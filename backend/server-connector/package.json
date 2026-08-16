@@ -1,0 +1,46 @@
+{
+  "name": "scen-space-auth-email-server-kit",
+  "private": true,
+  "version": "0.7.0",
+  "description": "Cumulative Scen server kit with DB-backed auth, Google OIDC, transactional email, payments, media gateways, storage and Vercel connector",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "typecheck": "tsc --noEmit"
+  },
+  "notes": [
+    "No deployment endpoint is included.",
+    "DATABASE_URL and object-storage credentials are server-only.",
+    "All project/scene/asset repository reads are scoped by workspaceId from the signed user session.",
+    "Project versions are immutable snapshots.",
+    "Direct uploads use HMAC-bound completion tokens plus presigned private object URLs.",
+    "Generated image/video bytes are ingested through the same storage adapter.",
+    "Checkout creation is server-only and uses provider idempotency where supported.",
+    "Browser redirects never mutate credits; verified webhook processing does.",
+    "Credit wallet reservations are workspace-scoped and transactionally locked.",
+    "Manual credit adjustments require Owner role and an audit reason.",
+    "User sessions are opaque random tokens; only SHA-256 hashes are stored in PostgreSQL.",
+    "Protected user routes check session revocation in the database.",
+    "Google sign-in uses Authorization Code + PKCE + state binding.",
+    "Verification/reset/invitation tokens are single-use and stored hashed.",
+    "Transactional email provider keys are server-only; Resend/Postmark adapters are available."
+  ],
+  "dependencies": {
+    "postgres": "^3.4.7",
+    "@aws-sdk/client-s3": "^3.890.0",
+    "@aws-sdk/s3-request-presigner": "^3.890.0",
+    "next": "^15.5.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0"
+  }
+}

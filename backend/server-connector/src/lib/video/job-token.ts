@@ -1,0 +1,6 @@
+import crypto from 'node:crypto';
+import type { VideoProviderId } from './types';
+export type VideoJobClaims={v:1;provider:VideoProviderId;nativeId:string;workspaceId:string;userId:string;model:string;seconds:number;createdAt:number};
+function key(){const s=process.env.SCEN_VIDEO_JOB_SECRET||process.env.SCEN_USER_SESSION_SECRET;if(!s||s.length<24)throw new Error('SCEN_VIDEO_JOB_SECRET is not configured');return s}
+export function signVideoJob(c:VideoJobClaims){const body=Buffer.from(JSON.stringify(c)).toString('base64url');const sig=crypto.createHmac('sha256',key()).update(body).digest('base64url');return `svj1.${body}.${sig}`}
+export function verifyVideoJob(token:string,scope:{workspaceId:string;userId:string}):VideoJobClaims{const [prefix,body,sig]=token.split('.');if(prefix!=='svj1'||!body||!sig)throw Object.assign(new Error('Invalid video job id'),{status:400});const expected=crypto.createHmac('sha256',key()).update(body).digest('base64url');const a=Buffer.from(sig),b=Buffer.from(expected);if(a.length!==b.length||!crypto.timingSafeEqual(a,b))throw Object.assign(new Error('Invalid video job signature'),{status:403});const c=JSON.parse(Buffer.from(body,'base64url').toString()) as VideoJobClaims;if(c.workspaceId!==scope.workspaceId||c.userId!==scope.userId)throw Object.assign(new Error('Video job tenant mismatch'),{status:403});return c}

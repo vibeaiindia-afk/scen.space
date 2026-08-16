@@ -1,0 +1,1 @@
+import {NextRequest,NextResponse} from 'next/server';import {confirmVerify} from '@/lib/auth/flows';export async function POST(req:NextRequest){try{const b=await req.json();return NextResponse.json(await confirmVerify(String(b?.token||'')))}catch(e:any){return NextResponse.json({error:e?.message||'Verification failed'},{status:e?.status||400})}}

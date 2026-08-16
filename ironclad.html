@@ -1,0 +1,1513 @@
+<title>IRONCLAD Wrestling</title>
+
+<style>
+/* ============================================================
+   IRONCLAD &mdash; Global Wrestling League
+   Broadcast control-room identity. Committed dark world: this
+   page is an arena at night, so there is no light theme. Every
+   colour is painted explicitly so it holds on any host ground.
+   ============================================================ */
+
+:root{
+  /* ground &mdash; blue-biased blacks, never pure #000 */
+  --ink:#07070B;
+  --ink-2:#0C0D12;
+  --panel:#121319;
+  --panel-2:#1A1B23;
+  --plate:#0A0A0F;
+
+  /* line work */
+  --line:rgba(240,238,234,.10);
+  --line-2:rgba(240,238,234,.20);
+
+  /* type */
+  --bone:#F0EEEA;            /* broadcast white, warm */
+  --dim:#9C9AA6;             /* grey biased toward the red's violet neighbour */
+  --faint:#6B6975;
+
+  /* accent &mdash; one place only */
+  --red:#D4121F;
+  --red-hot:#FF2A36;
+  --red-wash:rgba(212,18,31,.14);
+
+  /* semantic, not accent */
+  --gold:#E3BE57;            /* championship */
+  --live:#FF2A36;
+
+  --display:'Avenir Next Condensed','Oswald','Arial Narrow','Helvetica Neue Condensed',Impact,sans-serif;
+  --body:'Avenir Next','Segoe UI',system-ui,-apple-system,sans-serif;
+  --data:ui-monospace,'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;
+
+  --rail:56px;
+  --max:1280px;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--ink);
+  color:var(--bone);
+  font-family:var(--body);
+  font-size:16px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+h1,h2,h3,h4{
+  font-family:var(--display);
+  font-weight:800;
+  font-stretch:condensed;
+  letter-spacing:-.015em;
+  line-height:.92;
+  text-wrap:balance;
+  margin:0;
+  text-transform:uppercase;
+}
+
+p{margin:0}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+canvas{display:block}
+
+:focus-visible{outline:2px solid var(--red-hot);outline-offset:3px;border-radius:2px}
+
+/* ---------- shared atoms ---------- */
+
+.wrap{width:100%;max-width:var(--max);margin:0 auto;padding:0 24px}
+
+.eyebrow{
+  font-family:var(--data);
+  font-size:10px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--faint);
+  font-variant-numeric:tabular-nums;
+}
+
+.rule{
+  display:flex;align-items:baseline;gap:16px;
+  padding-bottom:14px;margin-bottom:26px;
+  border-bottom:1px solid var(--line);
+}
+.rule h2{font-size:clamp(28px,4vw,44px)}
+.rule .eyebrow{margin-left:auto;white-space:nowrap}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  height:48px;padding:0 26px;
+  font-family:var(--display);font-weight:800;font-stretch:condensed;
+  font-size:15px;letter-spacing:.1em;text-transform:uppercase;
+  border:1px solid var(--line-2);
+  background:transparent;color:var(--bone);
+  transition:background .28s var(--ease),border-color .28s var(--ease),transform .18s var(--ease),color .28s var(--ease);
+  will-change:transform;
+}
+.btn:hover{background:rgba(240,238,234,.07);border-color:var(--bone)}
+.btn.primary{
+  background:var(--red);border-color:var(--red);color:#fff;
+  box-shadow:0 0 0 rgba(212,18,31,0);
+}
+.btn.primary:hover{
+  background:var(--red-hot);border-color:var(--red-hot);
+  box-shadow:0 10px 40px -8px rgba(212,18,31,.75);
+}
+.btn.sm{height:38px;padding:0 16px;font-size:12px}
+
+.pill{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--data);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  padding:5px 11px;border:1px solid var(--line-2);color:var(--dim);
+}
+.pill.hot{border-color:rgba(212,18,31,.55);color:#FFB9BD;background:var(--red-wash)}
+.pill.gold{border-color:rgba(227,190,87,.5);color:var(--gold)}
+
+.dot{width:6px;height:6px;border-radius:50%;background:var(--live);display:inline-block}
+.dot.pulse{animation:pulse 1.6s ease-out infinite}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(255,42,54,.6)}
+  70%{box-shadow:0 0 0 9px rgba(255,42,54,0)}
+  100%{box-shadow:0 0 0 0 rgba(255,42,54,0)}
+}
+
+.mono{font-family:var(--data);font-variant-numeric:tabular-nums}
+
+/* ---------- nav ---------- */
+
+.topbar{
+  position:sticky;top:0;z-index:60;
+  background:rgba(7,7,11,.82);
+  backdrop-filter:blur(18px) saturate(1.4);
+  -webkit-backdrop-filter:blur(18px) saturate(1.4);
+  border-bottom:1px solid var(--line);
+}
+.topbar-in{
+  height:var(--rail);
+  display:flex;align-items:center;gap:22px;
+  width:100%;max-width:var(--max);margin:0 auto;padding:0 24px;
+}
+
+.logo{display:flex;align-items:center;gap:9px;flex:none}
+.logo i{
+  width:4px;height:19px;background:var(--red);display:block;
+  transform:skewX(-16deg);
+}
+.logo b{
+  font-family:var(--display);font-weight:800;font-stretch:condensed;
+  font-size:20px;letter-spacing:.02em;
+}
+.logo span{
+  font-family:var(--data);font-size:8px;letter-spacing:.3em;color:var(--faint);
+  display:block;margin-top:-3px;
+}
+
+.tabs{display:flex;gap:2px;margin:0 auto}
+.tab-btn{
+  position:relative;
+  padding:0 15px;height:var(--rail);
+  font-family:var(--display);font-weight:700;font-stretch:condensed;
+  font-size:13px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--faint);
+  transition:color .25s var(--ease);
+}
+.tab-btn::after{
+  content:'';position:absolute;left:15px;right:15px;bottom:0;height:2px;
+  background:var(--red);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .34s var(--ease);
+}
+.tab-btn:hover{color:var(--bone)}
+.tab-btn:hover::after{transform:scaleX(1)}
+.tab-btn.on{color:var(--bone)}
+.tab-btn.on::after{transform:scaleX(1)}
+.tab-btn span{display:inline-block;transition:transform .25s var(--ease)}
+.tab-btn:hover span{transform:scale(1.05)}
+
+.topbar-right{display:flex;align-items:center;gap:8px;flex:none}
+.live-btn{
+  display:flex;align-items:center;gap:7px;
+  height:32px;padding:0 12px;border:1px solid var(--line-2);
+  font-family:var(--data);font-size:10px;letter-spacing:.18em;
+  color:var(--dim);transition:.25s var(--ease);
+}
+.live-btn:hover{border-color:var(--live);color:#fff}
+body.live .live-btn{border-color:var(--live);color:#fff;background:var(--red-wash)}
+.tix{
+  height:32px;padding:0 15px;background:var(--red);color:#fff;
+  font-family:var(--display);font-weight:800;font-stretch:condensed;
+  font-size:12px;letter-spacing:.14em;
+  display:flex;align-items:center;
+  transition:.22s var(--ease);
+}
+.tix:hover{background:var(--red-hot);box-shadow:0 8px 30px -6px rgba(212,18,31,.8)}
+
+/* ---------- live event mode ---------- */
+
+.livebar{
+  display:none;
+  border-bottom:1px solid rgba(212,18,31,.35);
+  background:linear-gradient(90deg,rgba(212,18,31,.22),rgba(212,18,31,.05) 60%,transparent);
+}
+body.live .livebar{display:block;animation:slidedown .5s var(--ease)}
+@keyframes slidedown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.livebar-in{
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:12px 24px;width:100%;max-width:var(--max);margin:0 auto;
+}
+.livebar .vs-mini{font-family:var(--display);font-weight:800;font-stretch:condensed;font-size:19px;letter-spacing:.01em}
+.livebar .vs-mini em{color:var(--red-hot);font-style:normal;padding:0 6px}
+.livebar .status{font-family:var(--data);font-size:11px;color:#FFB9BD;letter-spacing:.12em}
+.livebar .acts{margin-left:auto;display:flex;gap:8px}
+
+/* ---------- panels ---------- */
+
+.panel{display:none}
+.panel.on{display:block;animation:panelin .45s var(--ease)}
+@keyframes panelin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+section.block{padding:64px 0}
+section.block:first-of-type{padding-top:44px}
+
+/* ---------- hero ---------- */
+
+/* min-height, not height: a three-line headline on a narrow screen has to be
+   able to push the hero taller instead of being clipped off the top */
+.hero{position:relative;min-height:min(88vh,760px);overflow:hidden;border-bottom:1px solid var(--line)}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;will-change:transform}
+.hero-veil{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(180deg,rgba(7,7,11,.62),rgba(7,7,11,.15) 34%,rgba(7,7,11,.92)),
+    radial-gradient(120% 70% at 50% 88%,transparent 40%,rgba(7,7,11,.9));
+}
+.hero-in{
+  position:relative;height:100%;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding-top:120px;padding-bottom:58px;
+  width:100%;max-width:var(--max);margin:0 auto;padding-left:24px;padding-right:24px;
+}
+.hero h1{
+  font-size:clamp(56px,11.5vw,158px);
+  letter-spacing:-.03em;line-height:.84;
+  margin:14px 0 0;
+  max-width:14ch;
+}
+.hero h1 em{font-style:normal;color:var(--red-hot);text-shadow:0 0 44px rgba(255,42,54,.55)}
+.hero p.sub{
+  margin-top:18px;max-width:46ch;font-size:clamp(15px,1.7vw,19px);color:#CFCDD6;
+}
+.hero .acts{display:flex;gap:11px;margin-top:28px;flex-wrap:wrap}
+.hero .livepill{display:none}
+body.live .hero .livepill{display:inline-flex}
+
+.sweep{
+  position:absolute;top:0;bottom:0;width:34%;
+  background:linear-gradient(90deg,transparent,rgba(240,238,234,.055),transparent);
+  transform:skewX(-14deg);pointer-events:none;
+  animation:sweep 9s var(--ease) infinite;
+}
+@keyframes sweep{
+  0%{left:-40%;opacity:0}
+  12%{opacity:1}
+  55%{opacity:.7}
+  75%{left:112%;opacity:0}
+  100%{left:112%;opacity:0}
+}
+
+/* ---------- next main event ---------- */
+
+.mainevent{
+  border:1px solid var(--line);background:var(--ink-2);
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;
+  position:relative;overflow:hidden;
+}
+.mainevent::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(70% 120% at 50% 100%,var(--red-wash),transparent 62%);
+  pointer-events:none;
+}
+.me-side{padding:26px 24px;display:flex;flex-direction:column;gap:14px;position:relative}
+.me-side.right{align-items:flex-end;text-align:right}
+.me-plate{width:100%;aspect-ratio:4/5;max-height:290px;background:var(--plate);position:relative;overflow:hidden}
+.me-plate canvas{width:100%;height:100%}
+.me-side h3{font-size:clamp(24px,3.2vw,38px)}
+.me-side .nick{font-family:var(--data);font-size:11px;letter-spacing:.2em;color:var(--red-hot)}
+.me-side .rec{font-family:var(--data);font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+
+.me-mid{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;padding:26px 20px;min-width:230px;
+  border-left:1px solid var(--line);border-right:1px solid var(--line);
+  position:relative;
+}
+.vs{
+  font-family:var(--display);font-weight:800;font-stretch:condensed;
+  font-size:clamp(64px,11vw,132px);line-height:.8;letter-spacing:-.04em;
+  color:transparent;-webkit-text-stroke:2px var(--bone);
+  position:relative;
+}
+.vs::after{
+  content:'VS';position:absolute;inset:0;
+  color:var(--red);-webkit-text-stroke:0;
+  clip-path:polygon(0 62%,100% 62%,100% 100%,0 100%);
+}
+.me-meta{text-align:center;display:grid;gap:5px}
+.me-meta b{font-family:var(--display);font-stretch:condensed;font-size:19px;letter-spacing:.06em}
+.me-meta span{font-family:var(--data);font-size:11px;color:var(--dim);letter-spacing:.1em}
+
+.countdown{display:flex;gap:5px;margin-top:2px}
+.cd-cell{
+  min-width:56px;padding:8px 4px;text-align:center;
+  border:1px solid var(--line);background:rgba(7,7,11,.6);
+}
+.cd-cell b{
+  display:block;font-family:var(--data);font-size:21px;font-weight:600;
+  font-variant-numeric:tabular-nums;letter-spacing:.02em;
+}
+.cd-cell span{font-family:var(--data);font-size:8px;letter-spacing:.2em;color:var(--faint)}
+
+/* ---------- horizontal rails ---------- */
+
+.railrow{
+  display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;
+  scroll-snap-type:x mandatory;scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.railrow::-webkit-scrollbar{display:none}
+.railrow > *{scroll-snap-align:start;flex:none}
+
+/* ---------- fighter card ---------- */
+
+.fcard{
+  width:246px;background:var(--panel);border:1px solid var(--line);
+  overflow:hidden;text-align:left;display:block;
+  transition:border-color .3s var(--ease),transform .34s var(--ease);
+  perspective:800px;
+}
+.fcard:hover{border-color:var(--line-2)}
+.fcard .plate{aspect-ratio:3/4;background:var(--plate);overflow:hidden;position:relative}
+.fcard .plate canvas{width:100%;height:100%;transition:transform .5s var(--ease)}
+.fcard:hover .plate canvas{transform:scale(1.07) translateY(-8px)}
+.fcard .plate::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 45%,rgba(7,7,11,.86));
+}
+.fcard .badge{position:absolute;top:10px;left:10px;z-index:2}
+.fcard .body{padding:13px 14px 16px;display:grid;gap:5px;position:relative}
+.fcard h3{font-size:23px}
+.fcard .nick{font-family:var(--data);font-size:10px;letter-spacing:.2em;color:var(--red-hot)}
+.fcard .stats{
+  display:flex;gap:10px;margin-top:4px;
+  font-family:var(--data);font-size:11px;color:var(--dim);
+  font-variant-numeric:tabular-nums;
+}
+.fcard .stats span{white-space:nowrap}
+
+/* grid variant */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(214px,1fr));gap:14px}
+.fgrid .fcard{width:auto}
+
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:22px}
+.filt{
+  padding:8px 15px;border:1px solid var(--line);
+  font-family:var(--data);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--faint);transition:.22s var(--ease);
+}
+.filt:hover{color:var(--bone);border-color:var(--line-2)}
+.filt.on{color:#fff;border-color:var(--red);background:var(--red-wash)}
+
+/* ---------- video thumb ---------- */
+
+.vthumb{
+  position:relative;background:var(--plate);border:1px solid var(--line);
+  overflow:hidden;display:block;text-align:left;width:100%;
+  transition:border-color .3s var(--ease);
+}
+.vthumb:hover{border-color:var(--line-2)}
+.vthumb .shot{aspect-ratio:16/9;position:relative;overflow:hidden}
+.vthumb .shot canvas{width:100%;height:100%;transition:transform .6s var(--ease)}
+.vthumb:hover .shot canvas{transform:scale(1.06)}
+.vthumb .scan{
+  position:absolute;inset:0;opacity:0;pointer-events:none;
+  background:linear-gradient(180deg,transparent,rgba(255,42,54,.1) 50%,transparent);
+  transition:opacity .3s var(--ease);
+}
+.vthumb:hover .scan{opacity:1;animation:scan 2.4s linear infinite}
+@keyframes scan{from{transform:translateY(-100%)}to{transform:translateY(100%)}}
+.vthumb .play{
+  position:absolute;left:50%;top:50%;translate:-50% -50%;
+  width:52px;height:52px;border:1px solid rgba(240,238,234,.5);border-radius:50%;
+  display:grid;place-items:center;background:rgba(7,7,11,.45);
+  backdrop-filter:blur(4px);
+  transition:.3s var(--ease);
+}
+.vthumb:hover .play{background:var(--red);border-color:var(--red);scale:1.08}
+.vthumb .play::before{
+  content:'';border-left:12px solid var(--bone);
+  border-top:8px solid transparent;border-bottom:8px solid transparent;
+  margin-left:3px;
+}
+.vthumb .dur{
+  position:absolute;right:8px;bottom:8px;z-index:2;
+  font-family:var(--data);font-size:10px;letter-spacing:.06em;
+  background:rgba(7,7,11,.85);padding:3px 7px;color:var(--bone);
+  font-variant-numeric:tabular-nums;
+}
+.vthumb .cap{padding:12px 13px 15px;display:grid;gap:5px}
+.vthumb h4{font-size:19px}
+.vthumb .meta{font-family:var(--data);font-size:10px;letter-spacing:.1em;color:var(--faint)}
+
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(288px,1fr));gap:16px}
+
+.vrail .vthumb{width:308px}
+
+/* ---------- events ---------- */
+
+.ecard{
+  display:grid;grid-template-columns:212px 1fr auto;gap:22px;align-items:center;
+  border:1px solid var(--line);background:var(--panel);padding:16px;
+  transition:border-color .3s var(--ease),background .3s var(--ease);
+}
+.ecard:hover{border-color:var(--line-2);background:var(--panel-2)}
+.ecard .art{aspect-ratio:16/10;background:var(--plate);overflow:hidden}
+.ecard .art canvas{width:100%;height:100%}
+.ecard .info{display:grid;gap:7px;min-width:0}
+.ecard h3{font-size:clamp(22px,2.6vw,31px)}
+.ecard .where{font-family:var(--data);font-size:11px;color:var(--dim);letter-spacing:.09em}
+.ecard .card-of{font-family:var(--display);font-stretch:condensed;font-size:16px;letter-spacing:.04em;color:#D8D6DE}
+.ecard .card-of em{color:var(--red-hot);font-style:normal;padding:0 5px}
+.ecard .acts{display:flex;flex-direction:column;gap:7px}
+.elist{display:grid;gap:12px}
+
+.ecard.past{grid-template-columns:132px 1fr auto;opacity:.82}
+.ecard.past h3{font-size:20px}
+
+/* ---------- news ---------- */
+
+.newslead{
+  display:grid;grid-template-columns:1.25fr 1fr;gap:0;
+  border:1px solid var(--line);background:var(--panel);overflow:hidden;
+  margin-bottom:16px;
+}
+.newslead .shot{position:relative;min-height:260px;overflow:hidden}
+.newslead .shot canvas{width:100%;height:100%;position:absolute;inset:0}
+.newslead .txt{padding:28px;display:flex;flex-direction:column;gap:12px;justify-content:center}
+.newslead h3{font-size:clamp(28px,3.8vw,44px)}
+.newslead p{color:#C8C6D0;font-size:15px;max-width:44ch}
+
+.ncard{
+  border:1px solid var(--line);background:var(--panel);overflow:hidden;
+  display:flex;flex-direction:column;
+  transition:border-color .3s var(--ease),transform .3s var(--ease);
+}
+.ncard:hover{border-color:var(--line-2);transform:translateY(-3px)}
+.ncard .shot{aspect-ratio:16/9;overflow:hidden}
+.ncard .shot canvas{width:100%;height:100%}
+.ncard .txt{padding:13px 14px 17px;display:grid;gap:7px}
+.ncard h4{font-size:20px}
+.ncard p{font-size:13px;color:var(--dim);line-height:1.5}
+.ncard .foot{display:flex;gap:9px;align-items:center;font-family:var(--data);font-size:10px;color:var(--faint);letter-spacing:.12em}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:14px}
+
+.cat{
+  font-family:var(--data);font-size:9px;letter-spacing:.22em;
+  color:var(--red-hot);text-transform:uppercase;
+}
+
+/* ---------- overlays ---------- */
+
+.overlay{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(4,4,7,.86);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  display:none;align-items:center;justify-content:center;padding:24px;
+}
+.overlay.on{display:flex;animation:fade .3s var(--ease)}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.sheet{
+  width:100%;max-width:920px;max-height:88vh;overflow-y:auto;
+  background:var(--ink-2);border:1px solid var(--line-2);
+  position:relative;animation:rise .42s var(--ease);
+}
+@keyframes rise{from{opacity:0;transform:translateY(22px) scale(.985)}to{opacity:1;transform:none}}
+.sheet .x{
+  position:absolute;top:12px;right:12px;z-index:5;
+  width:36px;height:36px;border:1px solid var(--line-2);
+  display:grid;place-items:center;font-size:18px;color:var(--dim);
+  background:rgba(7,7,11,.7);
+}
+.sheet .x:hover{color:#fff;border-color:var(--bone)}
+
+.profile{display:grid;grid-template-columns:340px 1fr}
+.profile .plate{position:relative;background:var(--plate);min-height:420px;overflow:hidden}
+.profile .plate canvas{position:absolute;inset:0;width:100%;height:100%}
+.profile .info{padding:30px 30px 34px;display:grid;gap:16px;align-content:start}
+.profile h2{font-size:clamp(34px,5vw,58px)}
+.profile .nick{font-family:var(--data);font-size:12px;letter-spacing:.24em;color:var(--red-hot)}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.statgrid div{background:var(--ink-2);padding:11px 12px}
+.statgrid b{display:block;font-family:var(--data);font-size:15px;font-variant-numeric:tabular-nums}
+.statgrid span{font-family:var(--data);font-size:9px;letter-spacing:.18em;color:var(--faint)}
+.profile .bio{font-size:14px;color:#C6C4CE;line-height:1.62;max-width:56ch}
+.recent{display:grid;gap:1px;background:var(--line);border:1px solid var(--line)}
+.recent .r{
+  background:var(--ink-2);padding:9px 12px;display:flex;gap:12px;align-items:center;
+  font-family:var(--data);font-size:11px;color:var(--dim);
+}
+.recent .r b{width:22px;font-weight:600}
+.recent .r b.w{color:#5FD08A}
+.recent .r b.l{color:#E0616B}
+.recent .r span{margin-left:auto;color:var(--faint);font-size:10px}
+
+.player{width:100%;max-width:1000px}
+.player .stage{aspect-ratio:16/9;background:#000;position:relative;overflow:hidden}
+.player .stage canvas{width:100%;height:100%}
+.player .bar{
+  position:absolute;left:0;right:0;bottom:0;padding:14px 16px;
+  background:linear-gradient(transparent,rgba(4,4,7,.94));
+  display:flex;align-items:center;gap:14px;
+}
+.player .track{flex:1;height:3px;background:rgba(240,238,234,.22);position:relative}
+.player .track i{position:absolute;inset:0 auto 0 0;width:0;background:var(--red);display:block}
+.player .tc{font-family:var(--data);font-size:11px;font-variant-numeric:tabular-nums;color:var(--bone)}
+.player .cap{padding:16px 18px 20px;display:grid;gap:6px}
+.player h3{font-size:26px}
+
+/* ---------- mobile bar ---------- */
+
+.mobar{
+  display:none;
+  position:fixed;left:0;right:0;bottom:0;z-index:70;
+  background:rgba(7,7,11,.94);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.mobar-in{display:grid;grid-template-columns:repeat(4,1fr)}
+.mobar button{
+  height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  font-family:var(--data);font-size:9px;letter-spacing:.16em;color:var(--faint);
+  position:relative;
+}
+.mobar button i{width:16px;height:2px;background:currentColor;display:block;opacity:.55}
+.mobar button.on{color:var(--bone)}
+.mobar button.on i{background:var(--red);opacity:1}
+
+.moresheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:80;
+  background:var(--ink-2);border-top:1px solid var(--line-2);
+  padding:18px 20px calc(24px + env(safe-area-inset-bottom,0px));
+  display:none;
+}
+.moresheet.on{display:block;animation:slideup .32s var(--ease)}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+.moresheet button{
+  width:100%;text-align:left;padding:15px 4px;border-bottom:1px solid var(--line);
+  font-family:var(--display);font-stretch:condensed;font-weight:700;
+  font-size:18px;letter-spacing:.1em;text-transform:uppercase;
+}
+
+/* ---------- reveal ---------- */
+
+.rv{opacity:0;transform:translateY(18px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.rv.in{opacity:1;transform:none}
+
+/* ---------- footer ---------- */
+
+.foot{
+  border-top:1px solid var(--line);margin-top:40px;padding:34px 0 40px;
+  color:var(--faint);font-family:var(--data);font-size:11px;letter-spacing:.1em;
+}
+.foot-in{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+.foot-in .grow{flex:1}
+
+/* ---------- responsive ---------- */
+
+@media (max-width:900px){
+  .mainevent{grid-template-columns:1fr}
+  .me-mid{border-left:0;border-right:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);order:2}
+  .me-side.right{order:3;align-items:flex-start;text-align:left}
+  .profile{grid-template-columns:1fr}
+  .profile .plate{min-height:280px}
+  .newslead{grid-template-columns:1fr}
+  .ecard{grid-template-columns:1fr;gap:14px}
+  .ecard .acts{flex-direction:row}
+  .ecard.past{grid-template-columns:1fr}
+}
+
+@media (max-width:760px){
+  .tabs{display:none}
+  .mobar{display:block}
+  body{padding-bottom:58px}
+  .topbar-in{gap:12px}
+  .topbar-right{margin-left:auto}
+  .wrap{padding:0 16px}
+  /* the fixed bottom bar sits over the last 58px, so the hero CTAs clear it */
+  .hero-in{padding-left:16px;padding-right:16px;padding-bottom:88px;padding-top:96px}
+  section.block{padding:44px 0}
+  .fcard{width:190px}
+  .vrail .vthumb{width:250px}
+  .logo span{display:none}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+  .rv{opacity:1;transform:none}
+}
+</style>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="logo" href="#" data-tab="home">
+      <i></i>
+      <div>
+        <b>IRONCLAD</b>
+        <span>GLOBAL WRESTLING</span>
+      </div>
+    </a>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab-btn on" data-tab="home"><span>Home</span></button>
+      <button class="tab-btn" data-tab="fighters"><span>Fighters</span></button>
+      <button class="tab-btn" data-tab="events"><span>Events</span></button>
+      <button class="tab-btn" data-tab="videos"><span>Videos</span></button>
+      <button class="tab-btn" data-tab="news"><span>News</span></button>
+    </nav>
+
+    <div class="topbar-right">
+      <button class="live-btn" id="liveToggle"><i class="dot pulse"></i> LIVE</button>
+      <button class="tix" data-tab="events">Tickets</button>
+    </div>
+  </div>
+</header>
+
+<div class="livebar" id="livebar">
+  <div class="livebar-in">
+    <span class="pill hot"><i class="dot pulse"></i> Live now</span>
+    <div class="vs-mini">KAIA MORENO <em>VS</em> VERA KRUGER</div>
+    <div class="status mono" id="liveStatus">ROUND 3 &middot; 04:12 REMAINING</div>
+    <div class="acts">
+      <button class="btn sm primary" data-video="live">Watch live</button>
+      <button class="btn sm" data-tab="events">Live results</button>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- ============ HOME ============ -->
+<div class="panel on" id="p-home">
+
+  <div class="hero">
+    <canvas id="heroCanvas"></canvas>
+    <div class="hero-veil"></div>
+    <div class="sweep"></div>
+    <div class="hero-in">
+      <span class="pill hot livepill"><i class="dot pulse"></i> Live now &middot; Round 3</span>
+      <h1>The Fight <em>Starts</em> Here</h1>
+      <p class="sub">Big personalities. Bigger rivalries. One unforgettable arena.</p>
+      <div class="acts">
+        <button class="btn primary mag" data-video="v1">Watch now</button>
+        <button class="btn mag" data-tab="events">View events</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="block wrap rv">
+    <div class="rule">
+      <h2>Next Main Event</h2>
+      <span class="eyebrow" id="meCode">IRONCLAD 24</span>
+    </div>
+    <div class="mainevent" id="mainEvent"></div>
+  </section>
+
+  <section class="block wrap rv">
+    <div class="rule">
+      <h2>Featured Fighters</h2>
+      <span class="eyebrow">Roster &middot; 4 of 8</span>
+    </div>
+    <div class="railrow" id="featured"></div>
+  </section>
+
+  <section class="block wrap rv">
+    <div class="rule">
+      <h2>Latest Highlights</h2>
+      <span class="eyebrow">Updated after every card</span>
+    </div>
+    <div class="grid3" id="highlights"></div>
+  </section>
+</div>
+
+<!-- ============ FIGHTERS ============ -->
+<div class="panel" id="p-fighters">
+  <section class="block wrap">
+    <div class="rule">
+      <h2>The Roster</h2>
+      <span class="eyebrow" id="rosterCount">8 fighters</span>
+    </div>
+    <div class="filters" id="filters">
+      <button class="filt on" data-f="all">All</button>
+      <button class="filt" data-f="champ">Champions</button>
+      <button class="filt" data-f="men">Men</button>
+      <button class="filt" data-f="women">Women</button>
+    </div>
+    <div class="fgrid" id="roster"></div>
+  </section>
+</div>
+
+<!-- ============ EVENTS ============ -->
+<div class="panel" id="p-events">
+  <section class="block wrap">
+    <div class="rule">
+      <h2>Upcoming Events</h2>
+      <span class="eyebrow">3 cards on sale</span>
+    </div>
+    <div class="elist" id="upcoming"></div>
+  </section>
+  <section class="block wrap">
+    <div class="rule">
+      <h2>Past Events</h2>
+      <span class="eyebrow">Full replays included with a pass</span>
+    </div>
+    <div class="elist" id="past"></div>
+  </section>
+</div>
+
+<!-- ============ VIDEOS ============ -->
+<div class="panel" id="p-videos">
+  <section class="block wrap">
+    <div class="rule">
+      <h2>Video</h2>
+      <span class="eyebrow">5 categories</span>
+    </div>
+    <div id="vcats"></div>
+  </section>
+</div>
+
+<!-- ============ NEWS ============ -->
+<div class="panel" id="p-news">
+  <section class="block wrap">
+    <div class="rule">
+      <h2>Breaking News</h2>
+      <span class="eyebrow" id="newsStamp"></span>
+    </div>
+    <div id="newsLead"></div>
+    <div class="grid4" id="newsGrid"></div>
+  </section>
+</div>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <span>IRONCLAD GLOBAL WRESTLING</span>
+    <span class="grow"></span>
+    <span>ORIGINAL BRAND &middot; NOT AFFILIATED WITH ANY EXISTING PROMOTION</span>
+  </div>
+</footer>
+
+<!-- overlays -->
+<div class="overlay" id="profileOverlay">
+  <div class="sheet">
+    <button class="x" data-close>&times;</button>
+    <div class="profile" id="profileBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="videoOverlay">
+  <div class="sheet player">
+    <button class="x" data-close>&times;</button>
+    <div class="stage">
+      <canvas id="playerCanvas"></canvas>
+      <div class="bar">
+        <span class="tc" id="tcNow">00:00</span>
+        <div class="track"><i id="trackFill"></i></div>
+        <span class="tc" id="tcEnd">00:00</span>
+      </div>
+    </div>
+    <div class="cap" id="playerCap"></div>
+  </div>
+</div>
+
+<nav class="mobar">
+  <div class="mobar-in">
+    <button class="on" data-tab="home"><i></i>Home</button>
+    <button data-tab="fighters"><i></i>Fighters</button>
+    <button data-tab="events"><i></i>Events</button>
+    <button id="moreBtn"><i></i>More</button>
+  </div>
+</nav>
+
+<div class="moresheet" id="moreSheet">
+  <button data-tab="videos">Videos</button>
+  <button data-tab="news">News</button>
+  <button id="moreLive">Live event mode</button>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ============================================================
+   Procedural broadcast plates.
+   There is no photography in a self-contained page, so every
+   image slot is painted: arena ground, spotlight, a silhouette
+   built from curves, and a shared grain tile. Each subject gets
+   a seed, so no two plates repeat.
+   ============================================================ */
+
+function rng(seed){
+  let a = seed >>> 0;
+  return function(){
+    a += 0x6D2B79F5;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+let grainTile = null;
+function grain(){
+  if (grainTile) return grainTile;
+  const c = document.createElement('canvas');
+  c.width = c.height = 96;
+  const x = c.getContext('2d');
+  const img = x.createImageData(96, 96);
+  for (let i = 0; i < img.data.length; i += 4){
+    const v = 120 + Math.random() * 135;
+    img.data[i] = img.data[i+1] = img.data[i+2] = v;
+    img.data[i+3] = 15;
+  }
+  x.putImageData(img, 0, 0);
+  grainTile = c;
+  return c;
+}
+
+function fit(cv){
+  const r = cv.getBoundingClientRect();
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = Math.max(1, Math.round((r.width || cv.clientWidth || 300) * dpr));
+  const h = Math.max(1, Math.round((r.height || cv.clientHeight || 200) * dpr));
+  cv.width = w; cv.height = h;
+  return { w:w, h:h, s:dpr };
+}
+
+/* one broad-shouldered figure, drawn from curves rather than
+   hand-authored path data so the pose can vary per seed */
+function figure(g, x, base, hgt, rand, flip){
+  const s = hgt / 100;
+  const lean = (rand() - 0.5) * 10 * s;
+  g.save();
+  g.translate(x, base);
+  if (flip) g.scale(-1, 1);
+  g.fillStyle = '#000';
+
+  // torso
+  g.beginPath();
+  g.moveTo(-26*s, 0);
+  g.bezierCurveTo(-30*s, -34*s, -34*s, -50*s, -27*s + lean, -62*s);
+  g.bezierCurveTo(-20*s + lean, -70*s, -12*s + lean, -72*s, 0 + lean, -72*s);
+  g.bezierCurveTo(12*s + lean, -72*s, 20*s + lean, -70*s, 27*s + lean, -62*s);
+  g.bezierCurveTo(34*s, -50*s, 30*s, -34*s, 26*s, 0);
+  g.closePath();
+  g.fill();
+
+  // head
+  g.beginPath();
+  g.ellipse(lean, -82*s, 11*s, 13*s, 0, 0, Math.PI*2);
+  g.fill();
+
+  // arms \u2014 angle varies with the seed
+  const a1 = 0.5 + rand() * 0.9;
+  g.lineWidth = 13*s;
+  g.lineCap = 'round';
+  g.strokeStyle = '#000';
+  g.beginPath();
+  g.moveTo(-25*s + lean, -58*s);
+  g.lineTo(-25*s - Math.cos(a1)*30*s, -58*s + Math.sin(a1)*26*s);
+  g.stroke();
+  g.beginPath();
+  g.moveTo(25*s + lean, -58*s);
+  g.lineTo(25*s + Math.cos(a1*0.7)*28*s, -58*s + Math.sin(a1*0.7)*30*s);
+  g.stroke();
+
+  // legs
+  g.lineWidth = 16*s;
+  g.beginPath(); g.moveTo(-13*s, -4*s); g.lineTo(-17*s, 0); g.stroke();
+  g.beginPath(); g.moveTo(13*s, -4*s); g.lineTo(18*s, 0); g.stroke();
+
+  // rim light
+  g.globalCompositeOperation = 'lighter';
+  g.strokeStyle = 'rgba(255,255,255,.30)';
+  g.lineWidth = 1.6*s;
+  g.beginPath();
+  g.moveTo(-27*s + lean, -62*s);
+  g.bezierCurveTo(-20*s + lean, -70*s, -12*s + lean, -72*s, 0 + lean, -72*s);
+  g.stroke();
+  g.strokeStyle = 'rgba(212,18,31,.55)';
+  g.beginPath();
+  g.moveTo(27*s, -60*s);
+  g.bezierCurveTo(33*s, -48*s, 30*s, -30*s, 26*s, -2*s);
+  g.stroke();
+  g.restore();
+}
+
+function paint(cv, seed, kind){
+  const d = fit(cv);
+  const g = cv.getContext('2d');
+  const rand = rng(seed);
+  const W = d.w, H = d.h;
+
+  // ground
+  const bg = g.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#15161E');
+  bg.addColorStop(0.55, '#0B0B11');
+  bg.addColorStop(1, '#050508');
+  g.fillStyle = bg;
+  g.fillRect(0, 0, W, H);
+
+  // crowd speckle high up
+  g.save();
+  for (let i = 0; i < Math.round(W * H / 5200); i++){
+    const y = rand() * H * 0.42;
+    g.fillStyle = 'rgba(240,238,234,' + (0.02 + rand() * 0.07) + ')';
+    g.fillRect(rand() * W, y, 1.6 * d.s, 1.6 * d.s);
+  }
+  g.restore();
+
+  // spotlight cones
+  const cones = kind === 'arena' ? 3 : 2;
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < cones; i++){
+    const x = W * (0.18 + rand() * 0.64);
+    const spread = W * (0.14 + rand() * 0.2);
+    const warm = rand() > 0.62;
+    const gr = g.createLinearGradient(x, 0, x, H * 0.95);
+    gr.addColorStop(0, warm ? 'rgba(255,80,88,.16)' : 'rgba(214,222,255,.13)');
+    gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr;
+    g.beginPath();
+    g.moveTo(x - W * 0.03, -2);
+    g.lineTo(x + W * 0.03, -2);
+    g.lineTo(x + spread, H * 0.95);
+    g.lineTo(x - spread, H * 0.95);
+    g.closePath();
+    g.fill();
+  }
+  g.restore();
+
+  // key light behind the subject
+  const key = g.createRadialGradient(W * 0.5, H * 0.58, 0, W * 0.5, H * 0.58, W * 0.72);
+  key.addColorStop(0, kind === 'news' ? 'rgba(212,18,31,.30)' : 'rgba(255,90,96,.22)');
+  key.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = key;
+  g.fillRect(0, 0, W, H);
+
+  // subject
+  if (kind === 'arena'){
+    // pushed to the edges so the headline sits in the gap between them
+    figure(g, W * 0.15, H * 1.0, H * 0.54, rand, false);
+    figure(g, W * 0.85, H * 1.0, H * 0.57, rand, true);
+  } else if (kind === 'portrait'){
+    figure(g, W * 0.5, H * 1.02, H * 0.92, rand, rand() > 0.5);
+  } else if (kind === 'wide'){
+    figure(g, W * 0.38, H * 1.02, H * 0.86, rand, false);
+    figure(g, W * 0.63, H * 1.02, H * 0.82, rand, true);
+  } else if (kind === 'event'){
+    // diagonal broadcast slash instead of a figure
+    g.save();
+    g.translate(W * 0.5, H * 0.5);
+    g.rotate(-0.34);
+    g.fillStyle = 'rgba(212,18,31,.85)';
+    g.fillRect(-W * 0.9, -H * 0.05, W * 1.8, H * 0.1);
+    g.fillStyle = 'rgba(240,238,234,.12)';
+    g.fillRect(-W * 0.9, H * 0.1, W * 1.8, H * 0.03);
+    g.restore();
+    figure(g, W * 0.5, H * 1.04, H * 0.8, rand, rand() > 0.5);
+  } else {
+    figure(g, W * 0.5, H * 1.05, H * 0.8, rand, rand() > 0.5);
+  }
+
+  // haze
+  const haze = g.createLinearGradient(0, H * 0.45, 0, H);
+  haze.addColorStop(0, 'rgba(150,150,170,0)');
+  haze.addColorStop(0.7, 'rgba(140,140,165,.10)');
+  haze.addColorStop(1, 'rgba(120,120,150,.05)');
+  g.fillStyle = haze;
+  g.fillRect(0, H * 0.45, W, H * 0.55);
+
+  // grain
+  const p = g.createPattern(grain(), 'repeat');
+  g.fillStyle = p;
+  g.fillRect(0, 0, W, H);
+}
+
+/* paint on first sight, so 30 plates never block the first frame */
+const painter = new IntersectionObserver(function(rows){
+  rows.forEach(function(r){
+    if (!r.isIntersecting) return;
+    const cv = r.target;
+    if (cv.dataset.done) return;
+    cv.dataset.done = '1';
+    paint(cv, Number(cv.dataset.seed) || 7, cv.dataset.kind || 'portrait');
+    painter.unobserve(cv);
+  });
+}, { rootMargin: '250px' });
+
+function plate(seed, kind){
+  return '<canvas data-seed="' + seed + '" data-kind="' + kind + '"></canvas>';
+}
+function hook(root){
+  (root || document).querySelectorAll('canvas[data-seed]').forEach(function(c){ painter.observe(c); });
+}
+
+/* ============================================================
+   Data. Dates are computed from today so the card never goes
+   stale \u2014 the countdown and the printed date always agree.
+   ============================================================ */
+
+const DAY = 86400000;
+function at(days, hour){
+  const d = new Date();
+  d.setHours(hour, 0, 0, 0);
+  return new Date(d.getTime() + days * DAY);
+}
+function fmtDate(d){
+  return d.toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }).toUpperCase();
+}
+
+const FIGHTERS = [
+  { id:'moreno', first:'Kaia', last:'Moreno', nick:'Blacksaw', rec:'24-3', div:"Women's Heavyweight",
+    sex:'women', champ:true, ht:'5\u201911"', wt:'168 lb', move:'Saw Line', titles:'2 \u00d7 World',
+    seed:1207,
+    bio:'Moreno turned a five-fight losing run into the longest title reign in the division by rebuilding her whole game around one counter. Opponents know it is coming and still walk into it.',
+    recent:[['W','Vera Kruger','IRONCLAD 23'],['W','Rhea Vance','IRONCLAD 22'],['W','Nia Baptiste','SALT ROAD'],['L','Vera Kruger','IRONCLAD 20']] },
+  { id:'orlov', first:'Dmitri', last:'Orlov', nick:'The Vault', rec:'31-7', div:'Super Heavyweight',
+    sex:'men', champ:false, ht:'6\u20197"', wt:'304 lb', move:'Deadbolt', titles:'1 \u00d7 Tag',
+    seed:8842,
+    bio:'Thirty-eight fights and nobody has taken him off his feet in the opening ten minutes. Orlov calls it patience; the roster calls it a wall with a pulse.',
+    recent:[['W','Tane Fifita','IRONCLAD 23'],['L','Emeka Okafor','HOLLOW CROWN'],['W','Sol Aguilar','IRONCLAD 21'],['W','Tane Fifita','DEADWEIGHT']] },
+  { id:'baptiste', first:'Nia', last:'Baptiste', nick:'Riptide', rec:'19-2', div:"Women's Cruiserweight",
+    sex:'women', champ:true, ht:'5\u20197"', wt:'141 lb', move:'Undertow', titles:'1 \u00d7 World',
+    seed:3391,
+    bio:'The fastest ascent on the roster. Baptiste took the belt in her nineteenth professional match and has not dropped a round since the semi-final in Toronto.',
+    recent:[['W','Rhea Vance','IRONCLAD 23'],['W','Vera Kruger','IRONCLAD 22'],['W','Rhea Vance','RIOT ROW'],['L','Kaia Moreno','SALT ROAD']] },
+  { id:'okafor', first:'Emeka', last:'Okafor', nick:'Iron Sermon', rec:'28-5', div:'Heavyweight',
+    sex:'men', champ:true, ht:'6\u20194"', wt:'259 lb', move:'Last Word', titles:'3 \u00d7 World',
+    seed:5560,
+    bio:'Okafor talks for forty seconds before every match and then does not speak again until it is over. Three reigns, two of them ended by his own decision to move up.',
+    recent:[['W','Dmitri Orlov','HOLLOW CROWN'],['W','Tane Fifita','IRONCLAD 22'],['W','Sol Aguilar','DEADWEIGHT'],['W','Tane Fifita','IRONCLAD 20']] },
+  { id:'aguilar', first:'Sol', last:'Aguilar', nick:'Ghostlight', rec:'22-9', div:'Cruiserweight',
+    sex:'men', champ:false, ht:'5\u201910"', wt:'196 lb', move:'Blackout Arc', titles:'2 \u00d7 Tag',
+    seed:9114,
+    bio:'The most watched entrance in the league and the most divisive record behind it. Aguilar has beaten every champion on this roster and held a belt for exactly eleven days.',
+    recent:[['L','Dmitri Orlov','IRONCLAD 21'],['W','Vera Kruger','RIOT ROW'],['L','Emeka Okafor','DEADWEIGHT'],['W','Tane Fifita','IRONCLAD 19']] },
+  { id:'kruger', first:'Vera', last:'Kruger', nick:'Nightfall', rec:'17-6', div:"Women's Middleweight",
+    sex:'women', champ:false, ht:'5\u20199"', wt:'154 lb', move:'Curfew', titles:'\u2014',
+    seed:2278,
+    bio:'Kruger fights in silence and trains in the dark on purpose. She is the only person to have beaten Kaia Moreno since the reign began, and she is getting the rematch.',
+    recent:[['L','Kaia Moreno','IRONCLAD 23'],['L','Nia Baptiste','IRONCLAD 22'],['L','Sol Aguilar','RIOT ROW'],['W','Kaia Moreno','IRONCLAD 20']] },
+  { id:'fifita', first:'Tane', last:'Fifita', nick:'Landslide', rec:'26-4', div:'Heavyweight',
+    sex:'men', champ:false, ht:'6\u20192"', wt:'271 lb', move:'Ground Give', titles:'1 \u00d7 World',
+    seed:6603,
+    bio:'Fifita has finished more matches inside three minutes than the rest of the heavyweight division combined. The four losses are all to the same two men.',
+    recent:[['L','Dmitri Orlov','IRONCLAD 23'],['L','Emeka Okafor','IRONCLAD 22'],['W','Rhea Vance','RIOT ROW'],['L','Dmitri Orlov','DEADWEIGHT']] },
+  { id:'vance', first:'Rhea', last:'Vance', nick:'Static', rec:'14-1', div:"Women's Cruiserweight",
+    sex:'women', champ:false, ht:'5\u20196"', wt:'138 lb', move:'Whitenoise', titles:'\u2014',
+    seed:4417,
+    bio:'Fourteen matches, one loss, and a style nobody has managed to scout. Vance changes stance mid-exchange often enough that two opponents have asked for tape of their own fights.',
+    recent:[['L','Nia Baptiste','IRONCLAD 23'],['W','Kaia Moreno','IRONCLAD 22'],['W','Vera Kruger','RIOT ROW'],['W','Nia Baptiste','IRONCLAD 20']] }
+];
+
+const byId = {};
+FIGHTERS.forEach(function(f){ byId[f.id] = f; });
+
+const EVENTS = [
+  { no:24, name:'Blackout', when:at(27,19), city:'Manchester', arena:'Co-op Live',
+    a:'moreno', b:'kruger', tix:'Limited', seed:1401 },
+  { no:25, name:'Salt Road', when:at(58,19), city:'Osaka', arena:'Edion Arena',
+    a:'okafor', b:'orlov', tix:'On sale', seed:2402 },
+  { no:26, name:'Last Light', when:at(94,19), city:'S\u00e3o Paulo', arena:'Gin\u00e1sio do Ibirapuera',
+    a:'baptiste', b:'vance', tix:'Presale', seed:3403 }
+];
+
+const PAST = [
+  { no:23, name:'Hollow Crown', when:at(-19,19), city:'Toronto', arena:'Scotiabank Arena', seed:5501 },
+  { no:22, name:'Deadweight', when:at(-47,19), city:'Berlin', arena:'Uber Arena', seed:5502 },
+  { no:21, name:'Riot Row', when:at(-76,19), city:'Mexico City', arena:'Arena Ciudad', seed:5503 }
+];
+
+const VIDEOS = {
+  'Highlights':[
+    { t:'Main Event Highlights', f:'Moreno vs Kruger', e:'IRONCLAD 23', d:'8:24', v:'2.4M', seed:7001 },
+    { t:'Top 10 Moments', f:'Full roster', e:'Season so far', d:'11:02', v:'1.9M', seed:7002 },
+    { t:'Backstage Chaos', f:'Aguilar, Fifita', e:'Hollow Crown', d:'4:47', v:'986K', seed:7003 },
+    { t:'The Rematch Call', f:'Kruger', e:'IRONCLAD 23', d:'2:19', v:'742K', seed:7004 }
+  ],
+  'Full Matches':[
+    { t:'Okafor vs Orlov', f:'Heavyweight title', e:'Hollow Crown', d:'34:11', v:'3.1M', seed:7101 },
+    { t:'Baptiste vs Vance', f:'Cruiserweight title', e:'IRONCLAD 23', d:'27:52', v:'2.2M', seed:7102 },
+    { t:'Moreno vs Vance', f:'Number one contender', e:'IRONCLAD 22', d:'31:08', v:'1.7M', seed:7103 },
+    { t:'Fifita vs Orlov', f:'Super heavyweight', e:'Deadweight', d:'19:44', v:'1.1M', seed:7104 }
+  ],
+  'Interviews':[
+    { t:'Forty Seconds With Okafor', f:'Emeka Okafor', e:'Hollow Crown', d:'6:30', v:'812K', seed:7201 },
+    { t:'Kruger Breaks Her Silence', f:'Vera Kruger', e:'IRONCLAD 23', d:'9:15', v:'1.3M', seed:7202 },
+    { t:'Eleven Days', f:'Sol Aguilar', e:'Riot Row', d:'12:40', v:'604K', seed:7203 }
+  ],
+  'Backstage':[
+    { t:'Walk To The Curtain', f:'Kaia Moreno', e:'IRONCLAD 23', d:'3:58', v:'1.5M', seed:7301 },
+    { t:'Tape And Ice', f:'Medical bay', e:'Deadweight', d:'7:22', v:'433K', seed:7302 },
+    { t:'The Gorilla Position', f:'Production crew', e:'Riot Row', d:'5:11', v:'389K', seed:7303 }
+  ],
+  'Top Moments':[
+    { t:'Moreno Lands The Saw Line', f:'Kaia Moreno', e:'IRONCLAD 20', d:'1:12', v:'4.8M', seed:7401 },
+    { t:'Orlov Refuses To Fall', f:'Dmitri Orlov', e:'Deadweight', d:'2:04', v:'2.7M', seed:7402 },
+    { t:'Vance Switches Stance', f:'Rhea Vance', e:'IRONCLAD 22', d:'0:48', v:'2.1M', seed:7403 }
+  ]
+};
+
+const NEWS_LEAD = {
+  cat:'Breaking',
+  h:'Kruger gets the rematch she has demanded for a year',
+  p:'The only fighter to beat Kaia Moreno since her reign began headlines IRONCLAD 24 in Manchester. Moreno agreed to the booking inside forty minutes of the challenge being issued on camera.',
+  seed:9001
+};
+
+const NEWS = [
+  { cat:'Rivalries', h:'Aguilar names his price for a title shot', p:'Eleven days as champion, and Ghostlight says he will only come back for the belt he lost.', seed:9101 },
+  { cat:'Championships', h:'Okafor will defend twice before moving up', p:'The heavyweight champion confirms two defences, then a division change he has hinted at all season.', seed:9102 },
+  { cat:'Fights', h:'Vance vs Baptiste is booked for S\u00e3o Paulo', p:'A third meeting between the two fastest risers on the roster closes out IRONCLAD 26.', seed:9103 },
+  { cat:'Backstage', h:'Production adds a fourth camera to the entrance ramp', p:'A small change with a big effect on how the walk-outs are cut for broadcast.', seed:9104 }
+];
+
+/* ============================================================
+   Render
+   ============================================================ */
+
+const $  = function(s, r){ return (r || document).querySelector(s); };
+const $$ = function(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+const esc = function(v){ return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){
+  return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+}); };
+
+function fullName(f){ return f.first + ' ' + f.last; }
+
+function fighterCard(f){
+  return '<button class="fcard" data-fighter="' + f.id + '">' +
+    '<div class="plate">' + plate(f.seed, 'portrait') +
+      (f.champ ? '<span class="pill gold badge">Champion</span>' : '') +
+    '</div>' +
+    '<div class="body">' +
+      '<span class="nick">' + esc(f.nick) + '</span>' +
+      '<h3>' + esc(fullName(f)) + '</h3>' +
+      '<div class="stats"><span>' + esc(f.rec) + '</span><span>' + esc(f.div) + '</span></div>' +
+    '</div></button>';
+}
+
+function videoCard(v, wide){
+  return '<button class="vthumb" data-v=\'' + esc(JSON.stringify(v)) + '\'>' +
+    '<div class="shot">' + plate(v.seed, wide ? 'wide' : 'thumb') +
+      '<div class="scan"></div><div class="play"></div>' +
+      '<span class="dur mono">' + esc(v.d) + '</span>' +
+    '</div>' +
+    '<div class="cap">' +
+      '<h4>' + esc(v.t) + '</h4>' +
+      '<span class="meta">' + esc(v.f) + ' &middot; ' + esc(v.e) + ' &middot; ' + esc(v.v) + ' views</span>' +
+    '</div></button>';
+}
+
+/* --- next main event --- */
+const NEXT = EVENTS[0];
+(function renderMainEvent(){
+  const a = byId[NEXT.a], b = byId[NEXT.b];
+  $('#meCode').textContent = 'IRONCLAD ' + NEXT.no + ' \u00b7 ' + NEXT.name.toUpperCase();
+  $('#mainEvent').innerHTML =
+    '<div class="me-side">' +
+      '<div class="me-plate">' + plate(a.seed, 'portrait') + '</div>' +
+      '<span class="nick">' + esc(a.nick) + '</span>' +
+      '<h3>' + esc(fullName(a)) + '</h3>' +
+      '<span class="rec">' + esc(a.rec) + ' \u00b7 ' + esc(a.div) + '</span>' +
+    '</div>' +
+    '<div class="me-mid">' +
+      '<div class="vs">VS</div>' +
+      '<div class="me-meta">' +
+        '<b>IRONCLAD ' + NEXT.no + ' \u00b7 ' + esc(NEXT.name.toUpperCase()) + '</b>' +
+        '<span>' + fmtDate(NEXT.when) + ' \u00b7 ' + esc(NEXT.city) + '</span>' +
+        '<span>' + esc(NEXT.arena) + '</span>' +
+      '</div>' +
+      '<div class="countdown" id="cd">' +
+        ['Days','Hrs','Min','Sec'].map(function(l){
+          return '<div class="cd-cell"><b>--</b><span>' + l + '</span></div>';
+        }).join('') +
+      '</div>' +
+      '<button class="btn primary mag" data-tab="events">Get tickets</button>' +
+    '</div>' +
+    '<div class="me-side right">' +
+      '<div class="me-plate">' + plate(b.seed, 'portrait') + '</div>' +
+      '<span class="nick">' + esc(b.nick) + '</span>' +
+      '<h3>' + esc(fullName(b)) + '</h3>' +
+      '<span class="rec">' + esc(b.rec) + ' \u00b7 ' + esc(b.div) + '</span>' +
+    '</div>';
+})();
+
+function tickCountdown(){
+  const cells = $$('#cd .cd-cell b');
+  if (!cells.length) return;
+  let ms = NEXT.when.getTime() - Date.now();
+  if (ms < 0) ms = 0;
+  const d = Math.floor(ms / DAY);
+  const h = Math.floor(ms / 3600000) % 24;
+  const m = Math.floor(ms / 60000) % 60;
+  const s = Math.floor(ms / 1000) % 60;
+  const pad = function(n){ return String(n).padStart(2, '0'); };
+  [d, pad(h), pad(m), pad(s)].forEach(function(v, i){ cells[i].textContent = v; });
+}
+tickCountdown();
+setInterval(tickCountdown, 1000);
+
+/* --- home rails --- */
+$('#featured').innerHTML = FIGHTERS.slice(0, 4).map(fighterCard).join('');
+$('#highlights').innerHTML = VIDEOS['Highlights'].slice(0, 3).map(function(v){
+  return videoCard(v, true);
+}).join('');
+
+/* --- roster --- */
+function renderRoster(filter){
+  const list = FIGHTERS.filter(function(f){
+    if (filter === 'champ') return f.champ;
+    if (filter === 'men')   return f.sex === 'men';
+    if (filter === 'women') return f.sex === 'women';
+    return true;
+  });
+  $('#roster').innerHTML = list.map(fighterCard).join('');
+  $('#rosterCount').textContent = list.length + (list.length === 1 ? ' fighter' : ' fighters');
+  hook($('#roster'));
+}
+renderRoster('all');
+
+$('#filters').addEventListener('click', function(e){
+  const b = e.target.closest('.filt');
+  if (!b) return;
+  $$('#filters .filt').forEach(function(x){ x.classList.toggle('on', x === b); });
+  renderRoster(b.dataset.f);
+});
+
+/* --- events --- */
+$('#upcoming').innerHTML = EVENTS.map(function(ev){
+  const a = byId[ev.a], b = byId[ev.b];
+  return '<article class="ecard">' +
+    '<div class="art">' + plate(ev.seed, 'event') + '</div>' +
+    '<div class="info">' +
+      '<span class="eyebrow">IRONCLAD ' + ev.no + ' \u00b7 ' + fmtDate(ev.when) + '</span>' +
+      '<h3>' + esc(ev.name) + '</h3>' +
+      '<span class="where">' + esc(ev.arena) + ' \u00b7 ' + esc(ev.city) + '</span>' +
+      '<div class="card-of">' + esc(a.last.toUpperCase()) + '<em>vs</em>' + esc(b.last.toUpperCase()) + '</div>' +
+      '<span class="pill' + (ev.tix === 'Limited' ? ' hot' : '') + '">' + esc(ev.tix) + '</span>' +
+    '</div>' +
+    '<div class="acts">' +
+      '<button class="btn sm primary mag" data-tix="' + ev.no + '">Buy tickets</button>' +
+      '<button class="btn sm" data-fighter="' + ev.a + '">Event details</button>' +
+    '</div></article>';
+}).join('');
+
+$('#past').innerHTML = PAST.map(function(ev){
+  return '<article class="ecard past">' +
+    '<div class="art">' + plate(ev.seed, 'event') + '</div>' +
+    '<div class="info">' +
+      '<span class="eyebrow">IRONCLAD ' + ev.no + ' \u00b7 ' + fmtDate(ev.when) + '</span>' +
+      '<h3>' + esc(ev.name) + '</h3>' +
+      '<span class="where">' + esc(ev.arena) + ' \u00b7 ' + esc(ev.city) + '</span>' +
+    '</div>' +
+    '<div class="acts">' +
+      '<button class="btn sm mag" data-v=\'' + esc(JSON.stringify({
+        t: ev.name + ' \u2014 Full Replay', f:'Full card', e:'IRONCLAD ' + ev.no, d:'2:41:18', v:'\u2014', seed: ev.seed
+      })) + '\'>Watch replay</button>' +
+    '</div></article>';
+}).join('');
+
+/* --- videos --- */
+$('#vcats').innerHTML = Object.keys(VIDEOS).map(function(cat){
+  return '<div style="margin-bottom:34px">' +
+    '<div class="rule" style="margin-bottom:16px"><h2 style="font-size:24px">' + esc(cat) + '</h2>' +
+      '<span class="eyebrow">' + VIDEOS[cat].length + ' videos</span></div>' +
+    '<div class="railrow vrail">' + VIDEOS[cat].map(function(v){ return videoCard(v, false); }).join('') + '</div>' +
+  '</div>';
+}).join('');
+
+/* --- news --- */
+$('#newsStamp').textContent = 'UPDATED ' + fmtDate(new Date());
+$('#newsLead').innerHTML =
+  '<article class="newslead">' +
+    '<div class="shot">' + plate(NEWS_LEAD.seed, 'wide') + '</div>' +
+    '<div class="txt">' +
+      '<span class="cat">' + esc(NEWS_LEAD.cat) + '</span>' +
+      '<h3>' + esc(NEWS_LEAD.h) + '</h3>' +
+      '<p>' + esc(NEWS_LEAD.p) + '</p>' +
+      '<span class="eyebrow">' + fmtDate(new Date()) + ' \u00b7 4 MIN READ</span>' +
+    '</div>' +
+  '</article>';
+
+$('#newsGrid').innerHTML = NEWS.map(function(n, i){
+  return '<article class="ncard">' +
+    '<div class="shot">' + plate(n.seed, 'thumb') + '</div>' +
+    '<div class="txt">' +
+      '<span class="cat">' + esc(n.cat) + '</span>' +
+      '<h4>' + esc(n.h) + '</h4>' +
+      '<p>' + esc(n.p) + '</p>' +
+      '<div class="foot"><span>' + fmtDate(at(-i - 1, 9)) + '</span></div>' +
+    '</div></article>';
+}).join('');
+
+hook(document);
+
+/* ============================================================
+   Behaviour
+   ============================================================ */
+
+function go(tab){
+  $$('.panel').forEach(function(p){ p.classList.toggle('on', p.id === 'p-' + tab); });
+  $$('.tab-btn').forEach(function(b){ b.classList.toggle('on', b.dataset.tab === tab); });
+  $$('.mobar button').forEach(function(b){ b.classList.toggle('on', b.dataset.tab === tab); });
+  $('#moreSheet').classList.remove('on');
+  scrollTo({ top: 0, behavior: REDUCED ? 'auto' : 'smooth' });
+  hook(document);
+}
+
+document.addEventListener('click', function(e){
+  const tab = e.target.closest('[data-tab]');
+  if (tab){ e.preventDefault(); go(tab.dataset.tab); return; }
+
+  const f = e.target.closest('[data-fighter]');
+  if (f){ openProfile(f.dataset.fighter); return; }
+
+  const v = e.target.closest('[data-v]');
+  if (v){ openVideo(JSON.parse(v.dataset.v)); return; }
+
+  const live = e.target.closest('[data-video="live"]');
+  if (live){
+    openVideo({ t:'Moreno vs Kruger \u2014 Live', f:'IRONCLAD 24', e:'Manchester', d:'LIVE', v:'\u2014', seed:1207 });
+    return;
+  }
+
+  const tix = e.target.closest('[data-tix]');
+  if (tix){ go('events'); return; }
+
+  if (e.target.closest('[data-close]') || e.target.classList.contains('overlay')){
+    closeAll();
+  }
+});
+
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') closeAll();
+});
+
+function closeAll(){
+  $$('.overlay').forEach(function(o){ o.classList.remove('on'); });
+  stopPlayer();
+}
+
+/* --- fighter profile --- */
+function openProfile(id){
+  const f = byId[id];
+  if (!f) return;
+  $('#profileBody').innerHTML =
+    '<div class="plate">' + plate(f.seed + 1, 'portrait') + '</div>' +
+    '<div class="info">' +
+      '<span class="nick">' + esc(f.nick) + '</span>' +
+      '<h2>' + esc(fullName(f)) + '</h2>' +
+      (f.champ ? '<span class="pill gold" style="justify-self:start">Reigning champion</span>' : '') +
+      '<div class="statgrid">' +
+        '<div><b>' + esc(f.rec) + '</b><span>RECORD</span></div>' +
+        '<div><b>' + esc(f.ht) + '</b><span>HEIGHT</span></div>' +
+        '<div><b>' + esc(f.wt) + '</b><span>WEIGHT</span></div>' +
+        '<div><b>' + esc(f.titles) + '</b><span>TITLES</span></div>' +
+      '</div>' +
+      '<div><span class="eyebrow">Signature move</span>' +
+        '<div style="font-family:var(--display);font-stretch:condensed;font-size:26px;letter-spacing:.03em;text-transform:uppercase">' +
+        esc(f.move) + '</div></div>' +
+      '<p class="bio">' + esc(f.bio) + '</p>' +
+      '<div><span class="eyebrow">Recent fights</span>' +
+        '<div class="recent" style="margin-top:8px">' +
+          f.recent.map(function(r){
+            return '<div class="r"><b class="' + (r[0] === 'W' ? 'w' : 'l') + '">' + r[0] + '</b>' +
+              '<span style="margin:0;color:var(--bone)">' + esc(r[1]) + '</span>' +
+              '<span>' + esc(r[2]) + '</span></div>';
+          }).join('') +
+        '</div></div>' +
+      '<button class="btn primary mag" style="justify-self:start" data-v=\'' +
+        esc(JSON.stringify({ t: fullName(f) + ' \u2014 Highlights', f: f.nick, e:'Career reel', d:'6:12', v:'1.1M', seed: f.seed })) +
+      '\'>Watch highlights</button>' +
+    '</div>';
+  hook($('#profileBody'));
+  $('#profileOverlay').classList.add('on');
+}
+
+/* --- video modal --- */
+let playTimer = null;
+function stopPlayer(){ clearInterval(playTimer); playTimer = null; }
+
+function openVideo(v){
+  $('#playerCap').innerHTML =
+    '<h3>' + esc(v.t) + '</h3>' +
+    '<span class="meta eyebrow">' + esc(v.f) + ' &middot; ' + esc(v.e) + ' &middot; ' + esc(v.v) + ' views</span>';
+  const cv = $('#playerCanvas');
+  delete cv.dataset.done;
+  $('#videoOverlay').classList.add('on');
+
+  requestAnimationFrame(function(){
+    paint(cv, v.seed, 'wide');
+  });
+
+  const secs = (function(){
+    const p = String(v.d).split(':').map(Number);
+    if (p.length === 3) return p[0]*3600 + p[1]*60 + p[2];
+    if (p.length === 2) return p[0]*60 + p[1];
+    return 180;
+  })();
+  $('#tcEnd').textContent = v.d === 'LIVE' ? 'LIVE' : v.d;
+
+  let t = 0;
+  stopPlayer();
+  if (REDUCED) return;
+  playTimer = setInterval(function(){
+    t += 1;
+    if (t > secs) t = 0;
+    const m = Math.floor(t / 60), s = t % 60;
+    $('#tcNow').textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    $('#trackFill').style.width = (t / secs * 100) + '%';
+  }, 1000);
+}
+
+/* --- live event mode --- */
+let round = 3, secsLeft = 252;
+function liveTick(){
+  if (!document.body.classList.contains('live')) return;
+  secsLeft -= 1;
+  if (secsLeft <= 0){ round += 1; secsLeft = 300; }
+  const m = Math.floor(secsLeft / 60), s = secsLeft % 60;
+  $('#liveStatus').textContent = 'ROUND ' + round + ' \u00b7 ' +
+    String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0') + ' REMAINING';
+}
+setInterval(liveTick, 1000);
+
+$('#liveToggle').addEventListener('click', function(){
+  document.body.classList.toggle('live');
+});
+$('#moreLive').addEventListener('click', function(){
+  document.body.classList.toggle('live');
+  $('#moreSheet').classList.remove('on');
+});
+$('#moreBtn').addEventListener('click', function(e){
+  e.stopPropagation();
+  $('#moreSheet').classList.toggle('on');
+});
+
+/* --- hero: parallax + first paint --- */
+const heroCv = $('#heroCanvas');
+function paintHero(){ paint(heroCv, 4242, 'arena'); }
+paintHero();
+addEventListener('resize', function(){
+  clearTimeout(window.__rs);
+  window.__rs = setTimeout(paintHero, 200);
+});
+
+if (!REDUCED){
+  addEventListener('scroll', function(){
+    const y = scrollY;
+    if (y < 900) heroCv.style.transform = 'translateY(' + (y * 0.28) + 'px) scale(1.06)';
+  }, { passive:true });
+}
+
+/* --- scroll reveals --- */
+const revealer = new IntersectionObserver(function(rows){
+  rows.forEach(function(r){
+    if (r.isIntersecting){ r.target.classList.add('in'); revealer.unobserve(r.target); }
+  });
+}, { threshold:.12 });
+$$('.rv').forEach(function(el){ revealer.observe(el); });
+
+/* --- magnetic buttons --- */
+if (!REDUCED && matchMedia('(hover:hover)').matches){
+  document.addEventListener('mousemove', function(e){
+    const b = e.target.closest('.mag');
+    if (!b) return;
+    const r = b.getBoundingClientRect();
+    const dx = (e.clientX - (r.left + r.width / 2)) / r.width;
+    const dy = (e.clientY - (r.top + r.height / 2)) / r.height;
+    b.style.transform = 'translate(' + (dx * 7) + 'px,' + (dy * 5) + 'px)';
+  });
+  document.addEventListener('mouseout', function(e){
+    const b = e.target.closest('.mag');
+    if (b) b.style.transform = '';
+  });
+}
+
+})();
+</script>

@@ -1,0 +1,49 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "scen-frontend",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8765",
+        "--directory",
+        "/Users/apple/Downloads/Scen-MASTER-complete-roadmap"
+      ],
+      "port": 8765
+    },
+    {
+      "name": "scen-backend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "cwd": "/Users/apple/Downloads/Scen-MASTER-complete-roadmap/backend/server-connector",
+      "port": 3000
+    },
+    {
+      "name": "hero-preview",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4321"
+      ],
+      "port": 4321
+    },
+    {
+      "name": "scen-verify",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8791",
+        "--directory",
+        "/Users/apple/Downloads/Scen-MASTER-complete-roadmap"
+      ],
+      "port": 8791
+    }
+  ]
+}

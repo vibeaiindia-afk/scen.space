@@ -1,0 +1,52 @@
+{
+  "product": "Scen",
+  "flow": "Real Database + Storage Foundation",
+  "deployEnabled": false,
+  "database": {
+    "driver": "postgresql-compatible",
+    "env": "DATABASE_URL",
+    "schemaVersion": 3,
+    "tenantKey": "workspace_id"
+  },
+  "storage": {
+    "driver": "s3-compatible",
+    "private": true,
+    "signedUploads": true,
+    "signedDownloads": true
+  },
+  "tables": [
+    "workspaces",
+    "users",
+    "memberships",
+    "projects",
+    "project_versions",
+    "scenes",
+    "assets",
+    "generated_jobs",
+    "review_comments",
+    "audit_events"
+  ],
+  "routes": [
+    "GET/POST /api/projects",
+    "GET/PATCH/DELETE /api/projects/:id",
+    "GET/POST /api/projects/:id/versions",
+    "GET/POST /api/projects/:id/scenes",
+    "PATCH/DELETE /api/projects/:id/scenes/:sceneId",
+    "POST /api/storage/uploads/sign",
+    "POST /api/storage/uploads/complete",
+    "GET /api/assets",
+    "GET /api/assets/:id/content",
+    "DELETE /api/assets/:id",
+    "GET /api/admin/data/status",
+    "POST /api/admin/data/migrations/apply"
+  ],
+  "security": [
+    "workspace scope from signed session",
+    "parameterized queries",
+    "private object storage",
+    "HMAC upload completion tokens",
+    "presigned object access",
+    "owner-only migration apply",
+    "no deployment route"
+  ]
+}

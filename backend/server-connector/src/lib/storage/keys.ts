@@ -1,0 +1,1 @@
+import crypto from 'node:crypto';const safe=(s:string)=>s.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,90)||'asset';export function assetKey(workspaceId:string,name:string){const d=new Date(),y=d.getUTCFullYear(),m=String(d.getUTCMonth()+1).padStart(2,'0');return `workspaces/${safe(workspaceId)}/${y}/${m}/${crypto.randomUUID()}-${safe(name)}`}

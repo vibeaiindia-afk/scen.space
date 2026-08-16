@@ -1,0 +1,1 @@
+import type {NextRequest} from 'next/server';import {requireSession,USER_COOKIE,UserAuthError,type UserSession} from './auth/session';export {USER_COOKIE,UserAuthError};export type {UserSession};export async function requireUser(req:NextRequest){return await requireSession(req)}

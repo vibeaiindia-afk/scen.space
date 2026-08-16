@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Scen — Power 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME TOKENS
+   ============================================================ */
+:root{
+  --background: 260 87% 3%;
+  --foreground: 40 6% 95%;
+  --hero-sub: 40 6% 82%;
+
+  --font-body: "Geist", "Geist Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "General Sans", var(--font-body);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:hsl(var(--background));
+  color:hsl(var(--foreground));
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+img{display:block}
+
+/* ============================================================
+   LIQUID GLASS UTILITY
+   ============================================================ */
+.liquid-glass{
+  background:rgba(255,255,255,0.01);
+  background-blend-mode:luminosity;
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+  border:none;
+  box-shadow:inset 0 1px 1px rgba(255,255,255,0.1);
+  position:relative;
+  overflow:hidden;
+}
+.liquid-glass::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  padding:1.4px;
+  background:linear-gradient(180deg,
+    rgba(255,255,255,0.45) 0%,
+    rgba(255,255,255,0.15) 20%,
+    rgba(255,255,255,0) 40%,
+    rgba(255,255,255,0) 60%,
+    rgba(255,255,255,0.15) 80%,
+    rgba(255,255,255,0.45) 100%);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;
+          mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask-composite:exclude;
+  pointer-events:none;
+}
+
+/* heroSecondary button variant */
+.btn-hero-secondary{
+  color:hsl(var(--foreground));
+  border-radius:9999px;
+  font-weight:500;
+  line-height:1;
+  transition:box-shadow .25s ease, transform .25s ease;
+}
+.btn-hero-secondary:hover{
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.18), 0 0 24px rgba(255,255,255,.06);
+}
+.btn-hero-secondary:active{transform:translateY(1px)}
+
+/* ============================================================
+   PAGE WRAPPER + BACKGROUND VIDEO
+   ============================================================ */
+.page{
+  position:relative;
+  min-height:100vh;
+  overflow:hidden;
+}
+.bg-video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  opacity:0;              /* JS-controlled fade loop */
+  z-index:0;
+  pointer-events:none;
+}
+.page-content{
+  position:relative;
+  z-index:10;
+}
+
+/* ============================================================
+   HERO SECTION
+   ============================================================ */
+.hero{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  overflow:visible;       /* so the blur shape is not clipped */
+}
+.hero-blur{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:984px;
+  height:527px;
+  opacity:.9;
+  background:#030712;     /* gray-950 */
+  filter:blur(82px);
+  pointer-events:none;
+  z-index:0;
+}
+.hero > *:not(.hero-blur){position:relative;z-index:1}
+
+/* ---------- Navbar ---------- */
+.navbar{
+  width:100%;
+  padding:20px 32px;      /* py-5 px-8 */
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  justify-content:space-between;
+}
+.nav-logo{display:flex;align-items:center;gap:9px;height:32px;text-decoration:none;color:inherit}
+.nav-logo img,.nav-logo svg{height:32px;width:auto}
+.nav-logo .wordmark{
+  font-family:var(--font-head);
+  font-size:22px;
+  font-weight:600;
+  letter-spacing:-.02em;
+  color:hsl(var(--foreground));
+}
+.nav-center{display:flex;align-items:center;gap:34px}
+.nav-item{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  font-size:15px;
+  color:hsl(var(--foreground)/.9);
+  transition:color .2s ease, opacity .2s ease;
+}
+.nav-item:hover{color:hsl(var(--foreground));opacity:.75}
+.nav-item svg{width:15px;height:15px;opacity:.8}
+.nav-signup{padding:8px 16px}          /* rounded-full px-4 py-2 */
+
+.nav-divider{
+  height:1px;
+  margin-top:3px;                       /* mt-[3px] */
+  background:linear-gradient(to right,
+    transparent,
+    hsl(var(--foreground)/.20),
+    transparent);
+}
+
+/* ---------- Hero content ---------- */
+.hero-center{
+  flex:1 1 0%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 32px;
+}
+.hero-copy{display:flex;flex-direction:column;align-items:flex-start}
+
+.hero-title{
+  margin:0;
+  font-family:var(--font-head);
+  font-size:220px;
+  font-weight:400;
+  line-height:1.02;
+  letter-spacing:-.024em;
+  color:hsl(var(--foreground));
+  white-space:nowrap;
+}
+.hero-title .grad{
+  background-image:linear-gradient(to left,#6366f1,#a855f7,#fcd34d);
+  -webkit-background-clip:text;
+          background-clip:text;
+  color:transparent;
+  -webkit-text-fill-color:transparent;
+}
+
+.hero-sub{
+  margin:9px 0 0;                       /* mt-[9px] */
+  max-width:28rem;                      /* max-w-md */
+  font-size:1.125rem;                   /* text-lg */
+  line-height:2rem;                     /* leading-8 */
+  color:hsl(var(--hero-sub));
+  opacity:.8;
+}
+.hero-cta{
+  margin-top:25px;                      /* mt-[25px] */
+  padding:24px 29px;                    /* py-[24px] px-[29px] */
+}
+
+/* ---------- Logo marquee ---------- */
+.marquee-wrap{padding-bottom:40px}      /* pb-10 */
+.marquee-inner{
+  max-width:64rem;                      /* max-w-5xl */
+  margin:0 auto;
+  display:flex;
+  align-items:center;
+  gap:48px;                             /* gap-12 */
+  padding:0 32px;
+}
+.marquee-label{
+  flex:none;
+  font-size:.875rem;                    /* text-sm */
+  line-height:1.45;
+  color:hsl(var(--foreground)/.5);
+}
+.marquee{
+  flex:1 1 auto;
+  overflow:hidden;
+  -webkit-mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent);
+          mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent);
+}
+.marquee-track{
+  display:flex;
+  align-items:center;
+  width:max-content;
+  animation:marquee-scroll 20s linear infinite;
+}
+@keyframes marquee-scroll{
+  from{transform:translateX(0%)}
+  to{transform:translateX(-50%)}
+}
+/* gap-16 as a trailing margin, not `gap`, so translateX(-50%) is an exact loop */
+.brand{display:flex;align-items:center;gap:10px;flex:none;margin-right:64px}
+.brand-icon{
+  width:24px;height:24px;
+  border-radius:.5rem;                  /* rounded-lg */
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:600;
+  color:hsl(var(--foreground)/.9);
+}
+.brand-name{
+  font-size:1rem;                       /* text-base */
+  font-weight:600;
+  color:hsl(var(--foreground));
+  white-space:nowrap;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .marquee-track{animation:none}
+}
+
+/* ============================================================
+   RESPONSIVE FALLBACKS (desktop layout above is unchanged)
+   ============================================================ */
+@media (max-width:1180px){
+  .hero-title{font-size:clamp(84px,18vw,220px)}
+  .nav-center{gap:24px}
+}
+@media (max-width:900px){
+  .navbar{padding:20px}
+  .nav-center{display:none}
+  .hero-blur{width:min(984px,110vw);height:420px}
+  .marquee-inner{flex-direction:column;align-items:flex-start;gap:24px;width:100%}
+  .marquee{width:100%}
+  .hero-cta{padding:18px 24px}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Background video: JS-controlled fade loop, no gradient overlays -->
+  <video
+    id="bgVideo"
+    class="bg-video"
+    src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_065045_c44942da-53c6-4804-b734-f9e07fc22e08.mp4"
+    autoplay muted playsinline preload="auto"></video>
+
+  <div class="page-content">
+    <section class="hero">
+
+      <!-- Blurred overlay shape, centered behind content -->
+      <div class="hero-blur" aria-hidden="true"></div>
+
+      <!-- Navbar -->
+      <div>
+        <nav class="navbar">
+          <a class="nav-logo" href="#" aria-label="Scen home">
+            <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <rect x="1" y="1" width="30" height="30" rx="9" stroke="rgba(255,255,255,.35)" stroke-width="1.4"/>
+              <path d="M22 11.2c-1.6-1.5-3.6-2.2-5.9-2.2-3.4 0-5.6 1.6-5.6 4 0 2.2 1.6 3.3 5 4 3.9.8 6.6 2.2 6.6 5.6 0 3.3-2.9 5.4-7.2 5.4-2.7 0-5.1-.9-6.9-2.6"
+                    stroke="url(#sg)" stroke-width="2.1" stroke-linecap="round"/>
+              <defs>
+                <linearGradient id="sg" x1="24" y1="9" x2="8" y2="28" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#fcd34d"/><stop offset=".5" stop-color="#a855f7"/><stop offset="1" stop-color="#6366f1"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <span class="wordmark">Scen</span>
+          </a>
+
+          <div class="nav-center">
+            <button class="nav-item" type="button">
+              Features
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <button class="nav-item" type="button">Showcase</button>
+            <button class="nav-item" type="button">Plans</button>
+            <button class="nav-item" type="button">
+              Learning
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+          </div>
+
+          <button class="btn-hero-secondary liquid-glass nav-signup" type="button">Sign Up</button>
+        </nav>
+        <div class="nav-divider" aria-hidden="true"></div>
+      </div>
+
+      <!-- Hero content -->
+      <div class="hero-center">
+        <div class="hero-copy">
+          <h1 class="hero-title">Power <span class="grad">3D</span></h1>
+          <p class="hero-sub">Cinematic 3D websites, generated<br/>from a single brief.</p>
+          <button class="btn-hero-secondary liquid-glass hero-cta" type="button">Start Building</button>
+        </div>
+      </div>
+
+      <!-- Logo marquee -->
+      <div class="marquee-wrap">
+        <div class="marquee-inner">
+          <div class="marquee-label">Relied on by brands<br/>across the globe</div>
+          <div class="marquee">
+            <div class="marquee-track" id="marqueeTrack"></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+</div>
+
+<script>
+/* ---------- Logo marquee (duplicated for a seamless loop) ---------- */
+(function(){
+  var brands = ['Vortex','Nimbus','Prysma','Cirrus','Kynder','Halcyn'];
+  var track  = document.getElementById('marqueeTrack');
+  var html   = brands.map(function(n){
+    return '<div class="brand">'
+         +   '<div class="brand-icon liquid-glass">'+n.charAt(0)+'</div>'
+         +   '<span class="brand-name">'+n+'</span>'
+         + '</div>';
+  }).join('');
+  track.innerHTML = html + html;   // 2x -> translateX(-50%) loops seamlessly
+})();
+
+/* ---------- Background video: 0.5s fade in / 0.5s fade out, replay loop ---------- */
+(function(){
+  var v = document.getElementById('bgVideo');
+  if(!v) return;
+
+  var FADE = 0.5;          // seconds
+  var replaying = false;
+  var rafId = null;
+
+  function tick(){
+    var d = v.duration;
+    if(isFinite(d) && d > 0 && !replaying){
+      var t = v.currentTime;
+      var o = 1;
+      if(t < FADE){
+        o = t / FADE;                    // fade in
+      }else if(d - t < FADE){
+        o = Math.max(0,(d - t) / FADE);  // fade out
+      }
+      v.style.opacity = String(Math.min(1,Math.max(0,o)));
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+
+  v.addEventListener('ended', function(){
+    replaying = true;
+    v.style.opacity = '0';
+    setTimeout(function(){
+      try{ v.currentTime = 0; }catch(e){}
+      replaying = false;
+      var p = v.play();
+      if(p && p.catch) p.catch(function(){});
+    },100);
+  });
+
+  // Autoplay can be blocked until the first interaction on some browsers.
+  function kick(){
+    var p = v.play();
+    if(p && p.catch) p.catch(function(){
+      document.addEventListener('click', kick, {once:true});
+      document.addEventListener('touchstart', kick, {once:true});
+    });
+  }
+  v.addEventListener('loadedmetadata', kick);
+  kick();
+
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){
+      if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
+    }else if(!rafId){
+      rafId = requestAnimationFrame(tick);
+    }
+  });
+
+  rafId = requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

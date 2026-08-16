@@ -1,0 +1,49 @@
+{
+  "product": "Scen",
+  "flow": "Real Image Generation Gateway",
+  "deployEnabled": false,
+  "providers": [
+    {
+      "id": "openai",
+      "env": "OPENAI_API_KEY",
+      "defaultModel": "gpt-image-2",
+      "generate": true,
+      "edit": true
+    },
+    {
+      "id": "gemini",
+      "env": "GEMINI_API_KEY",
+      "defaultModel": "gemini-3.1-flash-image",
+      "generate": true,
+      "edit": true
+    },
+    {
+      "id": "replicate",
+      "env": "REPLICATE_API_TOKEN",
+      "defaultModel": "black-forest-labs/flux-1.1-pro",
+      "generate": true,
+      "edit": "model-specific; generic rescue disabled for edit"
+    }
+  ],
+  "routes": [
+    "GET /api/admin/image/status",
+    "POST /api/admin/image/providers/test",
+    "POST /api/image/generate"
+  ],
+  "routing": [
+    "SCEN_IMAGE_PRIMARY",
+    "SCEN_IMAGE_FALLBACK",
+    "SCEN_IMAGE_RESCUE"
+  ],
+  "security": [
+    "server-only provider keys",
+    "signed user/admin session guards",
+    "no arbitrary remote reference URLs",
+    "reference byte/count ceilings",
+    "prompt length ceiling",
+    "provider-native safety baseline",
+    "optional OpenAI prompt moderation",
+    "no deployment endpoint"
+  ],
+  "storage": "optional SCEN_ASSET_INGEST_URL hook"
+}

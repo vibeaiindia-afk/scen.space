@@ -1,0 +1,13 @@
+{
+  "product":"Scen",
+  "flow":"Real AI Text & Code Provider Gateway",
+  "deployEnabled":false,
+  "providers":[
+    {"id":"openai","env":"OPENAI_API_KEY","api":"Responses API","defaultModel":"gpt-5.6","storage":"store:false"},
+    {"id":"anthropic","env":"ANTHROPIC_API_KEY","api":"Messages API","defaultModel":"claude-sonnet-4-20250514"},
+    {"id":"gemini","env":"GEMINI_API_KEY","api":"generateContent","defaultModel":"gemini-3.5-flash"}
+  ],
+  "features":["chat","code","planning","analysis"],
+  "routes":["GET /api/admin/ai/status","POST /api/admin/ai/providers/test","POST /api/ai/generate"],
+  "secretPolicy":"server-env-only"
+}

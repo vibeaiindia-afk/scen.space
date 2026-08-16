@@ -1,0 +1,13 @@
+{
+  "product":"Scen",
+  "flow":"Real Video Generation Gateway",
+  "deployEnabled":false,
+  "providers":[
+    {"id":"openai","env":"OPENAI_API_KEY","defaultModel":"sora-2","async":"OpenAI Videos API"},
+    {"id":"gemini","env":"GEMINI_API_KEY","defaultModel":"veo-3.1-generate-preview","async":"Gemini long-running operation"},
+    {"id":"replicate","env":"REPLICATE_API_TOKEN","defaultModel":"google/veo-3","async":"Replicate predictions"}
+  ],
+  "endpoints":["POST /api/video/jobs","GET /api/video/jobs/:id","POST /api/video/jobs/:id/cancel","GET /api/video/jobs/:id/content","GET /api/admin/video/status","POST /api/admin/video/providers/test"],
+  "security":["signed tenant-bound job IDs","server-only provider secrets","reference byte/type limits","no arbitrary remote input URLs","no deployment route"],
+  "notes":["Cancellation is provider-capability aware. OpenAI's documented delete endpoint is for completed/failed assets and is not treated as an in-flight cancel API.","Provider output is fetched server-side because provider URLs/files may expire or require authentication."]
+}

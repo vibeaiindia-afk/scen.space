@@ -1,0 +1,1 @@
+import {NextRequest,NextResponse} from 'next/server';import {confirmReset} from '@/lib/auth/flows';export async function POST(req:NextRequest){try{const b=await req.json();return NextResponse.json(await confirmReset(String(b?.token||''),String(b?.newPassword||'')))}catch(e:any){return NextResponse.json({error:e?.message||'Reset failed'},{status:e?.status||400})}}

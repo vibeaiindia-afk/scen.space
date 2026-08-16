@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+# Reference copies only — the runtime SQL lives inline in src/lib/data/migrations.ts.
+# Leading slash anchors this to the repo root; an unanchored "migrations/" would
+# also exclude src/app/api/admin/data/migrations/ and drop that API route.
+/migrations/
+/DATABASE-SCHEMA.sql

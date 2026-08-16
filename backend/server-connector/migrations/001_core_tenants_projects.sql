@@ -1,0 +1,2 @@
+-- Canonical SQL is embedded in src/lib/data/migrations.ts for server runtime.
+-- This operator copy is intentionally static and version-controlled.

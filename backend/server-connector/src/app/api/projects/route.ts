@@ -1,0 +1,3 @@
+import type { NextRequest } from 'next/server';import { requireUser } from '../../../lib/user-auth';import { createProject,listProjects } from '../../../lib/data/projects';
+export async function GET(req:NextRequest){try{return Response.json({projects:await listProjects(await requireUser(req))})}catch(e:any){return Response.json({error:String(e?.message||e)},{status:e?.status||500})}}
+export async function POST(req:NextRequest){try{const body=await req.json().catch(()=>({}));return Response.json({project:await createProject(await requireUser(req),body)},{status:201})}catch(e:any){return Response.json({error:String(e?.message||e)},{status:e?.status||500})}}

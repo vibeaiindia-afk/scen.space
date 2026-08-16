@@ -1,0 +1,10 @@
+# The frontend project deploys only the static build from the repo root.
+# The backend is a separate Vercel project rooted at backend/server-connector.
+backend/
+docs/
+manifests/
+node_modules/
+.next/
+*.command
+ROADMAP-VERIFIED.md
+START-HERE.txt

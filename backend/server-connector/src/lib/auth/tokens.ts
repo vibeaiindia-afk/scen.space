@@ -1,0 +1,6 @@
+import crypto from 'node:crypto';import {db} from '../data/db';
+export type TokenType='verify_email'|'reset_password'|'workspace_invite';
+const hash=(raw:string)=>crypto.createHash('sha256').update(raw).digest('hex');
+export function randomToken(bytes=32){return crypto.randomBytes(bytes).toString('base64url')}
+export async function issueToken(input:{type:TokenType;userId?:string;email?:string;workspaceId?:string;minutes:number;metadata?:any}){const sql=db(),raw=randomToken(),id='tok_'+crypto.randomUUID();await sql`insert into auth_one_time_tokens(id,token_type,token_hash,user_id,email,workspace_id,metadata,expires_at) values(${id},${input.type},${hash(raw)},${input.userId||null},${input.email?.toLowerCase()||null},${input.workspaceId||null},${JSON.stringify(input.metadata||{})}::jsonb,now()+make_interval(mins=>${Math.max(1,input.minutes)}))`;return raw}
+export async function consumeToken(raw:string,type:TokenType){const sql=db(),h=hash(raw);return await sql.begin(async(tx:any)=>{const rows=await tx`select * from auth_one_time_tokens where token_hash=${h} and token_type=${type} and consumed_at is null and expires_at>now() for update`;const row=rows[0];if(!row)return null;await tx`update auth_one_time_tokens set consumed_at=now() where id=${row.id}`;return row})}

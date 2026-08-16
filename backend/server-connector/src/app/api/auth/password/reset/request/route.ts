@@ -1,0 +1,1 @@
+import {NextRequest,NextResponse} from 'next/server';import {requestReset} from '@/lib/auth/flows';export async function POST(req:NextRequest){const b=await req.json().catch(()=>({}));await requestReset(String(b?.email||'')).catch(()=>{});return NextResponse.json({ok:true,message:'If that account exists, a reset email has been sent.'})}

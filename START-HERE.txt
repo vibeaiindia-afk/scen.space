@@ -1,0 +1,20 @@
+SCEN — COMPLETE WEBSITE PACKAGE
+
+1. For frontend preview on Mac:
+   Double-click: start-local.command
+   Then open: http://localhost:8765
+
+2. Main frontend source:
+   index.html
+
+3. Full backend/server source:
+   backend/server-connector/
+
+4. Environment variable template:
+   backend/server-connector/.env.example
+
+5. Real API keys/secrets are NOT included in this ZIP.
+   Keep them server-side (for example in Vercel Environment Variables).
+
+Brand: Scen
+Domain: scen.space

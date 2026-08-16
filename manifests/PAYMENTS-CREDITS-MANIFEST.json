@@ -1,0 +1,38 @@
+{
+  "product": "Scen",
+  "flow": "Real Payments + Credits",
+  "deployEnabled": false,
+  "providers": {
+    "razorpay": [
+      "subscriptions",
+      "payment-links",
+      "webhooks"
+    ],
+    "stripe": [
+      "checkout-sessions",
+      "subscriptions",
+      "customer-portal",
+      "webhooks"
+    ]
+  },
+  "databaseMigration": "004_billing_credits.sql",
+  "creditEngine": "atomic reserve -> commit | release",
+  "security": [
+    "raw webhook body signature verification",
+    "webhook event deduplication",
+    "provider idempotency for Stripe checkout",
+    "browser success pages never grant credits",
+    "workspace-scoped wallet",
+    "owner-only manual adjustment"
+  ],
+  "routes": [
+    "src/app/api/billing/checkout/route.ts",
+    "src/app/api/billing/credits/route.ts",
+    "src/app/api/billing/invoices/route.ts",
+    "src/app/api/billing/portal/route.ts",
+    "src/app/api/billing/webhooks/stripe/route.ts",
+    "src/app/api/billing/webhooks/razorpay/route.ts",
+    "src/app/api/admin/billing/status/route.ts",
+    "src/app/api/admin/billing/credits/adjust/route.ts"
+  ]
+}

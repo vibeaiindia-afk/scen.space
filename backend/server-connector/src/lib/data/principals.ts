@@ -1,0 +1,3 @@
+import type { UserSession } from '../user-auth';import { db } from './db';
+export type PrincipalRef=Pick<UserSession,'sub'|'workspaceId'>;
+export async function ensurePrincipal(s:PrincipalRef){const sql=db();await sql.begin(async(tx:any)=>{await tx`insert into workspaces(id,name) values(${s.workspaceId},${'Workspace '+s.workspaceId.slice(0,8)}) on conflict(id) do nothing`;await tx`insert into users(id) values(${s.sub}) on conflict(id) do nothing`;await tx`insert into memberships(workspace_id,user_id,role) values(${s.workspaceId},${s.sub},'owner') on conflict(workspace_id,user_id) do nothing`})}

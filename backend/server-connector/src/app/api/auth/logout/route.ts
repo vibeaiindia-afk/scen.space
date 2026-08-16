@@ -1,0 +1,1 @@
+import {NextRequest,NextResponse} from 'next/server';import {USER_COOKIE,revokeRaw,clearSessionCookie} from '@/lib/auth/session';export async function POST(req:NextRequest){const raw=req.cookies.get(USER_COOKIE)?.value||'';await revokeRaw(raw).catch(()=>{});const res=NextResponse.json({ok:true});clearSessionCookie(res);return res}

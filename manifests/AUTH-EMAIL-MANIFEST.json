@@ -1,0 +1,35 @@
+{
+  "product": "Scen",
+  "flow": "Real Authentication + Transactional Email",
+  "deployEnabled": false,
+  "auth": {
+    "emailPassword": true,
+    "googleOIDC": true,
+    "session": "opaque DB-backed",
+    "passwordHash": "scrypt",
+    "oneTimeTokens": "SHA-256 hashed + single-use"
+  },
+  "email": {
+    "providers": [
+      "resend",
+      "postmark"
+    ],
+    "default": "resend",
+    "events": [
+      "verify",
+      "reset",
+      "workspace_invite",
+      "billing_receipt",
+      "optional_generation_ready"
+    ]
+  },
+  "migration": 5,
+  "security": [
+    "HttpOnly session cookie",
+    "database revocation",
+    "OAuth state + PKCE",
+    "enumeration-safe reset request",
+    "workspace invite email match",
+    "server-only provider secrets"
+  ]
+}

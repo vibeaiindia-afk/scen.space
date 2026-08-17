@@ -178,6 +178,13 @@ button.pill:hover{border-color:rgba(255,255,255,.28);color:#fff}
 .tools .caps{padding:0 8px;margin:14px 0 7px;display:block}
 .tools .caps:first-child{margin-top:0}
 .tool{display:flex;align-items:center;gap:10px;width:100%;padding:8px 9px;border-radius:10px;font-size:13px;color:#9d9da8;transition:.14s;text-align:left}
+.modeRow{display:flex;gap:3px;padding:3px;border:1px solid #1e1e26;border-radius:10px;background:#0b0b0f;margin:0 0 12px}
+.modeRow button{flex:1;padding:6px 5px;border-radius:7px;font-size:11px;font-weight:700;color:#7d7d88;transition:.14s}
+.modeRow button.on{background:#17171e;color:#fff}
+.toolAdv{display:flex;align-items:center;gap:10px;width:100%;padding:8px 9px;margin-top:12px;border-top:1px solid #1a1a22;
+  border-radius:0 0 10px 10px;font-size:13px;color:#7f7f8a;text-align:left;transition:.14s}
+.toolAdv:hover{color:#fff}
+.toolAdv .cnt{margin-left:auto;font-size:10px;color:#5d5d67}
 .tool:hover{background:#101017;color:#e6e6ec}
 .tool.on{background:#15151c;color:#fff}
 .tool em{font-style:normal;width:16px;text-align:center;opacity:.9;font-size:13px}
@@ -2732,19 +2739,45 @@ function rebuild(reason,t0){
 /* ============================================================
    Panels — tools column
    ============================================================ */
+/* Sixteen panels used to be listed at once, so the studio opened on a wall of
+   infrastructure. Simple Mode shows the four that belong to the project; the
+   cloud and setup panels move behind Advanced, which is the same
+   `scen.uimode` key the main app uses, so the two surfaces agree.
+   Labels follow the client-facing vocabulary (AI gateway → AI, and so on);
+   the panels themselves are untouched and all still reachable. */
 var TOOLS=[
-  ['PROJECT',[['brief','▤','Brief'],['plan','◇','Plan'],['log','⌁','Build log'],['files','⌸','Files']]],
-  ['SCEN CLOUD',[['aigateway','✦','AI gateway'],['publishing','◈','Publishing'],['domains','🌐','Domains'],['database','⛁','Database'],
-    ['users','◍','Users & Auth'],['monitoring','📈','Monitoring'],['storage','▦','App Storage'],
-    ['security','⛨','Security Center']]],
-  ['SETUP',[['integrations','⧉','Integrations'],['git','⑂','Git'],['secrets','🔑','Secrets'],
-    ['skills','✦','Agent Skills']]]
+  ['PROJECT','simple',[['brief','▤','Brief'],['plan','◇','Plan'],['files','⌸','Files'],['log','⌁','Activity']]],
+  ['SCEN CLOUD','advanced',[['aigateway','✦','AI'],['publishing','◈','Publishing'],['domains','🌐','Domain'],['database','⛁','Data'],
+    ['users','◍','Login & Users'],['monitoring','📈','Site Health'],['storage','▦','Storage'],
+    ['security','⛨','Security']]],
+  ['SETUP','advanced',[['integrations','⧉','Connections'],['git','⑂','GitHub'],['secrets','🔑','API Keys'],
+    ['skills','✦','AI Skills']]]
 ];
+var MODE_KEY='scen.uimode';
+function uiMode(){try{return localStorage.getItem(MODE_KEY)==='advanced'?'advanced':'simple'}catch(e){return 'simple'}}
+function setUiMode(m){
+  try{localStorage.setItem(MODE_KEY,m)}catch(e){}
+  /* A panel that is being hidden must not stay selected underneath. */
+  if(m==='simple'&&!toolIsSimple(S.tool)){S.tool='brief';save()}
+  renderTools();renderMain();
+}
+function toolIsSimple(id){
+  for(var i=0;i<TOOLS.length;i++)
+    if(TOOLS[i][1]==='simple')
+      for(var j=0;j<TOOLS[i][2].length;j++)
+        if(TOOLS[i][2][j][0]===id)return true;
+  return false;
+}
 function renderTools(){
-  var col=$('#toolsCol'),out='';
+  var col=$('#toolsCol'),out='',adv=uiMode()==='advanced';
+  out+='<div class="modeRow" role="tablist" aria-label="Interface complexity">'+
+    '<button role="tab" aria-selected="'+(!adv)+'" class="'+(adv?'':'on')+'" data-uimode="simple">Simple</button>'+
+    '<button role="tab" aria-selected="'+adv+'" class="'+(adv?'on':'')+'" data-uimode="advanced">Advanced</button>'+
+  '</div>';
   TOOLS.forEach(function(grp){
+    if(grp[1]==='advanced'&&!adv)return;
     out+='<span class="caps">'+grp[0]+'</span>';
-    grp[1].forEach(function(t){
+    grp[2].forEach(function(t){
       var meta='';
       if(t[0]==='brief')meta='<span class="cnt">'+briefFilled()+'/10</span>';
       if(t[0]==='plan'&&S.brief.pages.length)meta='<span class="cnt">'+S.brief.pages.length+'</span>';
@@ -2753,6 +2786,7 @@ function renderTools(){
       out+='<button class="tool'+(S.tool===t[0]?' on':'')+'" data-tool="'+t[0]+'"><em>'+t[1]+'</em>'+esc(t[2])+meta+'</button>';
     });
   });
+  if(!adv)out+='<button class="toolAdv" data-uimode="advanced"><em>⚙</em>Advanced tools<span class="cnt">12</span></button>';
   col.innerHTML=out;
 }
 function refreshTools(){renderTools()}
@@ -3584,7 +3618,10 @@ $('#planBtn').addEventListener('click',function(){
 $$('.tab').forEach(function(b){b.addEventListener('click',function(){setTab(b.dataset.tab)})});
 $$('.seg [data-mode]').forEach(function(b){b.addEventListener('click',function(){setMode(b.dataset.mode)})});
 $('#toolsCol').addEventListener('click',function(e){
-  var t=e.target.closest('.tool');if(!t)return;
+  /* The Simple/Advanced switch lives in this column too, and is not a panel. */
+  var m=e.target.closest('[data-uimode]');
+  if(m){setUiMode(m.dataset.uimode);return}
+  var t=e.target.closest('.tool');if(!t||!t.dataset.tool)return;
   S.tool=t.dataset.tool;S.tab='tools';save();setTab('tools');renderTools();
 });
 $$('.rail button').forEach(function(b){

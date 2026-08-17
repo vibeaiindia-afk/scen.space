@@ -11278,5 +11278,78 @@ else{mountWs();mo.observe(document.body,{childList:true,subtree:true})}
 @media(prefers-reduced-motion:reduce){.hero-copy:after{box-shadow:none}}
 </style>
 
+
+<style id="scen-ui2-tighten">
+/* Closing the gap to design/scen-ui-2.html.
+
+   The mockup reads better for one reason: it has a single primary action and
+   one table doing the work. The live page had three competing buttons in the
+   nav and a grid of cards where the mockup had a scannable list. */
+
+/* One primary. The 4D Website Builder pill was a second bright element
+   fighting the CTA, so it joins the links instead of the actions. */
+.mactions .nav-ghost,.mactions a[href="/agent-studio.html"]{
+  background:transparent!important;border:1px solid rgba(255,255,255,.14)!important;
+  color:#8a8a95!important;font-weight:500!important;box-shadow:none!important}
+.mactions .nav-ghost:hover,.mactions a[href="/agent-studio.html"]:hover{color:#fff!important}
+
+/* Any chapter rail / vertical edge label the mockup does not have. */
+.hero .index,.hero-index,.chapter-rail,.hero-chapters,.scroll-dots{display:none!important}
+
+/* Sites table — the mockup's scannable list. */
+.ui2-tbl{margin-top:16px}
+.ui2-tr{display:grid;grid-template-columns:1.5fr .9fr 1.1fr;gap:12px;align-items:center;
+  padding:12px 4px;border-bottom:1px solid var(--line);font-size:12.5px;cursor:pointer}
+.ui2-tr:last-child{border-bottom:0}
+.ui2-tr:hover{background:rgba(255,255,255,.02)}
+.ui2-tr.head{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ui2-dim);
+  font-weight:600;cursor:default;background:none}
+.ui2-tr b{font-weight:600;color:#fff}
+.ui2-tr .mutcell{color:#6f6f79}
+.ui2-chip{display:inline-block;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;
+  border:1px solid var(--line2);color:#8a8a95}
+.ui2-chip.ok{border-color:rgba(223,255,69,.3);color:var(--acid);background:rgba(223,255,69,.12)}
+</style>
+
+<script id="scen-ui2-tighten-js">
+/* Home's left column becomes the mockup's card: a header row, then the sites
+   list. No traffic chart — the product records no traffic series, and drawing
+   invented bars is the one thing this whole refactor has refused to do. */
+(function(){
+'use strict';
+if(typeof views!=='function'&&typeof views!=='object')return;
+var prev=views.dashboard;
+if(typeof prev!=='function')return;
+
+views.dashboard=function(){
+  var html=prev.apply(this,arguments);
+  var ps=(state.projects||[]);
+  if(!ps.length)return html;
+
+  var rows='<div class="ui2-tbl">'+
+    '<div class="ui2-tr head"><span>Website</span><span>Status</span><span>Address</span></div>'+
+    ps.slice(0,6).map(function(p,i){
+      var s=p.status||'Draft';
+      var live=s==='Published';
+      var addr=p.domain?escV(p.domain)
+        :(live&&state.publishSettings&&state.publishSettings.subdomain
+            ?'scen.space/s/'+escV(state.publishSettings.subdomain)
+            :'Not connected');
+      return '<div class="ui2-tr" data-sx="openProject" data-idx="'+i+'">'+
+        '<b>'+escV(p.name||'Untitled')+'</b>'+
+        '<span><span class="ui2-chip '+(live?'ok':'')+'">'+escV(s)+'</span></span>'+
+        '<span class="mutcell">'+addr+'</span></div>';
+    }).join('')+'</div>';
+
+  /* Swap the card grid for the list, leaving the rest of the layout alone.
+     Matched by its articles rather than by counting closing tags — a lazy
+     [\s\S]*? here ran past the grid and swallowed the paper panel with it. */
+  var re=/<div class="sx-grid" style="margin:0">(?:<article[\s\S]*?<\/article>)+<\/div>/;
+  if(!re.test(html))return html;
+  return html.replace(re,rows);
+};
+})();
+</script>
+
 </body>
 </html>

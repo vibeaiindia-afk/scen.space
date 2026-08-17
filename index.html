@@ -11587,5 +11587,69 @@ else boot();
 })();
 </script>
 
+
+<style id="scen-showcase-css">
+/* The showcase carried two cards — "Orbit Store" and "Silent Resort" — that
+   named sites which do not exist and carried no link. Directly above a
+   templates row full of real, openable work. Replaced with actual sites. */
+#showcase .show-grid{display:grid!important;grid-template-columns:repeat(3,1fr);gap:12px}
+.sc-card{position:relative;display:block;border:1px solid rgba(255,255,255,.08);border-radius:22px;
+  overflow:hidden;background:#0d0d12;text-decoration:none;color:inherit;transition:border-color .18s,transform .18s}
+.sc-card:hover{border-color:rgba(255,255,255,.2);transform:translateY(-2px)}
+.sc-shot{position:relative;height:210px;overflow:hidden;background:#08080c;border-bottom:1px solid rgba(255,255,255,.07)}
+.sc-shot iframe{position:absolute;inset:0;width:200%;height:200%;border:0;transform:scale(.5);
+  transform-origin:0 0;pointer-events:none;filter:saturate(1.02)}
+.sc-shot:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(8,8,12,.75))}
+.sc-live{position:absolute;z-index:2;left:12px;top:12px;display:inline-flex;align-items:center;gap:6px;
+  font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#0a0a0c;
+  background:var(--acid);padding:4px 9px;border-radius:999px}
+.sc-body{padding:16px 17px 18px}
+.sc-body .k{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#5f5f6b;font-weight:600}
+.sc-body b{display:block;font-size:17px;font-weight:600;letter-spacing:-.025em;margin:7px 0 6px;color:#fff}
+.sc-body p{font-size:12.5px;line-height:1.55;color:#8a8a95;margin:0}
+.sc-open{margin-top:13px;font-size:12px;font-weight:600;color:var(--acid)}
+@media(max-width:940px){#showcase .show-grid{grid-template-columns:1fr}.sc-shot{height:190px}}
+</style>
+
+<script id="scen-showcase">
+(function(){
+'use strict';
+/* Three real sites, each opening the page it advertises. Descriptions come
+   from the template's own entry, so the card cannot drift from the thing. */
+var PICKS=['frame','synapsex','worlds'];
+
+function slug(n){return String(n||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')}
+
+function build(){
+  var grid=document.querySelector('#showcase .show-grid');
+  if(!grid||grid.dataset.real)return;
+  if(typeof TEMPLATES==='undefined')return;
+
+  var picked=PICKS.map(function(s){
+    for(var i=0;i<TEMPLATES.length;i++)if(slug(TEMPLATES[i].name)===s)return TEMPLATES[i];
+    return null;
+  }).filter(Boolean);
+  if(picked.length<PICKS.length)return;
+  grid.dataset.real='1';
+
+  grid.innerHTML=picked.map(function(t){
+    var href=t.file||('/preset/'+slug(t.name));
+    return '<a class="sc-card" href="'+href+'" target="_blank" rel="noopener">'+
+      '<div class="sc-shot"><span class="sc-live">Live site</span>'+
+      '<iframe src="'+href+'" loading="lazy" tabindex="-1" aria-hidden="true" scrolling="no"></iframe></div>'+
+      '<div class="sc-body"><span class="k">'+escV(t.category||'Showcase')+'</span>'+
+      '<b>'+escV(t.name)+'</b><p>'+escV(t.tag||'')+'</p>'+
+      '<div class="sc-open">Open it ↗</div></div></a>';
+  }).join('');
+}
+
+var mo=new MutationObserver(build);
+function boot(){build();mo.observe(document.body,{childList:true,subtree:true})}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);
+else boot();
+setTimeout(build,1200);
+})();
+</script>
+
 </body>
 </html>

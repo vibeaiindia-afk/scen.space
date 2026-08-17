@@ -323,7 +323,13 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
   .topbar{flex-wrap:wrap;height:auto;min-height:0;padding:8px 10px;gap:8px;align-items:center}
   .tb-left{min-width:0;flex:1 1 100%;order:1;overflow:hidden}
   .tb-right{margin-left:0;order:3;width:100%;justify-content:flex-start;gap:6px}
-  .tb-right .btn,.tb-right .pill{flex:1;min-width:0;text-align:center;white-space:nowrap}
+  .tb-right .btn,.tb-right .pill{min-width:0;text-align:center;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  /* The pill holds an email and will happily run through the buttons beside
+     it. Let it take the slack and truncate; the buttons keep their own size. */
+  .tb-right .pill{flex:1 1 auto}
+  .tb-right .btn{flex:0 0 auto}
+  .tb-right .ico{flex:0 0 auto}
   .tb-center{order:2;width:100%;margin-left:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tb-center::-webkit-scrollbar{display:none}
   .tb-center .tab{flex:0 0 auto}
@@ -4142,7 +4148,9 @@ function setAiPill(){
   else if(AI.state==='ready')
     note.textContent='Signed in — the Scen AI gateway writes the copy and the plan on the next build. Publishing is not connected.';
   else if(AI.state==='signedout')
-    note.innerHTML='Not signed in, so the gateway is refusing requests. <a href="/" style="color:var(--acid)">Sign in on Scen</a> and reload, or keep building with the local writers.';
+    /* /login renders the sign-in form directly. "/" lands on the public page,
+   which on a phone means opening the menu and hunting for Log in. */
+    note.innerHTML='Not signed in, so the gateway is refusing requests. <a href="/login" style="color:var(--acid)">Sign in on Scen</a> and reload, or keep building with the local writers.';
   else if(AI.state==='offline')
     note.textContent='The /api routes are not reachable from this page, so everything is being generated locally in your browser.';
   else if(AI.state==='error')
@@ -4380,9 +4388,12 @@ function boot(){
     resetState();C.applySeed(seed);
     if(S.brief.name)$('#projName').textContent=S.brief.name;
     renderTools();setMode('design');setPhasePill();setTab('tools');
+    /* §5 — "Five questions and I build it" promised a form, and set the tone
+       for everything after it. The agent asks what it still needs, which on a
+       seeded brief is usually one thing. */
     agentSay('Starting from <b>'+esc(seed.label)+'</b> — the look, the pages and the palette are '+
-      'already filled into the brief on the right.<br/><br/>Five questions and I build it. '+
-      'Anything you want changed after that, just say it and I rebuild.');
+      'already in the brief.<br/><br/>Tell me about your place and I will build it. '+
+      'Anything you want changed after, just say it.');
     save();setTimeout(function(){askCurrent(true)},760);
     return;
   }

@@ -1851,6 +1851,10 @@ function briefSummary(b){
     pages:b.pages,
     features:(b.features||[]).map(function(f){return FEATURES[f]?FEATURES[f].l:f}),
     look:STYLES[b.style]?STYLES[b.style].l:'',
+    /* Captured from "clone of <site>" and passed as direction, not as
+       something to reproduce. Without this the reference was stored on the
+       brief and never reached the model that writes the site. */
+    referenceSite:b.reference||'',
     accent:b.accent,motion:b.motion,
     languages:b.languages
   });
@@ -2304,11 +2308,58 @@ function answer(value,label){
 }
 
 /* free text from the composer */
+/* What the customer actually said, before it gets filed under whatever
+   question happens to be on screen.
+
+   The interview used to assign every message to the current step, so typing
+   "clone of netflix.com/browse" at the name question made that the project
+   name. Intent is read first now; only what is left becomes the answer. */
+var URL_RE=/\b((?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?)/i;
+var REF_RE=/\b(clone|cloan|copy|like|similar to|inspired by|same as)\b/i;
+function readIntent(text){
+  var out={ref:'',rest:text};
+  var m=text.match(URL_RE);
+  if(m&&!/\.(png|jpg|jpeg|webp|mp4|gif)$/i.test(m[1])){
+    out.ref=m[1];
+    out.rest=text.replace(m[1],'').replace(REF_RE,'').replace(/\s{2,}/g,' ').trim();
+    out.rest=out.rest.replace(/^(of|a|an|the|to|make|lets|let's|build|create)\s+/i,'').trim();
+  }
+  return out;
+}
+/* A short field should not swallow a paragraph. */
+function looksLikeBrief(st,text){
+  return (st.id==='name')&&(text.length>36||URL_RE.test(text));
+}
+
 function handleText(text){
   var atts=S.atts.slice();
   if(S.phase==='interview'){
     var st=step();
     if(!st)return;
+
+    var intent=readIntent(text);
+    if(intent.ref){
+      userSay(text,atts);S.atts=[];renderAtts();
+      S.brief.reference=intent.ref;
+      /* Only if something meaningful survived. Stripping the URL out of
+         "clone of <site>" leaves "of", which is not a pitch. */
+      if(intent.rest.length>8)S.brief.pitch=S.brief.pitch||intent.rest;
+      save();
+      /* Said plainly, because Scen builds in the direction of a reference —
+         it does not reproduce someone else's site, and implying otherwise
+         would set up a promise the build cannot keep. */
+      agentSay('Noted <b>'+C.esc(intent.ref)+'</b> as a reference. I will take the '+
+        'layout and feel as direction — I build your own site from it, not a copy of theirs.');
+      if(looksLikeBrief(st,text)){askCurrent(true);return}
+      return askCurrent(true);
+    }
+    if(looksLikeBrief(st,text)){
+      userSay(text,atts);S.atts=[];renderAtts();
+      S.brief.pitch=text;save();
+      agentSay('Got it — I have kept that as the brief. What should the site be <b>called</b>?');
+      return;
+    }
+
     if(st.type==='multi'){
       var cur=(st.val?st.val(S.brief):[]).slice();
       text.split(/[,\n]/).map(function(x){return x.trim()}).filter(Boolean).forEach(function(x){

@@ -8931,7 +8931,7 @@ html.polish-high-contrast{--muted:#d0d0d4;--line:rgba(255,255,255,.19)}html.poli
 
 
 <!-- ===== PROMPT LIBRARY =============================================
-     124 starting prompts. They are prompts, not finished sites, so
+     126 starting prompts. They are prompts, not finished sites, so
      picking one writes the brief and runs the generator that already
      builds real sections — rather than pretending to be a template
      with content it does not have. -->
@@ -9012,7 +9012,7 @@ html.polish-high-contrast{--muted:#d0d0d4;--line:rgba(255,255,255,.19)}html.poli
         +'</div></article>';
     }).join('');
 
-    return viewHead('Prompt library','124 starting points. Pick one and the AI builds it into an editable site.',
+    return viewHead('Prompt library','126 starting points. Pick one and the AI builds it into an editable site.',
         '<button class="btn" data-nav="templates">Browse templates</button>')
       +'<div class="filters">'+chips+'</div>'
       +'<div class="pl-bar"><input class="pl-search" id="plSearch" placeholder="Search by name, category or words in the prompt" value="'+E(q)+'"/>'
@@ -9529,8 +9529,11 @@ html.polish-high-contrast{--muted:#d0d0d4;--line:rgba(255,255,255,.19)}html.poli
   .sx-grid{grid-template-columns:1fr}
   .sx-hero h1{font-size:27px}
   body.inbuilder #sxTabbar{background:rgba(8,8,11,.97)}
-  /* iOS zooms the page when a focused input is under 16px. */
-  .app-main input,.app-main textarea,.app-main select{font-size:16px}
+  /* iOS zooms the page when a focused input is under 16px. Scoping this to
+     .app-main missed the one input that matters most — the hero prompt on the
+     public page, which is the first thing a phone visitor taps. */
+  .app-main input,.app-main textarea,.app-main select,
+  #heroPrompt,.prompt-top textarea,#marketing input,#marketing textarea{font-size:16px}
 }
 .sx-sheet{position:fixed;inset:0;z-index:400;display:none}
 .sx-sheet.on{display:block}
@@ -10827,11 +10830,12 @@ try{navigate=window.navigate}catch(e){}
 /* ──────────────────────────────────────────────────────────────────────────
    Scroll-film templates.
 
-   The ten entries below are complete standalone pages under /templates/,
+   The twelve entries below are complete standalone pages under /templates/,
    not preset data. Every other TEMPLATES entry is a description that the
    preset renderers draw; these are hand-built pages with their own markup,
    so there is nothing for the renderer to draw from. The first five are
-   scroll-scrubbed films; the rest are single-viewport hero pages.
+   scroll-scrubbed films; the rest are single-viewport hero pages. Terranova
+   is a folder rather than one file, so its entry points at its index.html.
 
    They join the same gallery by carrying a `file` field. Anything holding
    one is served as a real file — Vercel checks the filesystem before the SPA
@@ -10911,7 +10915,21 @@ var FILMS=[
    palette:{accent:'#6BADC4',accent2:'#010A17'},
    heroTitle:'Gentle Touch. Radiant Presence.',
    heroSubtitle:'Two screens for a beauty and wellness studio — one cinematic, one a founder quote that clouds drift into.',
-   components:['Home','About','Services','Journal','Contact']}
+   components:['Home','About','Services','Journal','Contact']},
+
+  {name:'Terranova',file:'/templates/terranova/index.html',category:'Research',
+   tag:'A card that refracts the film playing behind it',
+   palette:{accent:'#f5f4f0',accent2:'#c2ccd3'},
+   heroTitle:'Signals From The Deep Green',
+   heroSubtitle:'Dark type on a bright film, and a glass card that is really a live refracted copy of the video behind it.',
+   components:['Home','About','Research','Projects','Journal','Contact']},
+
+  {name:'Orbit',file:'/templates/orbit.html',category:'Security',
+   tag:'Poster type with a mouse-driven morph reveal',
+   palette:{accent:'#fd86db',accent2:'#161616'},
+   heroTitle:'Orbit',
+   heroSubtitle:'One word, one flower, and a trail that wipes the image away to a second one wherever the cursor goes.',
+   components:['Home','Resources','Benefits','Contact']}
 ];
 
 function slugOf(name){return String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')}

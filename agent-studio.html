@@ -2519,13 +2519,29 @@ function haveEnough(b){
 }
 /* Assumptions a designer would make without stopping to ask. All editable. */
 function fillDefaults(b){
-  if(!b.style)b.style='minimal';
+  /* §3 and §49 — the agent decides these, and says so in one line rather than
+     leaving the brief to show "not answered yet" beside "enough to start".
+     Returns what it chose so the conversation can mention it. */
+  var chose=[];
+  if(!b.style){b.style='minimal';chose.push(STYLES.minimal.l.toLowerCase()+' look')}
   if(!b.motion)b.motion='cinematic';
   if(!b.content)b.content='agent';
   if(!(b.languages||[]).length)b.languages=['English'];
-  if(!b.goal)b.goal=(b.features||[]).indexOf('store')>=0?'sell':
-                    ((b.features||[]).indexOf('bookings')>=0?'book':'lead');
-  if(!b.accent){var P=INDUSTRIES[b.industry];b.accent=(P&&P.accent)||'#dfff45'}
+  if(!b.goal){
+    b.goal=(b.features||[]).indexOf('store')>=0?'sell':
+           ((b.features||[]).indexOf('bookings')>=0?'book':'lead');
+    chose.push(GOALS[b.goal].toLowerCase());
+  }
+  if(!b.accent){
+    var P=INDUSTRIES[b.industry];b.accent=(P&&P.accent)||'#dfff45';
+    chose.push('an accent that suits the trade');
+  }
+  return chose;
+}
+/* One sentence, only when something was actually decided. */
+function saidDefaults(chose){
+  if(!chose||!chose.length)return '';
+  return '<br/><br/>I picked '+chose.join(', ')+' — say the word and I change any of it.';
 }
 
 /* Merge what the model read. §48 — an explicit statement outranks whatever we
@@ -2662,7 +2678,8 @@ function handleText(text){
         applyTurn(o);
         if(o.reply)agentSay(esc(String(o.reply).slice(0,300)));
         if(o.ready_to_build&&haveEnough(S.brief)){
-          fillDefaults(S.brief);
+          var chose=fillDefaults(S.brief);
+          if(chose.length)agentSay(saidDefaults(chose).replace(/^<br\/><br\/>/,''));
           S.skip=(S.skip||[]).concat(FLOW.map(function(f){return f.id}));
           S.step=0;save();return askCurrent(true);
         }
@@ -2729,9 +2746,9 @@ function handleText(text){
          should see progress, not eleven more questions — the defaults are all
          things they can change afterwards. */
       if(haveEnough(S.brief)){
-        fillDefaults(S.brief);
+        var chose2=fillDefaults(S.brief);
         agentSay((got.length?'Read that as the brief. I took '+got.join(' · ')+'.<br/><br/>':'')+
-                 'That is enough to start. Here is what I would build — change anything you like.');
+                 'That is enough to start.'+saidDefaults(chose2));
         S.skip=(S.skip||[]).concat(FLOW.map(function(f){return f.id}));
         S.step=0;save();
         return askCurrent(true);        /* walks past everything to finishInterview() */

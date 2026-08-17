@@ -217,6 +217,13 @@ function syncTabbar(route){
   var on=map[route]||'';
   [].forEach.call(bar.querySelectorAll('button'),function(b){b.classList.toggle('on',b.dataset.tab===on)});
 }
+/* The preloader defers a navigation to the public page and returns early, so
+   the wrappers below can run while state.route still names the old screen —
+   which left the phone tab bar sitting on the landing page for anyone who had
+   used the workspace before. The URL layer watches the route for real and
+   calls this once it has settled. */
+window.__scenSyncTabbar=syncTabbar;
+
 function openSheet(){
   var body=document.getElementById('sxSheetBody');if(!body)return;
   var items=[['pages','Pages','pages'],['media','Media','media'],['connections','Connections','plug'],

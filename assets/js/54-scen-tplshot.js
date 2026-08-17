@@ -40,6 +40,12 @@ function unmount(shot){
   if(i>-1)live.splice(i,1);
 }
 
+/* How far a card sits from the middle of what the visitor is reading. */
+function offCentre(shot){
+  var r=shot.getBoundingClientRect();
+  return Math.abs((r.top+r.bottom)/2-innerHeight/2);
+}
+
 function mount(shot){
   var f=document.createElement('iframe');
   f.className='tpl-frame';
@@ -58,12 +64,46 @@ function mount(shot){
   shot.appendChild(f);
   live.push(shot);
 
-  /* Oldest first: the card furthest from what the visitor is reading. */
+  /* Furthest from the middle of the screen goes first. Evicting the *oldest*
+     read as "furthest from what the visitor is reading", and it is not: the
+     grid shows six cards at once, so scrolling the gallery into view mounted
+     the top row, then evicted it to make room for the bottom row. Nothing
+     re-mounts a card that never stopped intersecting, so the row directly
+     under the heading stayed blank for as long as you looked at it. */
   while(live.length>MAX_LIVE){
-    var old=live[0];
-    if(old===shot)break;
-    unmount(old);
+    var worst=null;
+    for(var i=0;i<live.length;i++){
+      if(live[i]===shot)continue;
+      if(!worst||offCentre(live[i])>offCentre(worst))worst=live[i];
+    }
+    if(!worst)break;
+    unmount(worst);
   }
+}
+
+/* Mounting and evicting one card at a time leaves the set wherever the scroll
+   happened to drop it — half a row lit, half blank, which reads as broken
+   rather than as a budget. Once the scrolling settles, hand the slots to the
+   cards nearest the middle of the screen instead. Cards in the same row tie on
+   distance and the sort is stable, so a row lights up whole. */
+var settleTimer=0;
+function rebalance(){
+  clearTimeout(settleTimer);
+  settleTimer=setTimeout(function(){
+    /* A hidden or zero-height viewport makes every card read as off screen,
+       and acting on that would tear down the whole gallery for a tab the
+       visitor is about to come back to. */
+    if(document.hidden||!innerHeight)return;
+    var shots=[].slice.call(document.querySelectorAll('#templates .tpl-shot[data-preview]'));
+    var seen=shots.filter(function(s){
+      var r=s.getBoundingClientRect();
+      return r.bottom>0&&r.top<innerHeight;
+    });
+    seen.sort(function(a,b){return offCentre(a)-offCentre(b)});
+    var want=seen.slice(0,MAX_LIVE);
+    live.slice().forEach(function(s){if(want.indexOf(s)<0)unmount(s)});
+    want.forEach(function(s){if(!s.__frame)mount(s)});
+  },450);
 }
 
 var io=new IntersectionObserver(function(entries){
@@ -74,7 +114,7 @@ var io=new IntersectionObserver(function(entries){
       /* A card can cross the edge twice in one flick — wait before dropping
          it, so a scroll past does not reload it on the way back. */
       if(shot.__frame&&!shot.__idle){
-        shot.__idle=setTimeout(function(){shot.__idle=0;unmount(shot)},IDLE_MS);
+        shot.__idle=setTimeout(function(){shot.__idle=0;unmount(shot);rebalance()},IDLE_MS);
       }
       return;
     }
@@ -82,6 +122,7 @@ var io=new IntersectionObserver(function(entries){
     if(!shot.__frame)mount(shot);
     else if(shot.__scrub)shot.__scrub.start();
   });
+  rebalance();
 },{threshold:.2});
 
 function wire(){
@@ -98,6 +139,10 @@ function wire(){
     io.observe(shot);
   }
 }
+
+/* The observer only fires when a card crosses the edge, so a scroll that ends
+   between crossings would leave the slots where they were. */
+addEventListener('scroll',rebalance,{passive:true});
 
 var mo=new MutationObserver(wire);
 function boot(){wire();mo.observe(document.body,{childList:true,subtree:true})}

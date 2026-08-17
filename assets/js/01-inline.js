@@ -1234,7 +1234,16 @@ document.addEventListener('drop',e=>{const s=e.target.closest('[data-section-ind
 document.addEventListener('dragend',()=>{state.dragIndex=null;document.querySelectorAll('.editable-section').forEach(x=>x.classList.remove('drag-over','dragging'))});
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();toast('Command palette: Create · Projects · Builder · Admin')}});
 window.addEventListener('mousemove',e=>{if(state.route!=='marketing')return;const x=(e.clientX/window.innerWidth-.5)*2,y=(e.clientY/window.innerHeight-.5)*2;document.documentElement.style.setProperty('--mx',x.toFixed(2));document.documentElement.style.setProperty('--my',y.toFixed(2))});
-window.addEventListener('hashchange',()=>{const r=location.hash.replace('#/','');if(r)navigate(r)});
+// Only "#/route" is a route. The public page's own links are plain anchors —
+// #features, #showcase, #pricing, #templates — and this used to hand those
+// straight to navigate(), which has no such view: signed in it rendered the
+// dashboard over the landing page, signed out it asked for a login. Clicking
+// Product on the home page took you out of the home page.
+window.addEventListener('hashchange',()=>{
+  if(!/^#\//.test(location.hash))return;
+  const r=location.hash.slice(2);
+  if(r)navigate(r);
+});
 
 
 /* ===== NEXT FLOW: MULTI-PAGE + BRAND + REUSABLE + 3D SCENES ===== */

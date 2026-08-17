@@ -70,6 +70,9 @@ Object.defineProperty(state,'route',{
     current=v;
     try{syncUrl()}catch(e){}
     try{syncAuthActions()}catch(e){}
+    /* The phone tab bar belongs to the workspace, not the public page, and the
+       layer that owns it cannot tell when a deferred navigation lands. */
+    try{if(window.__scenSyncTabbar)window.__scenSyncTabbar(v)}catch(e){}
   }
 });
 
@@ -101,17 +104,21 @@ window.addEventListener('click',function(e){
   window.navigate('dashboard');
 },true);
 
-/* The session lands after the first paint, so the buttons are re-read when it
-   does. The timer covers the case where applySession is not reachable here. */
-var baseApply=window.applySession;
-if(typeof baseApply==='function'){
-  window.applySession=function(){
-    var r=baseApply.apply(this,arguments);
+/* state.auth is optimistically restored from storage before the server has
+   answered, so a visitor whose session had expired was shown "Open workspace"
+   and never got the login back. Watching the value covers every path that
+   changes it — the session landing, the 401 clearing it, signing out — and
+   unlike wrapping restoreSession it does not care that the boot already called
+   it before this script ran. */
+var currentAuth=state.auth;
+Object.defineProperty(state,'auth',{
+  configurable:true,enumerable:true,
+  get:function(){return currentAuth},
+  set:function(v){
+    currentAuth=v;
     try{syncAuthActions()}catch(e){}
-    return r;
-  };
-  try{applySession=window.applySession}catch(e){}
-}
+  }
+});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',syncAuthActions);
 else syncAuthActions();
 setTimeout(syncAuthActions,1200);

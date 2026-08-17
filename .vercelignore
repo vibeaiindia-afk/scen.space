@@ -8,3 +8,17 @@ node_modules/
 *.command
 ROADMAP-VERIFIED.md
 START-HERE.txt
+
+# Vercel uploads from the filesystem, not from git, so .gitignore does not
+# protect anything here. ADMIN-KEY.txt is the staff key: without this line it
+# would be served as a static file at /ADMIN-KEY.txt.
+ADMIN-KEY.txt
+*.key
+.env
+.env.*
+
+# Internal notes. Not secret, but they document the staff login and every
+# gated route, which is not something to hand to the public.
+SITE-TREE.md
+HANDOFF.md
+README.md

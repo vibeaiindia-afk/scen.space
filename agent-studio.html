@@ -327,6 +327,10 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
   .tb-center{order:2;width:100%;margin-left:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tb-center::-webkit-scrollbar{display:none}
   .tb-center .tab{flex:0 0 auto}
+  /* The 980px rule gives the chat width:100%, but it sits in a flex row after
+     a ~52px icon rail, so 100% of the shell overshot the screen by exactly the
+     rail's width. Let it take what is left instead of all of it. */
+  .chat{flex:1 1 auto;width:auto;min-width:0}
   /* iOS zooms the whole page when a focused field is under 16px. */
   #input,.comp textarea,.comp input{font-size:16px}
 }

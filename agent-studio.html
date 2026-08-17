@@ -771,7 +771,7 @@ var FLOW=[
     "A website. Good."}},
 
 {id:'industry',type:'single',
-  q:function(){return "What's the business? Pick the closest one — it decides the pages, the copy and the features I suggest."},
+  q:function(){return "What kind of business is it? Pick whatever is closest — it decides which pages I plan, how the copy sounds, and which features I put in. Nothing here is locked; you can change all of it later."},
   opts:function(){return Object.keys(INDUSTRIES).map(function(k){
     return{v:k,l:INDUSTRIES[k].e+'  '+INDUSTRIES[k].l}})},
   set:function(b,v){
@@ -787,7 +787,7 @@ var FLOW=[
 {id:'name',type:'text',optional:true,ph:'Brand or project name',
   q:function(b){return b.name?
     "What should this one be called? The template came in as <b>"+esc(b.name)+"</b> — keep it or type your own.":
-    "What's it called?"},
+    "What is it called? If you have not decided, say what it does and I will suggest something you can change later."},
   extra:function(b){return b.name?[{v:b.name,l:'Keep '+b.name}]:[{v:'__auto',l:"I haven't picked a name"}]},
   set:function(b,v){
     var blank=(v==='__auto'||v==='__skip'||!v);
@@ -803,7 +803,7 @@ var FLOW=[
   ack:function(b,v){return v==='__auto'?"Here's my draft — you can rewrite it any time after the build:\n\n<b>"+esc(b.pitch)+"</b>":"Got it."}},
 
 {id:'goal',type:'single',
-  q:function(){return "What does the site actually have to do? I'll aim every call-to-action at this."},
+  q:function(){return "What do you want someone to actually do on the site? Whatever you pick, I point every button on every page at it."},
   opts:function(b){
     var all=Object.keys(GOALS).map(function(k){return{v:k,l:GOALS[k]}});
     var P=INDUSTRIES[b.industry];
@@ -841,7 +841,7 @@ var FLOW=[
   ack:function(b){return b.pages.length+" pages: "+b.pages.join(' · ')}},
 
 {id:'features',type:'multi',
-  q:function(){return "Which of these does it need? Each one adds real sections and a module to the plan."},
+  q:function(){return "What does it actually need to do? Each of these adds real, working sections — not placeholders — so pick only what you will use."},
   opts:function(){return Object.keys(FEATURES).map(function(k){
     return{v:k,l:FEATURES[k].e+'  '+FEATURES[k].l}})},
   val:function(b){return b.features},
@@ -852,7 +852,7 @@ var FLOW=[
     "Nothing extra — a clean brochure site then."}},
 
 {id:'style',type:'single',
-  q:function(){return "How should it feel? This sets the palette, the type and how much motion I write in."},
+  q:function(){return "How should it feel when someone lands on it? This sets the colours, the type and how much movement I write in — so go with your gut rather than what sounds professional."},
   opts:function(){return Object.keys(STYLES).map(function(k){return{v:k,l:STYLES[k].l,sw:STYLES[k].bg}})},
   set:function(b,v){b.style=v},
   ack:function(b,v){return{cinematic:"Dark, wide type, real depth in the hero.",
@@ -875,17 +875,17 @@ var FLOW=[
   ack:function(b){return "Accent set to <code>"+esc(b.accent)+"</code>. I'll derive the hover, focus and gradient tints from it."}},
 
 {id:'motion',type:'single',
-  q:function(){return "How much motion?"},
+  q:function(){return "How much should the page move as someone scrolls? Subtle stays calm and loads fastest. Cinematic makes things slide and fade in. Full 3D adds a shape that floats and turns at the top \u2014 it looks the best and loads a little slower."},
   opts:function(){return[
-    {v:'subtle',l:'Subtle — fades on scroll'},
-    {v:'cinematic',l:'Cinematic — parallax and reveals'},
-    {v:'full',l:'Full 3D — floating scene in the hero'}]},
+    {v:'subtle',l:'Subtle \u2014 gentle fades, nothing distracting'},
+    {v:'cinematic',l:'Cinematic \u2014 things slide and fade in as you scroll'},
+    {v:'full',l:'Full 3D \u2014 a shape that floats and turns at the top'}]},
   set:function(b,v){b.motion=v},
   ack:function(b,v){return v==='full'?"Full scene it is — I'll keep it off for anyone with reduced-motion turned on.":
     v==='cinematic'?"Cinematic. Enough movement to feel alive, not enough to get in the way.":"Subtle. Fast and calm."}},
 
 {id:'content',type:'single',
-  q:function(){return "Copy and images — what have you got?"},
+  q:function(){return "Do you have words and pictures already, or should I write them? If you have a few lines you like, paste them in — I will build around them instead of inventing my own."},
   opts:function(){return[
     {v:'agent',l:'Write everything for me'},
     {v:'mix',l:"I'll replace some of it later"},
@@ -895,7 +895,7 @@ var FLOW=[
     "I'll write the whole thing — headlines, sections, FAQs and buttons."}},
 
 {id:'languages',type:'multi',optional:true,
-  q:function(){return "Any languages beyond English?"},
+  q:function(){return "Anyone visiting who does not read English? Pick the languages and I will build the site to switch between them properly, not just translate the words."},
   opts:function(){return['English','Hindi','French','Arabic','Spanish','German'].map(function(l){
     return{v:l,l:l}})},
   val:function(b){return b.languages.length?b.languages:['English']},
@@ -2652,11 +2652,11 @@ function buildPlanSteps(){
       // read at write time, so a live plan that arrives mid-build is what gets logged
       subFn:function(){return G.sectionsFor(p.name,b,pro).map(function(x){return SECLABEL[x]||x}).join(' · ')}})});
   out.push({l:'Compiling styles.css',s:'tokens, layout, responsive rules',ms:460,file:'site/styles.css'});
-  out.push({l:'Wiring behaviour',s:'scroll reveals, navigation, forms',ms:380,file:'site/app.js'});
+  out.push({l:'Wiring behaviour',s:'scrolling, menus and forms',ms:380,file:'site/app.js'});
   b.features.forEach(function(f){out.push({l:'Wiring '+FEATURES[f].l,s:FEATURES[f].mod,ms:300})});
   if(b.kind==='app'||b.kind==='both'){
     out.push({l:'Generating app/App.jsx',s:'screens, tab bar and shared tokens',ms:520,file:'app/App.jsx'});
-    out.push({l:'Generating app/theme.js',s:'one palette for the site and the app',ms:280,file:'app/theme.js'});
+    out.push({l:'Generating app/theme.js',s:'one set of colours for the site and the app',ms:280,file:'app/theme.js'});
   }
   out.push({l:'Writing brief.json + README',s:'so the build can be rerun from the same answers',ms:300,file:'brief.json'});
   out.push({l:'Running checks',s:'headings, link targets, contrast, mobile widths',ms:640});
@@ -3386,7 +3386,7 @@ PANE.skills=function(){
   var rows=[['Interview','asks the questions and fills the brief'],
     ['Planner','turns the brief into pages and sections'],
     ['Copywriter','writes headlines, sections, FAQs and buttons'],
-    ['Design system','derives palette, type and motion from the style + accent'],
+    ['Design system','works out the colours, type and movement from your choices'],
     ['Code writer','emits HTML, CSS, JS and the React Native screens'],
     ['Editor','applies plain-language changes and rebuilds']];
   return '<div class="pane">'+head('Agent Skills','The six things this agent actually does, in the order it does them.')+

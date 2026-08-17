@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>FRAME — Scroll Film</title>
+<link rel="preconnect" href="https://pub-429d8fb4f8ff4b7d9c2624c0d7e4b4b5.r2.dev" crossorigin>
+<style>
+:root{
+  color-scheme:dark;
+  --p:0;
+  --red:0;
+  --warm:0;
+  --tilt:0deg;
+  --zoom:1.025;
+  --grain:.065;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:#050505;color:#fff;font-family:Arial,Helvetica,sans-serif;overscroll-behavior:none}
+body{overflow-x:hidden}
+main{height:760vh;position:relative;z-index:0}
+
+.stage{position:fixed;inset:0;overflow:hidden;background:#000;z-index:1}
+#film{
+  width:100%;height:100%;object-fit:cover;display:block;
+  transform:scale(var(--zoom)) rotate(var(--tilt));
+  transform-origin:center;will-change:transform,filter;
+  filter:saturate(calc(1 + var(--warm)*.25)) contrast(calc(1 + var(--red)*.12));
+}
+.stage:after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:6;
+  background:
+    radial-gradient(circle at 50% 50%,transparent 30%,rgba(0,0,0,.18) 100%),
+    linear-gradient(to bottom,rgba(0,0,0,.12),transparent 25%,transparent 72%,rgba(0,0,0,.22));
+}
+.grain{position:absolute;inset:-50%;z-index:12;pointer-events:none;opacity:var(--grain);mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.75'/%3E%3C/svg%3E");
+  animation:grain .18s steps(2) infinite;
+}
+@keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-2%)}75%{transform:translate(3%,3%)}100%{transform:translate(-2%,-3%)}}
+
+/* fixed editorial header — intentionally sparse, like a film title card */
+.nav{position:fixed;top:0;left:0;right:0;z-index:30;display:grid;grid-template-columns:1fr 1fr 1fr;padding:16px 22px 0;pointer-events:none;
+  font-size:clamp(10px,.82vw,14px);font-weight:900;letter-spacing:.07em;text-transform:uppercase;text-shadow:0 1px 10px rgba(0,0,0,.35)}
+.nav span:nth-child(2){text-align:center}.nav span:nth-child(3){text-align:right}
+
+.layer{position:fixed;inset:0;z-index:8;pointer-events:none;overflow:hidden}
+.scene{position:absolute;inset:0;opacity:0;will-change:opacity,transform,clip-path;pointer-events:none}
+
+/* 01 — giant cropped masthead */
+.s1{display:flex;align-items:flex-end;padding:0 1.2vw .25vh;}
+.s1 .studio{position:absolute;left:50%;bottom:11.5vh;transform:translateX(-50%);font-size:clamp(9px,.82vw,13px);letter-spacing:.02em;text-transform:uppercase;white-space:nowrap}
+.s1 .mast{font-family:Arial Black,Arial,sans-serif;font-size:clamp(92px,15.2vw,260px);font-weight:950;letter-spacing:-.095em;line-height:.72;white-space:nowrap;transform:translateY(24%);}
+.s1 .script{font-family:Georgia,serif;font-style:italic;font-weight:400;font-size:.42em;letter-spacing:-.08em;margin:0 -.07em;position:relative;top:-.12em}
+.s1 sup{font-size:.16em;top:-2.9em;position:relative;letter-spacing:0}
+
+/* 02 — hard red wash + editorial caption */
+.redwash{position:fixed;inset:0;z-index:5;background:rgba(213,0,0,var(--red));mix-blend-mode:multiply;pointer-events:none}
+.s2 .caption{position:absolute;left:2.2vw;bottom:5.7vh;width:min(365px,43vw);font-size:clamp(10px,.88vw,14px);line-height:1.05;font-weight:500;letter-spacing:-.025em}
+.s2 .micro{position:absolute;right:2.2vw;bottom:5.7vh;font-size:9px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+
+/* 03 — angular slice / lens cut */
+.s3 .blade{position:absolute;inset:-12%;border-left:2px solid rgba(255,255,255,.45);border-right:2px solid rgba(255,255,255,.17);background:rgba(255,255,255,.035);backdrop-filter:blur(.6px);transform:rotate(-17deg) translateX(4vw);clip-path:polygon(42% 0,72% 0,57% 100%,27% 100%)}
+.s3 .smallcopy{position:absolute;left:2vw;bottom:4.5vh;width:320px;max-width:48vw;font-size:clamp(9px,.78vw,12px);line-height:1.04}
+
+/* 04 — warm editorial headline */
+.warmwash{position:fixed;inset:0;z-index:5;pointer-events:none;opacity:var(--warm);background:linear-gradient(100deg,rgba(255,97,20,.18),rgba(255,205,120,.14) 55%,rgba(255,255,255,.04));mix-blend-mode:screen}
+.s4 .stack{position:absolute;left:2.2vw;bottom:7vh;font-family:Arial Black,Arial,sans-serif;font-weight:950;font-size:clamp(27px,4.25vw,68px);line-height:.72;letter-spacing:-.055em;text-transform:uppercase}
+.s4 .stack em{font-family:Georgia,serif;font-weight:400;font-style:italic;font-size:.42em;letter-spacing:-.02em;margin-left:.12em}
+.s4 .essay{position:absolute;right:2.4vw;top:13vh;width:min(320px,40vw);font-size:clamp(9px,.8vw,13px);line-height:1.02;letter-spacing:-.02em}
+
+/* 05 — three vertical film strips */
+.s5{display:flex;background:#050505}
+.strip{position:relative;height:100%;overflow:hidden;flex:1;border-left:1px solid rgba(255,255,255,.12);transform:translateY(8%);opacity:0}
+.strip:first-child{border-left:0}
+.strip video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.06);filter:saturate(1.05) contrast(1.05)}
+.strip.a video{object-position:22% 50%}.strip.b video{object-position:50% 50%}.strip.c video{object-position:78% 50%}
+.s5 .tiny{position:absolute;z-index:4;right:1.2vw;bottom:2.2vh;font-size:8px;text-transform:uppercase;letter-spacing:.09em;opacity:.8}
+
+/* 06 — final client-number style moment */
+.s6{display:flex;align-items:flex-end;justify-content:center;padding-bottom:5vh;text-align:center}
+.s6 .client{font-size:clamp(9px,.8vw,12px);text-transform:uppercase;letter-spacing:.06em}
+.s6 .num{font-family:Georgia,serif;font-style:italic;font-size:clamp(48px,6.8vw,104px);line-height:.7;margin-top:.04em}
+.s6 .endmark{position:absolute;left:1vw;right:1vw;bottom:-1.6vh;font-family:Arial Black,Arial,sans-serif;font-size:clamp(90px,14vw,230px);font-weight:950;letter-spacing:-.09em;line-height:.68;white-space:nowrap;opacity:.9}
+
+/* flash bar */
+.flash{position:fixed;inset:0;z-index:20;background:#fff;opacity:0;pointer-events:none;mix-blend-mode:screen}
+
+@media(max-width:760px){
+  main{height:720vh}
+  .nav{padding:13px 12px 0;font-size:9px}
+  .s1{padding-left:2.2vw}.s1 .mast{font-size:23vw}.s1 .studio{bottom:9vh;font-size:8px}
+  .s2 .caption{left:4vw;bottom:6vh;width:70vw;font-size:10px}.s2 .micro{right:4vw;font-size:7px}
+  .s3 .smallcopy{left:4vw;width:66vw;font-size:9px}
+  .s4 .stack{left:4vw;bottom:8vh;font-size:11vw}.s4 .essay{right:4vw;top:12vh;width:58vw;font-size:9px}
+  .s6 .endmark{font-size:22vw}
+}
+@media(prefers-reduced-motion:reduce){.grain{animation:none}.stage video{transform:none!important}.flash{display:none}}
+</style>
+</head>
+<body>
+<div class="stage" aria-hidden="true">
+  <video id="film" muted playsinline preload="auto">
+    <source src="https://pub-429d8fb4f8ff4b7d9c2624c0d7e4b4b5.r2.dev/workspaces/ws_197efd1b-8385-48a7-a09f-2c155a7c6e62/2026/08/hf_20260804_142024_56a0b549-4cae-4d3f-8fe3-f227a1db346a_min.mp4" type="video/mp4">
+  </video>
+  <div class="redwash"></div><div class="warmwash"></div><div class="grain"></div>
+</div>
+
+<div class="nav" aria-hidden="true"><span>MENU</span><span>ABOUT</span><span>CONTACT</span></div>
+
+<div class="layer" aria-hidden="true">
+  <div class="scene s1">
+    <div class="studio">CREATIVE AI FILM STUDIO</div>
+    <div class="mast">FR<span class="script">a</span>ME<sup>®</sup></div>
+  </div>
+  <div class="scene s2">
+    <div class="caption">Impossible scenes, cut like they happened. No seams. No explanation. Just motion that feels remembered.</div>
+    <div class="micro">ARTIFICIAL / CINEMA</div>
+  </div>
+  <div class="scene s3">
+    <div class="blade"></div>
+    <div class="smallcopy">One image breaks into another. The frame bends first — then the world catches up.</div>
+  </div>
+  <div class="scene s4">
+    <div class="stack">BUILT.<br>FELT.<br>SHOT.<em>(01)</em></div>
+    <div class="essay">Every frame starts as a picture. We push it until it stops looking designed — and starts feeling found.</div>
+  </div>
+  <div class="scene s5">
+    <div class="strip a"><video muted playsinline preload="metadata" src="https://pub-429d8fb4f8ff4b7d9c2624c0d7e4b4b5.r2.dev/workspaces/ws_197efd1b-8385-48a7-a09f-2c155a7c6e62/2026/08/hf_20260804_142024_56a0b549-4cae-4d3f-8fe3-f227a1db346a_min.mp4"></video></div>
+    <div class="strip b"><video muted playsinline preload="metadata" src="https://pub-429d8fb4f8ff4b7d9c2624c0d7e4b4b5.r2.dev/workspaces/ws_197efd1b-8385-48a7-a09f-2c155a7c6e62/2026/08/hf_20260804_142024_56a0b549-4cae-4d3f-8fe3-f227a1db346a_min.mp4"></video></div>
+    <div class="strip c"><video muted playsinline preload="metadata" src="https://pub-429d8fb4f8ff4b7d9c2624c0d7e4b4b5.r2.dev/workspaces/ws_197efd1b-8385-48a7-a09f-2c155a7c6e62/2026/08/hf_20260804_142024_56a0b549-4cae-4d3f-8fe3-f227a1db346a_min.mp4"></video></div>
+    <div class="tiny">PARALLEL FRAMES / SAME STORY</div>
+  </div>
+  <div class="scene s6"><div><div class="client">FILMS</div><div class="num">(∞)</div></div><div class="endmark">FRAME</div></div>
+</div>
+<div class="flash"></div>
+<main aria-label="Scroll controlled film"></main>
+
+<script>
+(()=>{
+ const root=document.documentElement,film=document.getElementById('film');
+ const scenes=[...document.querySelectorAll('.scene')],flash=document.querySelector('.flash');
+ const strips=[...document.querySelectorAll('.strip')],stripVideos=[...document.querySelectorAll('.strip video')];
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ let duration=0,ready=false,target=0,current=0,last=performance.now(),seeking=false,lastCommit=-1;
+ let splitLast=-99;
+ const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+ const smoothstep=(a,b,x)=>{x=clamp((x-a)/(b-a));return x*x*(3-2*x)};
+ const windowOpacity=(p,a,b,fade=.035)=>smoothstep(a,a+fade,p)*(1-smoothstep(b-fade,b,p));
+ const pageProgress=()=>clamp(scrollY/Math.max(1,document.documentElement.scrollHeight-innerHeight));
+
+ function styleTimeline(p){
+   root.style.setProperty('--p',p.toFixed(4));
+   const red=windowOpacity(p,.145,.355,.045)*.78;
+   const warm=windowOpacity(p,.48,.72,.05);
+   root.style.setProperty('--red',red.toFixed(3));
+   root.style.setProperty('--warm',warm.toFixed(3));
+   const tilt=(-1.8*windowOpacity(p,.15,.38,.05)+1.1*windowOpacity(p,.37,.52,.04));
+   const zoom=1.018 + .055*windowOpacity(p,.14,.38,.05)+.032*windowOpacity(p,.35,.57,.04);
+   root.style.setProperty('--tilt',tilt.toFixed(2)+'deg');
+   root.style.setProperty('--zoom',zoom.toFixed(4));
+
+   const ranges=[[0,.22],[.15,.38],[.31,.53],[.46,.73],[.68,.88],[.84,1.01]];
+   scenes.forEach((s,i)=>{
+     const o=windowOpacity(p,ranges[i][0],ranges[i][1],i===0?.025:.04);
+     s.style.opacity=o.toFixed(3);
+   });
+
+   // masthead rises from below and gets cropped away
+   const s1=scenes[0];
+   const q1=smoothstep(0,.16,p);
+   s1.style.transform=`translateY(${(1-q1)*5 - smoothstep(.15,.22,p)*7}vh)`;
+
+   // red scene tilts in like a hard-cut editorial frame
+   const q2=smoothstep(.15,.24,p);
+   scenes[1].style.transform=`scale(${1.04-.04*q2}) rotate(${(1-q2)*-2.5}deg)`;
+
+   // diagonal blade travels across the lens
+   const blade=document.querySelector('.blade');
+   const q3=smoothstep(.31,.52,p);
+   blade.style.transform=`rotate(-17deg) translateX(${(1-q3)*32-8}vw)`;
+
+   // warm headline punches in with a micro scale snap
+   const q4=smoothstep(.48,.59,p);
+   document.querySelector('.s4 .stack').style.transform=`scale(${.82+.18*q4}) translateY(${(1-q4)*22}px)`;
+   document.querySelector('.s4 .essay').style.transform=`translateX(${(1-q4)*26}px)`;
+
+   // split film strips rise one after another
+   const q5=smoothstep(.69,.78,p);
+   strips.forEach((el,i)=>{
+     const qi=clamp((q5-i*.13)/(1-i*.13));
+     el.style.opacity=qi.toFixed(3);el.style.transform=`translateY(${(1-qi)*(8+i*3)}%)`;
+   });
+
+   const q6=smoothstep(.86,.965,p);
+   scenes[5].style.transform=`translateY(${(1-q6)*6}vh) scale(${.96+.04*q6})`;
+
+   // short white exposure hits near editorial cuts
+   const cuts=[.15,.315,.465,.685,.845];
+   let f=0; for(const c of cuts){const d=Math.abs(p-c);f=Math.max(f,clamp(1-d/.011));}
+   flash.style.opacity=(f*.22).toFixed(3);
+ }
+
+ function update(){const p=pageProgress();target=ready&&!reduced.matches?p*duration:0;styleTimeline(p);
+   // Split-screen videos are intentionally updated sparsely so the hero scrub stays smooth.
+   if(ready && p>.66 && p<.91 && Math.abs(current-splitLast)>.11){
+     splitLast=current;
+     stripVideos.forEach((v,i)=>{try{v.pause(); const offs=(i-1)*Math.min(.22,duration*.025); v.currentTime=clamp(current+offs,0,duration)}catch(e){}});
+   }
+ }
+ function commit(){if(!ready||reduced.matches||seeking)return;const next=clamp(current,0,duration);if(Math.abs(next-lastCommit)<Math.max(1/90,duration/12000))return;seeking=true;lastCommit=next;try{film.currentTime=next}catch(e){seeking=false}}
+ function raf(now){const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;film.pause();if(ready){if(reduced.matches){current=target=0;if(film.currentTime>.001&&!seeking){seeking=true;try{film.currentTime=0}catch(e){seeking=false}}}else{current+=(target-current)*(1-Math.exp(-dt*8));commit();}}requestAnimationFrame(raf)}
+ film.addEventListener('error',()=>{console.error('Video failed to load', film.error);});
+ film.addEventListener('loadedmetadata',()=>{duration=Number.isFinite(film.duration)?film.duration:0;ready=duration>0;film.pause();current=target=0;update();commit()},{once:true});
+ film.addEventListener('seeked',()=>{seeking=false;commit()}); film.addEventListener('seeking',()=>{seeking=true}); film.addEventListener('playing',()=>film.pause()); film.addEventListener('canplay',()=>film.pause());
+ stripVideos.forEach(v=>{v.addEventListener('playing',()=>v.pause());v.addEventListener('canplay',()=>v.pause())});
+ addEventListener('scroll',update,{passive:true});addEventListener('resize',update,{passive:true});reduced.addEventListener?.('change',update);
+ film.pause();film.load();styleTimeline(0);update();requestAnimationFrame(raf);
+})();
+</script>
+</body>
+</html>

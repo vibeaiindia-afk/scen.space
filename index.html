@@ -9442,7 +9442,10 @@ html.polish-high-contrast{--muted:#d0d0d4;--line:rgba(255,255,255,.19)}html.poli
 @media(max-width:820px){
   .app-sidebar{display:none!important}
   .app-main{margin-left:0;padding-bottom:calc(74px + env(safe-area-inset-bottom,0px))}
-  #sxTabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;z-index:320;left:0;right:0;bottom:0;
+  /* Only inside the app. The marketing page and the auth screen are not
+     places where Builder/Publish tabs mean anything. */
+  body.sx-inapp #sxTabbar{display:grid}
+  #sxTabbar{display:none;grid-template-columns:repeat(5,1fr);position:fixed;z-index:320;left:0;right:0;bottom:0;
     background:rgba(8,8,11,.94);backdrop-filter:blur(18px);border-top:1px solid var(--line);
     padding:7px 4px calc(7px + env(safe-area-inset-bottom,0px))}
   #sxTabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;color:#75757f;font-size:10px;font-weight:600;padding:5px 2px;min-height:46px;cursor:pointer}
@@ -9676,6 +9679,7 @@ function buildTabbar(){
 }
 function syncTabbar(route){
   var bar=document.getElementById('sxTabbar');if(!bar)return;
+  document.body.classList.toggle('sx-inapp',route!=='marketing'&&route!=='auth'&&!!route);
   var map={builder:'builder',aibuilder:'builder',business:'business',publish:'publish',connections:'more',settings:'more',pages:'more',media:'more'};
   var on=map[route]||'';
   [].forEach.call(bar.querySelectorAll('button'),function(b){b.classList.toggle('on',b.dataset.tab===on)});
@@ -10740,6 +10744,138 @@ window.navigate=function(route){
   return r;
 };
 try{navigate=window.navigate}catch(e){}
+})();
+</script>
+
+
+<script id="scen-film-templates">
+/* ──────────────────────────────────────────────────────────────────────────
+   Scroll-film templates.
+
+   The five entries below are complete standalone pages under /templates/,
+   not preset data. Every other TEMPLATES entry is a description that the
+   preset renderers draw; these are hand-built scroll-scrubbed films with
+   their own markup, so there is nothing for the renderer to draw from.
+
+   They join the same gallery by carrying a `file` field. Anything holding
+   one is served as a real file — Vercel checks the filesystem before the SPA
+   rewrite — and /preset/<slug> redirects there, so the URL contract the
+   gallery, the thumbnails and any existing link rely on still holds.
+   ────────────────────────────────────────────────────────────────────────── */
+(function(){
+'use strict';
+if(typeof TEMPLATES==='undefined')return;
+
+var FILMS=[
+  {name:'SynapseX',file:'/templates/synapsex.html',category:'Technology',
+   tag:'Scroll-scrubbed film with split hero titles',
+   palette:{accent:'#61ff9e',accent2:'#0b0b0f'},
+   heroTitle:'Brain And Body',
+   heroSubtitle:'Built at the intersection of neuroscience and artificial intelligence — neural pathways, cognitive load and physiological state as one adaptive layer.',
+   components:['Home','Technology','Research','Platform','Contact']},
+
+  {name:'Worlds',file:'/templates/worlds.html',category:'Agency',
+   tag:'Four titled moments over one continuous film',
+   palette:{accent:'#f6f3ec',accent2:'#050505'},
+   heroTitle:'Enter The Unknown',
+   heroSubtitle:'Where imagination becomes place. Every frame is a threshold, and depth comes before interface.',
+   components:['Home','Worlds','Atelier','Immersions','Contact']},
+
+  {name:'Kinetic Cut',file:'/templates/kinetic-cut.html',category:'Entertainment',
+   tag:'Five type treatments, each cut differently',
+   palette:{accent:'#ffffff',accent2:'#000000'},
+   heroTitle:'Enter The Frame',
+   heroSubtitle:'Nothing ordinary. Motion becomes emotion, and every scene breaks its type a different way.',
+   components:['Home','Work','Motion','Studio','Contact']},
+
+  {name:'Smooth Film',file:'/templates/smooth-film.html',category:'SaaS',
+   tag:'The quiet one — four sections, no tricks',
+   palette:{accent:'#ffffff',accent2:'#000000'},
+   heroTitle:'Ideas Become Real',
+   heroSubtitle:'Built differently. Four sections that fade up over a scroll-scrubbed film, and nothing that gets in the way.',
+   components:['Home','Product','Design','Company','Contact']},
+
+  {name:'Frame',file:'/templates/frame.html',category:'Luxury',
+   tag:'Editorial masthead, colour washes and split strips',
+   palette:{accent:'#d50000',accent2:'#050505'},
+   heroTitle:'FRaME',
+   heroSubtitle:'Impossible scenes, cut like they happened. No seams, no explanation — just motion that feels remembered.',
+   components:['Home','Films','Studio','Index','Contact']}
+];
+
+function slugOf(name){return String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')}
+
+/* Idempotent: this layer can run again without duplicating the gallery. */
+FILMS.forEach(function(f){
+  var exists=TEMPLATES.some(function(t){return slugOf(t.name)===slugOf(f.name)});
+  if(!exists)TEMPLATES.push(f);
+});
+
+function fileFor(slug){
+  for(var i=0;i<TEMPLATES.length;i++){
+    var t=TEMPLATES[i];
+    if(t&&t.file&&slugOf(t.name)===slug)return t.file;
+  }
+  return '';
+}
+window.scenTemplateFile=fileFor;
+
+/* A direct hit on /preset/<slug> for one of these should end up at the real
+   page rather than at a renderer with nothing to render. */
+var baseShowPreset=window.showPreset;
+if(typeof baseShowPreset==='function'){
+  window.showPreset=function(tpl){
+    if(tpl&&tpl.file){location.replace(tpl.file);return}
+    return baseShowPreset.apply(this,arguments);
+  };
+  try{showPreset=window.showPreset}catch(e){}
+}
+
+/* The redirect above is the fallback for a typed or shared URL. Pointing the
+   gallery's own links straight at the file skips loading the 1.4MB shell
+   first, which is a visible stall on a link that should feel instant. */
+function retargetLinks(root){
+  var scope=root||document;
+  var links=scope.querySelectorAll('a[href^="/preset/"]');
+  for(var i=0;i<links.length;i++){
+    var a=links[i];
+    if(a.dataset.filmRetargeted)continue;
+    var m=a.getAttribute('href').match(/^\/preset\/([^\/?#]+)/);
+    if(!m)continue;
+    /* The marketing gallery only lowercases the name, so a two-word template
+       arrives here as "/preset/kinetic cut". Slugify rather than trusting it. */
+    var file=fileFor(slugOf(decodeURIComponent(m[1])));
+    if(!file)continue;
+    a.setAttribute('href',file);
+    a.dataset.filmRetargeted='1';
+  }
+  /* Same root cause on the Customize link, which carried the raw name into a
+     query string as "?template=kinetic%20cut". The seed itself travels through
+     localStorage, so this was cosmetic — but it is the slug the studio reads
+     when no seed was written. */
+  var cust=scope.querySelectorAll('a[href*="template="]');
+  for(var j=0;j<cust.length;j++){
+    var c=cust[j];
+    if(c.dataset.filmSlugged)continue;
+    var href=c.getAttribute('href');
+    var q=href.match(/([?&]template=)([^&#]+)/);
+    if(!q)continue;
+    var want=slugOf(decodeURIComponent(q[2]));
+    if(!want||want===q[2])continue;
+    c.setAttribute('href',href.replace(q[0],q[1]+encodeURIComponent(want)));
+    c.dataset.filmSlugged='1';
+  }
+}
+
+/* The gallery is injected by an earlier layer and re-rendered on navigation,
+   so watch for it rather than racing it. */
+var mo=new MutationObserver(function(){retargetLinks(document)});
+function start(){
+  retargetLinks(document);
+  mo.observe(document.body,{childList:true,subtree:true});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);
+else start();
 })();
 </script>
 

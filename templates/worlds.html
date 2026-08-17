@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Worlds — Scroll Film</title>
+  <style>
+    :root{--fg:#f6f3ec;--muted:rgba(246,243,236,.64)}
+    *{box-sizing:border-box}
+    html,body{margin:0;background:#050505;color:var(--fg);font-family:Arial,Helvetica,sans-serif;overscroll-behavior:none}
+    body{height:650vh}
+    .stage{position:fixed;inset:0;overflow:hidden;background:#050505}
+    .film{position:absolute;inset:-2%;width:104%;height:104%;object-fit:cover;transform:scale(1.035);filter:saturate(.97) contrast(1.03) brightness(.88);will-change:transform,filter}
+    .veil{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.24),transparent 18%,transparent 72%,rgba(0,0,0,.26)),radial-gradient(ellipse at 50% 44%,transparent 40%,rgba(0,0,0,.24) 100%)}
+    header{position:fixed;top:0;left:0;right:0;z-index:20;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:18px 25px 0;pointer-events:none;text-transform:uppercase;font-size:7px;letter-spacing:.22em;font-weight:500;text-shadow:0 1px 10px rgba(0,0,0,.35)}
+    nav{display:flex;gap:24px;white-space:nowrap} nav:last-child{justify-self:end}
+    .star{font-size:14px;line-height:1;transform:translateY(-2px);filter:drop-shadow(0 1px 8px rgba(0,0,0,.45))}
+    .copy{position:fixed;inset:0;z-index:10;pointer-events:none}
+    .moment{position:absolute;left:50%;top:50%;transform:translate(-50%,-44%);width:min(88vw,1000px);text-align:center;opacity:0;will-change:opacity,transform,filter}
+    .moment small{display:block;margin-bottom:12px;font-size:8px;letter-spacing:.34em;text-transform:uppercase;color:var(--muted)}
+    .moment h1{margin:0;font-size:clamp(38px,7.6vw,118px);font-weight:500;line-height:.88;letter-spacing:-.055em;text-transform:uppercase}
+    .moment p{margin:13px 0 0;font-size:clamp(8px,.68vw,11px);letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.74)}
+    .side{position:absolute;right:24px;bottom:22px;font-size:7px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.64);writing-mode:vertical-rl;transform:rotate(180deg);opacity:.7}
+    .grain{position:absolute;inset:0;pointer-events:none;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.86' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E");mix-blend-mode:soft-light}
+    @media(max-width:720px){body{height:600vh}header{padding:15px 14px 0;font-size:6px;letter-spacing:.16em}nav{gap:11px}.star{font-size:12px}.moment{width:90vw}.moment h1{font-size:clamp(44px,13vw,76px)}.moment small,.moment p{font-size:7px}.side{right:12px;bottom:14px;font-size:6px}}
+    @media(prefers-reduced-motion:reduce){body{height:100vh}.film{transform:none!important}.moment{display:none}.film{filter:brightness(.88)}}
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <video id="film" class="film" muted playsinline preload="auto">
+      <source src="https://pub-429d8fb4f8ff4b7d9c2624c0d7e4b4b5.r2.dev/workspaces/ws_197efd1b-8385-48a7-a09f-2c155a7c6e62/2026/08/hf_20260804_142024_56a0b549-4cae-4d3f-8fe3-f227a1db346a_min.mp4" type="video/mp4" />
+    </video>
+    <div class="veil"></div><div class="grain"></div>
+  </div>
+  <header>
+    <nav><span>Worlds</span><span>Atelier</span><span>Immersions</span></nav>
+    <div class="star">✦</div>
+    <nav><span>Craft</span><span>Codex</span><span>Connect</span></nav>
+  </header>
+  <div class="copy">
+    <section class="moment" data-a="0.06" data-b="0.19"><small>World 01</small><h1>Enter<br>The Unknown</h1><p>Where imagination becomes place</p></section>
+    <section class="moment" data-a="0.28" data-b="0.41"><small>World 02</small><h1>Move<br>Through Light</h1><p>Every frame becomes a threshold</p></section>
+    <section class="moment" data-a="0.50" data-b="0.64"><small>World 03</small><h1>Beyond<br>The Surface</h1><p>Depth before interface</p></section>
+    <section class="moment" data-a="0.74" data-b="0.89"><small>World 04</small><h1>Stay<br>Curious</h1><p>The next world is already forming</p></section>
+    <div class="side">Scroll to move through the film</div>
+  </div>
+<script>
+(() => {
+  const video=document.getElementById('film');
+  const moments=[...document.querySelectorAll('.moment')];
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let duration=0,target=0,current=0,last=performance.now(),seeking=false,started=false;
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const smoothstep=t=>t*t*(3-2*t);
+  const progress=()=>{const max=document.documentElement.scrollHeight-innerHeight;return max>0?clamp(scrollY/max,0,1):0};
+  function updateText(p){for(const el of moments){const a=+el.dataset.a,b=+el.dataset.b,local=clamp((p-a)/(b-a),0,1),enter=smoothstep(clamp(local/.26,0,1)),exit=smoothstep(clamp((1-local)/.26,0,1)),o=Math.min(enter,exit),y=(1-o)*22,blur=(1-o)*8,scale=.985+o*.015;el.style.opacity=o.toFixed(3);el.style.transform=`translate(-50%, calc(-44% + ${y}px)) scale(${scale})`;el.style.filter=`blur(${blur}px)`}}
+  function requestSeek(t){if(!duration||seeking||Math.abs(video.currentTime-t)<.012)return;seeking=true;try{video.currentTime=clamp(t,0,Math.max(0,duration-.001))}catch(e){seeking=false}}
+  video.addEventListener('seeked',()=>{seeking=false});
+  function tick(now){const dt=Math.min(.05,Math.max(.001,(now-last)/1000));last=now;const p=progress();target=p*duration;if(!reduced&&duration){current+=(target-current)*(1-Math.exp(-dt*8));requestSeek(current);const drift=Math.sin(p*Math.PI*2)*.7,zoom=1.035+Math.sin(p*Math.PI)*.016;video.style.transform=`scale(${zoom}) translate3d(${drift}%,0,0)`;video.style.filter=`saturate(${.95+p*.05}) contrast(1.03) brightness(${.84+Math.sin(p*Math.PI)*.08})`;updateText(p)}requestAnimationFrame(tick)}
+  function init(){if(started)return;started=true;video.pause();duration=Number.isFinite(video.duration)?video.duration:0;current=0;target=0;if(reduced){try{video.currentTime=0}catch(e){}return}requestAnimationFrame(tick)}
+  if(video.readyState>=1)init();else video.addEventListener('loadedmetadata',init,{once:true});video.addEventListener('canplay',()=>video.pause());
+})();
+</script>
+</body></html>

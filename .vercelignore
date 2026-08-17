@@ -22,3 +22,8 @@ ADMIN-KEY.txt
 SITE-TREE.md
 HANDOFF.md
 README.md
+
+# Local dev helper inside a template folder (Terranova ships as five files,
+# one of which only exists to serve the other four on localhost). It stays in
+# the repo; there is no reason to hand it to visitors.
+templates/**/serve.mjs

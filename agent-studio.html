@@ -2361,7 +2361,12 @@ var INTENT={
      "rakho" — and the thing being changed is often just a noun. Without these
      "theek hai but accent gold kr do" scored as plain approval and built. */
   edit    : /\b(chota|bada|badal|badlo|change|make it|hatao|nikal|add |jodo|daal|colour|color|font|bigger|smaller|darker|lighter|move |swap|instead|k[ar]r? ?do|kro|karo|rakho|rakh ?do|lagao|lga ?do|hata ?do|badha|ghata)\b/i,
-  question: /\b(kitna|kitne|kya |kaise|kyu|why|how (long|much|do)|what (is|does)|can you|price|cost|time lagega)\b/i
+  question: /\b(kitna|kitne|kya |kaise|kyu|why|how (long|much|do)|what (is|does)|can you|price|cost|time lagega)\b/i,
+  /* Feel words on their own are answers, not instructions — "premium" is what
+     someone types when asked to pick a style. They only mean "change this"
+     when something points at the site: isko, thoda, zyada, aur, lge, feel. */
+  feel    : /\b(halka|halki|halke|gehra|gehri|gehre|bhaari|bhari|simple|saaf|clean|modern|premium|bold|soft|warm|thanda|garam|shaant|chamkeela|bright|elegant|classy|fresh|minimal|luxury|royal|sober|heavy|light|dark|serious|fun|playful|bharosemand|professional|mast)\b/i,
+  nudge   : /\b(isko|ise|iska|isme|thoda|thodi|zyada|jyada|aur|kam|bilkul|ekdum|jaisa|jesa|jese|jaise|feel|look|vibe|lge|lge?ga|lage|lagna|dikhe|dikhna|dikhna chahiye|banao|bnao|kro|karo)\b/i
 };
 function classify(text){
   var t=String(text||'').trim();
@@ -2374,6 +2379,7 @@ function classify(text){
      therefore veto both confirmations. */
   if(INTENT.approve.test(t)&&t.length<40&&!INTENT.edit.test(t))return 'approve';
   if(INTENT.edit.test(t))return 'edit';
+  if(INTENT.feel.test(t)&&INTENT.nudge.test(t))return 'edit';
   if(INTENT.reject.test(t)&&t.length<40)return 'reject';
   return 'answer';
 }

@@ -10965,5 +10965,244 @@ else start();
 })();
 </script>
 
+
+<style id="scen-ui2-css">
+/* ── UI 2 ───────────────────────────────────────────────────────────────────
+   The visual language from design/scen-ui-2.html, applied to the real shell.
+   Last stylesheet in the file, so these win without editing earlier layers.
+
+   The one rule underneath it: the accent marks exactly one thing per screen.
+   Everything else is grey, which is what makes the green mean something. ── */
+:root{
+  --r-lg:22px; --r-md:16px; --r-sm:12px;
+  --ui2-card:#101015; --ui2-card2:#141419;
+  --ui2-paper:#f2f2ee; --ui2-ink:#0a0a0c;
+  --ui2-dim:#5f5f6b;
+}
+body{background:#07070a}
+.app-main{background:#0b0b10}
+
+/* Sidebar ---------------------------------------------------------------- */
+.app-sidebar{background:#0a0a0e;padding:16px 12px}
+.app-sidebar .nav-group{margin:20px 0 0}
+.nav-label{font-size:10px;letter-spacing:.16em;color:var(--ui2-dim);font-weight:600;padding:0 10px 8px}
+.side-link{border-radius:11px;padding:9px 11px;font-size:13px;font-weight:500;color:#8a8a95;gap:11px}
+.side-link:hover{background:rgba(255,255,255,.04);color:#fff}
+.side-link.active{background:rgba(255,255,255,.07);color:#fff;font-weight:600}
+.side-link.active:after{display:none}
+.side-link.active .sx-i{stroke:var(--acid);opacity:1}
+.new-project{border-radius:var(--r-sm);font-weight:650;padding:11px;margin-bottom:14px}
+
+/* The workspace card the references open with. */
+.ui2-ws{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);
+  border-radius:var(--r-sm);background:rgba(255,255,255,.02);margin-bottom:14px;cursor:pointer}
+.ui2-ws i{width:28px;height:28px;border-radius:9px;flex:0 0 28px;
+  background:linear-gradient(135deg,var(--acid),#9ee7ff)}
+.ui2-ws b{font-size:12.5px;font-weight:600;display:block;color:#fff;line-height:1.3}
+.ui2-ws span{font-size:10.5px;color:var(--ui2-dim)}
+
+/* Cards ------------------------------------------------------------------ */
+.card,.stat.card,.chart-card{background:var(--ui2-card);border:1px solid var(--line);border-radius:var(--r-lg)}
+.sx-card,.sx-conn,.sx-pcard,.sx-compose,.sx-empty{border-radius:var(--r-lg);background:var(--ui2-card)}
+.sx-tool{border-radius:var(--r-sm);background:var(--ui2-card)}
+
+/* Stat tile -------------------------------------------------------------- */
+.ui2-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
+.ui2-stat{background:var(--ui2-card);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px}
+.ui2-stat .caps{display:block;margin-bottom:12px;font-size:10px;letter-spacing:.16em;color:var(--ui2-dim);font-weight:600}
+.ui2-row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.ui2-num{font-size:clamp(26px,3vw,40px);letter-spacing:-.04em;font-weight:600;line-height:1;color:#fff}
+.ui2-num small{font-size:.5em;color:#8a8a95;font-weight:500;margin-left:3px;letter-spacing:-.02em}
+.ui2-num.none{color:#3a3a44}
+.ui2-delta{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;
+  padding:3px 8px;border-radius:999px;background:rgba(223,255,69,.12);color:var(--acid)}
+.ui2-delta.down{background:rgba(255,110,110,.1);color:#ff9b9b}
+.ui2-hint{font-size:11.5px;color:#6f6f79;margin-top:12px;line-height:1.5}
+
+/* Sparkline / bars ------------------------------------------------------- */
+.ui2-spark{display:flex;align-items:flex-end;gap:2.5px;height:32px;margin-top:14px}
+.ui2-spark i{width:4px;border-radius:2px;background:rgba(255,255,255,.13);display:block}
+.ui2-spark i.on{background:var(--acid)}
+
+/* The one paper surface — where the waiting work lives. */
+.ui2-paper{background:var(--ui2-paper);color:var(--ui2-ink);border-radius:var(--r-lg);padding:20px;border:0}
+.ui2-paper .caps{color:#6c6c66;font-size:10px;letter-spacing:.16em;font-weight:600}
+.ui2-paper .ui2-num{color:var(--ui2-ink)}
+.ui2-paper .ui2-sub{font-size:12.5px;color:#6c6c66;margin-top:6px}
+.ui2-list{margin-top:16px;display:flex;flex-direction:column;gap:2px}
+.ui2-item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:12px;cursor:pointer;transition:.14s}
+.ui2-item:hover{background:rgba(0,0,0,.05)}
+.ui2-item.top{background:var(--ui2-ink);color:var(--ui2-paper)}
+.ui2-item .dot{width:30px;height:30px;border-radius:50%;flex:0 0 30px;background:linear-gradient(135deg,#c9c9c2,#8f8f88)}
+.ui2-item.top .dot{background:linear-gradient(135deg,var(--acid),#9ee7ff)}
+.ui2-item b{font-size:12.5px;font-weight:600;display:block;line-height:1.35}
+.ui2-item small{font-size:10.5px;opacity:.62;display:block}
+.ui2-item .st{margin-left:auto;font-size:10px;font-weight:650;padding:3px 9px;border-radius:999px;background:rgba(0,0,0,.07);white-space:nowrap}
+.ui2-item.top .st{background:rgba(255,255,255,.16)}
+.ui2-paper .btn.ink{background:var(--ui2-ink);border-color:var(--ui2-ink);color:var(--ui2-paper);font-weight:600;width:100%;margin-top:16px}
+
+/* Segmented control ------------------------------------------------------ */
+.ui2-seg{display:flex;gap:3px;padding:3px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:999px}
+.ui2-seg button{border:0;background:transparent;color:#8a8a95;font-family:inherit;font-size:12.5px;
+  font-weight:550;padding:7px 14px;border-radius:999px;cursor:pointer;transition:.14s}
+.ui2-seg button.on{background:var(--acid);color:var(--ui2-ink);font-weight:650}
+
+.ui2-split{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
+.ui2-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.ui2-top h1{font-size:26px;letter-spacing:-.035em;font-weight:600;margin:0}
+@media(max-width:900px){.ui2-stats,.ui2-split{grid-template-columns:1fr}}
+</style>
+
+<script id="scen-ui2">
+/* Home, rebuilt in the UI 2 language. Every number here comes from real state
+   or the capability read — where there is no data it says so rather than
+   showing a placeholder figure. */
+(function(){
+'use strict';
+var ic=window.scenIcon;
+if(typeof views==='undefined'||!ic)return;
+
+function n(v){return Number(v||0).toLocaleString()}
+
+/* A sparkline needs a real series. Nothing in the product records one yet, so
+   this draws the only honest thing available: flat, unlit, with the reason. */
+function spark(series){
+  if(!series||!series.length)
+    return '<div class="ui2-spark">'+Array(12).join('x').split('x')
+      .map(function(){return '<i style="height:14%"></i>'}).join('')+'</div>';
+  var max=Math.max.apply(null,series)||1;
+  return '<div class="ui2-spark">'+series.map(function(v,i){
+    return '<i class="'+(v===max?'on':'')+'" style="height:'+Math.max(8,v/max*100)+'%"></i>';
+  }).join('')+'</div>';
+}
+
+/* What is actually stopping this project going live. Real checks only. */
+function blockers(){
+  var out=[];
+  var caps=null;
+  try{caps=window.__ui2caps}catch(e){}
+  var domainState=caps&&caps.domain?caps.domain.state:null;
+  var payState=caps&&caps.payments?caps.payments.state:null;
+
+  if(state.store&&state.store.enabled&&payState&&payState!=='connected')
+    out.push(['Connect payments','Your store is built but checkout cannot take money','Blocking','connections']);
+  if(domainState==='setup_required')
+    out.push(['Finish your domain','Added, but still waiting on DNS at your registrar','Pending','domains']);
+  else if(domainState==='not_connected')
+    out.push(['Connect a domain','Publishing works without one, on a scen.space address','Optional','domains']);
+  var ps=state.projectSettings||{};
+  if(!ps.siteTitle||!ps.description)
+    out.push(['Add a site description','Improves how you appear in search results','Minor','projectsettings']);
+  if(!(state.forms||[]).length)
+    out.push(['Add a way to get enquiries','No form on the site yet, so nothing can reach you','Minor','forms']);
+  return out;
+}
+
+views.dashboard=function(){
+  var ps=(state.projects||[]);
+  var published=ps.filter(function(p){return p.status==='Published'}).length;
+  var leads=(state.leads||[]).length;
+  var credits=state.credits;
+  var todo=blockers();
+
+  var h='<div class="ui2-top"><h1>'+escV(typeof greeting==='function'?greeting():'Welcome back')+'</h1>'+
+    '<div style="display:flex;gap:10px;align-items:center">'+
+    '<div class="ui2-seg"><button class="on">Overview</button>'+
+    '<button data-nav="activity">Activity</button><button data-nav="monitoring">Health</button></div>'+
+    '<button class="btn primary" data-nav="create">＋ Create website</button></div></div>';
+
+  /* Stat row — three real counts. */
+  h+='<div class="ui2-stats">';
+  h+='<div class="ui2-stat"><span class="caps">Websites</span><div class="ui2-row">'+
+     '<div class="ui2-num'+(ps.length?'':' none')+'">'+(ps.length?n(ps.length):'—')+'</div>'+
+     (published?'<span class="ui2-delta">'+published+' live</span>':'')+'</div>'+
+     (ps.length?spark():'<p class="ui2-hint">Nothing built yet.</p>')+'</div>';
+
+  h+='<div class="ui2-stat"><span class="caps">Leads captured</span><div class="ui2-row">'+
+     '<div class="ui2-num'+(leads?'':' none')+'">'+(leads?n(leads):'—')+'</div></div>'+
+     (leads?spark():'<p class="ui2-hint">Arrive here when someone submits a form.</p>')+'</div>';
+
+  h+='<div class="ui2-stat"><span class="caps">Credits</span><div class="ui2-row">'+
+     '<div class="ui2-num'+(credits==null?' none':'')+'">'+(credits==null?'—':n(credits))+'</div></div>'+
+     (credits==null?'<p class="ui2-hint">Balance loads from your account.</p>'
+                   :'<p class="ui2-hint">Used by AI writing, images and video.</p>')+'</div>';
+  h+='</div>';
+
+  /* Projects + the paper panel. */
+  h+='<div class="ui2-split">';
+  h+='<div class="card" style="padding:20px">'+
+     '<div class="sx-row" style="margin-bottom:14px"><b style="font-size:12.5px">Continue working</b>'+
+     '<button class="btn ghost" data-nav="projects" style="font-size:12px">All projects</button></div>';
+  if(ps.length){
+    h+='<div class="sx-grid" style="margin:0">'+ps.slice(0,4).map(function(p,i){
+      var s=p.status||'Draft';
+      return '<article class="sx-pcard" data-sx="openProject" data-idx="'+i+'">'+
+        '<div class="sx-pshot">'+escV((p.name||'U').slice(0,1).toUpperCase())+'</div>'+
+        '<div class="sx-pbody"><b>'+escV(p.name||'Untitled')+'</b><div class="sx-pmeta">'+
+        '<span class="sx-st '+(s==='Published'?'ok':'')+'">'+escV(s)+'</span>'+
+        '<span>'+escV(p.updated||'Not edited yet')+'</span></div></div></article>';
+    }).join('')+'</div>';
+  }else{
+    h+='<div class="sx-empty" style="border:1px dashed #24242c"><b>No websites yet</b>'+
+       '<p>Describe your business in a sentence and Scen will plan the pages, write the copy and build the site.</p>'+
+       '<button class="btn primary" data-nav="aibuilder">Open AI Builder</button></div>';
+  }
+  h+='</div>';
+
+  /* The paper surface. */
+  h+='<div class="ui2-paper"><span class="caps">Needs you</span>'+
+     '<div class="ui2-num" style="margin-top:10px">'+(todo.length||'0')+'</div>'+
+     '<div class="ui2-sub">'+(todo.length
+        ?'thing'+(todo.length===1?'':'s')+' to look at before you launch'
+        :'nothing is waiting on you')+'</div>';
+  if(todo.length){
+    h+='<div class="ui2-list">'+todo.slice(0,4).map(function(t,i){
+      return '<div class="ui2-item'+(i===0?' top':'')+'" data-nav="'+t[3]+'"><span class="dot"></span>'+
+        '<div><b>'+escV(t[0])+'</b><small>'+escV(t[1])+'</small></div>'+
+        '<span class="st">'+escV(t[2])+'</span></div>';
+    }).join('')+'</div>'+
+    '<button class="btn ink" data-nav="'+todo[0][3]+'">'+escV(todo[0][0])+' →</button>';
+  }else{
+    h+='<div class="ui2-list"><div class="ui2-item"><span class="dot"></span>'+
+       '<div><b>All clear</b><small>Publish whenever you are ready</small></div></div></div>'+
+       '<button class="btn ink" data-nav="publish">Go to Publish →</button>';
+  }
+  h+='</div></div>';
+  return h;
+};
+
+/* The blockers list needs the capability read; cache it and repaint once. */
+if(typeof window.scenCapabilities==='function'){
+  var painted=false;
+  var poll=setInterval(function(){
+    if(!state.auth)return;
+    window.scenCapabilities().then(function(c){
+      window.__ui2caps=c;
+      clearInterval(poll);
+      if(!painted&&state.route==='dashboard'){painted=true;render('dashboard')}
+    }).catch(function(){clearInterval(poll)});
+  },1500);
+}
+
+/* Workspace card at the top of the sidebar, matching the reference. */
+function mountWs(){
+  var bar=document.querySelector('.app-sidebar');
+  if(!bar||bar.querySelector('.ui2-ws'))return;
+  var np=bar.querySelector('.new-project');
+  if(!np)return;
+  var c=(typeof state!=='undefined')?state.credits:null;
+  var d=document.createElement('div');
+  d.className='ui2-ws';
+  d.setAttribute('data-nav','settings');
+  d.innerHTML='<i></i><div><b>'+escV(state.workspaceName||'Workspace')+'</b>'+
+    '<span>'+(c==null?'Plan &amp; credits':Number(c).toLocaleString()+' credits')+'</span></div>';
+  np.parentNode.insertBefore(d,np);
+}
+var mo=new MutationObserver(mountWs);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){mountWs();mo.observe(document.body,{childList:true,subtree:true})});
+else{mountWs();mo.observe(document.body,{childList:true,subtree:true})}
+})();
+</script>
+
 </body>
 </html>

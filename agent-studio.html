@@ -2409,7 +2409,20 @@ function absorbBrief(text){
   else if(!b.kind&&/\bapp\b/i.test(text)){b.kind='app';got.push('an app')}
 
   var ind=matchOne(IND_WORDS,text);
-  if(ind&&!b.industry){b.industry=ind;got.push(INDUSTRIES[ind]?INDUSTRIES[ind].l:ind)}
+  if(ind&&!b.industry){
+    b.industry=ind;
+    got.push(INDUSTRIES[ind]?INDUSTRIES[ind].l:ind);
+    /* Answering the industry question is what loads that trade's page set and
+       feature list. Setting the field directly skipped that, so the pages
+       step opened with nothing ticked and Continue did nothing — the flow
+       dead-ended on a screen that looked fine. */
+    var P=INDUSTRIES[ind];
+    if(P){
+      if(!(b.pages||[]).length&&P.pages)b.pages=P.pages.slice();
+      if(!(b.features||[]).length&&P.feats)b.features=P.feats.slice();
+      if(!b.accent&&P.accent)b.accent=P.accent;
+    }
+  }
 
   var gl=matchOne(GOAL_WORDS,text);
   if(gl&&!b.goal){b.goal=gl;got.push(GOALS[gl]||gl)}

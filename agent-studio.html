@@ -2344,14 +2344,18 @@ function looksLikeBrief(st,text){
    stated, marks those questions answered, and leaves the genuinely open ones
    to be asked. Nothing is guessed: a field is only filled when the text says
    it. ── */
-var IND_WORDS={restaurant:/restaurant|caf|bistro|diner|menu|eatery|food/i,
+/* Order matters: the first match wins. "yoga studio" was landing on agency
+   because that pattern carried a bare "studio", so the specific trades are
+   tested first and agency no longer claims the word on its own. */
+var IND_WORDS={
+  fitness:/fitness|gym|yoga|pilates|workout|training studio|crossfit/i,
+  clinic:/clinic|health|medical|dental|therapy|wellness|mindful|spa/i,
+  restaurant:/restaurant|caf|bistro|diner|menu|eatery|food/i,
   realestate:/real ?estate|property|properties|realty|listing/i,
   fashion:/fashion|clothing|apparel|boutique|lookbook|wear/i,
-  agency:/agency|studio|consultanc|creative firm/i,
+  agency:/agency|consultanc|creative firm|design studio/i,
   saas:/saas|software|platform|dashboard|app for|b2b|api/i,
   portfolio:/portfolio|my work|personal site|photographer|designer/i,
-  clinic:/clinic|health|medical|dental|therapy|wellness|mindful/i,
-  fitness:/fitness|gym|training|workout|yoga|pilates/i,
   education:/course|school|academy|educat|tutor|learning/i,
   events:/event|conference|festival|ticket|wedding/i,
   travel:/travel|resort|hotel|tour|destination|stay/i};
@@ -2390,15 +2394,18 @@ function absorbBrief(text){
   var b=S.brief,got=[];
   if(!b.pitch){b.pitch=text.replace(/\s+/g,' ').trim().slice(0,240);got.push('the brief')}
 
-  var nm=text.match(/\b(?:called|named)\s+["'\u201c]?([A-Z][\w&' -]{1,28}?)["'\u201d]?(?=[\s,.:;]|$)/)
-        ||text.match(/["\u201c]([A-Z][\w&' -]{1,28})["\u201d]/);
+  /* A quoted name is exact. Unquoted, take up to three capitalised words —
+     "Serenity Flow" was being cut to "Serenity" by stopping at the first
+     space. */
+  var nm=text.match(/["\u201c]([^"\u201d]{1,40})["\u201d]/)
+        ||text.match(/\b(?:called|named)\s+((?:[A-Z][\w&']*)(?:[ -](?:[A-Z][\w&']*|of|and|&)){0,2})/);
   if(nm&&!b.name){b.name=nm[1].trim();got.push('name <b>'+C.esc(b.name)+'</b>')}
 
   /* Step 0 carries the agent's introduction, so leaving kind unset made the
      agent introduce itself again after the customer had already written a
      brief. Read it from the ordinary words people use. */
   if(!b.kind&&/\b(mobile app|ios|android|app store)\b/i.test(text)){b.kind='app';got.push('a mobile app')}
-  else if(!b.kind&&/\b(website|web ?site|landing page|hero section|home ?page|web app)\b/i.test(text)){b.kind='website';got.push('a website')}
+  else if(!b.kind&&/\b(web ?site|site|landing page|hero section|home ?page|web app|page for)\b/i.test(text)){b.kind='website';got.push('a website')}
   else if(!b.kind&&/\bapp\b/i.test(text)){b.kind='app';got.push('an app')}
 
   var ind=matchOne(IND_WORDS,text);

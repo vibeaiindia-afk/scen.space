@@ -140,10 +140,13 @@ requirement is silently skipped. That was a real bug found in testing.
 
 ## 7. What is NOT done — start here
 
-1. **`agent-studio.html` was not refactored.** Separate 210KB page, own shell,
-   14-question interview, 17 tool panels. The "Agent Studio becomes AI Builder" merge
-   was implemented only for the in-app flow (`views.aibuilder` wrapping the existing
-   create → plan → generation → builder routes). **Largest remaining item.**
+1. ~~`agent-studio.html` was not refactored.~~ **Done in `9f1f41c`** — 16 tool panels
+   become 4 in Simple Mode, sharing the `scen.uimode` key with the main app so both
+   surfaces expand together. Note it is edited **in place**, not appended: this file is
+   five separate IIFEs, so `TOOLS` is private to its block and cannot be wrapped from a
+   later script. What remains there is the deeper §12 merge — the 14-question interview
+   and the conversation are still separate from the in-app `create → plan → generation`
+   flow, so a project started in one does not continue in the other.
 2. **`GET /api/capabilities` has never run against a live database.** It typechecks and
    reuses existing status helpers, but was only tested against a browser stub.
 3. **Pre-existing fake data remains** in wrapped views — `views.funnels` still shows a

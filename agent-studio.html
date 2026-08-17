@@ -320,8 +320,8 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
    Publish and the account pill sat off the edge with nothing to scroll them
    into view. The row now wraps and the tabs scroll on their own. */
 @media (max-width:560px){
-  .toolbar{flex-wrap:wrap;height:auto;padding:8px 10px;gap:8px;align-items:center}
-  .tb-left{min-width:0;flex:1}
+  .topbar{flex-wrap:wrap;height:auto;min-height:0;padding:8px 10px;gap:8px;align-items:center}
+  .tb-left{min-width:0;flex:1 1 100%;order:1;overflow:hidden}
   .tb-right{margin-left:0;order:3;width:100%;justify-content:flex-start;gap:6px}
   .tb-right .btn,.tb-right .pill{flex:1;min-width:0;text-align:center;white-space:nowrap}
   .tb-center{order:2;width:100%;margin-left:0;overflow-x:auto;-webkit-overflow-scrolling:touch}

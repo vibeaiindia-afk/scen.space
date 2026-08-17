@@ -1976,6 +1976,48 @@ function editPrompt(text,b,hist){
   'in "reply" and return no other keys. '+
   'If nothing about the site should change, return only {"reply":"..."}.';
 }
+/* §7 + §47 — understand the turn before deciding what to say. One call that
+   reads the sentence against the brief and the conversation, returns what it
+   learned, and says whether anything still needs asking. The regex path stays
+   as the fallback for a missing gateway or unusable JSON. */
+function turnPrompt(text,b,hist){
+  return 'You are reading one turn of a conversation with a client who wants a website built.\n\n'+
+  'Project so far:\n'+briefSummary(b)+
+  (hist&&hist.length?'\n\nConversation so far (oldest first):\n'+hist.join('\n'):'')+
+  '\n\nThe client just said: "'+String(text).slice(0,800)+'"\n\n'+
+  'Return one JSON object:\n'+
+  '{"intent":"casual_chat|project_creation|project_edit|project_question|project_continue",\n'+
+  ' "brief_updates":{"name":"","industry":"","kind":"website|app|both","pitch":"","goal":"",\n'+
+  '   "style":"cinematic|minimal|editorial|luxury|playful","accent":"#rrggbb",\n'+
+  '   "addPages":[],"dropPages":[],"addFeatures":[],"dropFeatures":[],"languages":[],"location":""},\n'+
+  ' "ready_to_build":false, "should_ask_question":true, "next_question":"",\n'+
+  ' "reply":"one short natural sentence in the client\'s own language"}\n\n'+
+  'Rules:\n'+
+  '- Include only keys the client actually stated or that follow obviously. Omit the rest.\n'+
+  '- Never ask for anything already in the project or in the conversation above.\n'+
+  '- Ask at most one question, and only when it genuinely changes the result. '+
+  'Do not ask about motion, typography, spacing or radius — decide those yourself.\n'+
+  '- If the client says you decide, or anything like it, choose and set ready_to_build.\n'+
+  '- Once a kind, a trade and a name (or a workable placeholder) are known, set ready_to_build '+
+  'true and should_ask_question false. A strong first version beats a complete form.\n'+
+  '- Feature names must come from: '+Object.keys(FEATURES).join(', ')+'.\n'+
+  '- Match the client\'s language, including Hinglish. Be brief and decisive. '+
+  'Do not restate everything they said.';
+}
+function readTurn(text,b,hist){
+  var t0=Date.now();
+  return post('analysis',turnPrompt(text,b,hist),
+    'You read a client message and reply with one JSON object and nothing else.',
+    {maxOutputTokens:700,temperature:.3})
+    .then(function(d){
+      record(d,Date.now()-t0);
+      var o=jsonFrom(d.text);
+      if(!o)throw Object.assign(new Error('The model did not return usable JSON'),{status:502});
+      return o;
+    })
+    .catch(function(e){failed(e);return null});
+}
+
 function readEdit(text,b,hist){
   var t0=Date.now();
   return post('analysis',editPrompt(text,b,hist),
@@ -1999,7 +2041,7 @@ function test(){
 }
 
 window.__SCEN_AI={AI:AI,probe:probe,usable:usable,label:label,
-  writeCopy:writeCopy,writePlan:writePlan,readEdit:readEdit,test:test,SECTION_IDS:SECTION_IDS};
+  writeCopy:writeCopy,writePlan:writePlan,readEdit:readEdit,readTurn:readTurn,test:test,SECTION_IDS:SECTION_IDS};
 })();
 </script>
 <script>
@@ -2486,6 +2528,38 @@ function fillDefaults(b){
   if(!b.accent){var P=INDUSTRIES[b.industry];b.accent=(P&&P.accent)||'#dfff45'}
 }
 
+/* Merge what the model read. §48 — an explicit statement outranks whatever we
+   inferred, so anything present here simply overwrites. Pages and features go
+   through the same add/drop the edit reader already uses. */
+function applyTurn(o){
+  var b=S.brief,u=o&&o.brief_updates;if(!u)return;
+  ['name','pitch','goal','style','accent','industry','kind','location'].forEach(function(k){
+    if(u[k])b[k]=u[k];
+  });
+  if(Array.isArray(u.languages)&&u.languages.length)b.languages=u.languages;
+  if(Array.isArray(u.addPages))u.addPages.forEach(function(p){
+    p=C.titleCase(String(p));if(b.pages.indexOf(p)<0)b.pages.push(p)});
+  if(Array.isArray(u.dropPages))u.dropPages.forEach(function(p){
+    b.pages=b.pages.filter(function(x){return x.toLowerCase()!==String(p).toLowerCase()})});
+  if(Array.isArray(u.addFeatures))u.addFeatures.forEach(function(f){
+    if(FEATURES[f]&&b.features.indexOf(f)<0)b.features.push(f)});
+  if(Array.isArray(u.dropFeatures))u.dropFeatures.forEach(function(f){
+    b.features=b.features.filter(function(x){return x!==f})});
+  renderMain();
+}
+/* The model could not be read. Carry on with the old path, without echoing
+   the client's line twice — it is already on screen. */
+function resumeInterview(text){
+  var st=step();if(!st)return;
+  if(st.type==='multi'){
+    var cur=(st.val?st.val(S.brief):[]).slice();
+    text.split(/[,\n]/).map(function(x){return x.trim()}).filter(Boolean).forEach(function(x){
+      var t=C.titleCase(x);if(cur.indexOf(t)<0&&cur.indexOf(x)<0)cur.push(t)});
+    return answer(cur,cur.join(', '),true);
+  }
+  answer(text,text,true);
+}
+
 function absorbBrief(text){
   var b=S.brief,got=[];
   if(!b.pitch){b.pitch=text.replace(/\s+/g,' ').trim().slice(0,240);got.push('the brief')}
@@ -2562,6 +2636,33 @@ function handleText(text){
   if(S.phase==='interview'){
     var st=step();
     if(!st)return;
+
+    /* §47 — extraction first. Ask the model what this turn actually contained
+       before deciding what to say; the predefined next question is what made
+       the studio re-ask things the client had already told it. Everything
+       below stays as the fallback when the gateway is absent or the JSON is
+       unusable, so nothing here can strand a conversation. */
+    if(X.usable()){
+      userSay(text,atts);S.atts=[];renderAtts();
+      thinking();
+      X.readTurn(text,S.brief,transcript()).then(function(o){
+        clearThinking();setAiPill();
+        if(!o)return resumeInterview(text);
+        applyTurn(o);
+        if(o.reply)agentSay(esc(String(o.reply).slice(0,300)));
+        if(o.ready_to_build&&haveEnough(S.brief)){
+          fillDefaults(S.brief);
+          S.skip=(S.skip||[]).concat(FLOW.map(function(f){return f.id}));
+          S.step=0;save();return askCurrent(true);
+        }
+        if(o.should_ask_question&&o.next_question){
+          agentSay(esc(String(o.next_question).slice(0,240)));
+          S.awaitingFree=true;save();return;
+        }
+        save();askCurrent(true);
+      }).catch(function(){clearThinking();resumeInterview(text)});
+      return;
+    }
 
     var intent=readIntent(text);
 

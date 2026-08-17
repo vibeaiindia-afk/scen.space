@@ -2337,6 +2337,96 @@ function looksLikeBrief(st,text){
   return (st.id==='name')&&(text.length>36||URL_RE.test(text));
 }
 
+/* ── Absorbing a whole brief ───────────────────────────────────────────────
+   Someone who pastes a specification has already answered half the interview.
+   Reading it one field at a time — which is what the FLOW did — threw the
+   rest away and then asked for it again. This pulls out what is actually
+   stated, marks those questions answered, and leaves the genuinely open ones
+   to be asked. Nothing is guessed: a field is only filled when the text says
+   it. ── */
+var IND_WORDS={restaurant:/restaurant|caf|bistro|diner|menu|eatery|food/i,
+  realestate:/real ?estate|property|properties|realty|listing/i,
+  fashion:/fashion|clothing|apparel|boutique|lookbook|wear/i,
+  agency:/agency|studio|consultanc|creative firm/i,
+  saas:/saas|software|platform|dashboard|app for|b2b|api/i,
+  portfolio:/portfolio|my work|personal site|photographer|designer/i,
+  clinic:/clinic|health|medical|dental|therapy|wellness|mindful/i,
+  fitness:/fitness|gym|training|workout|yoga|pilates/i,
+  education:/course|school|academy|educat|tutor|learning/i,
+  events:/event|conference|festival|ticket|wedding/i,
+  travel:/travel|resort|hotel|tour|destination|stay/i};
+var FEAT_WORDS={store:/shop|store|e-?commerce|checkout|cart|sell/i,
+  bookings:/book|appointment|reservation|schedul/i,
+  blog:/blog|articles|posts|cms|journal/i,
+  forms:/contact form|enquiry|inquiry|lead form|get in touch/i,
+  accounts:/login|sign ?up|account|member|auth/i,
+  multilang:/multi-?lang|translat|bilingual|locales?/i,
+  gallery:/gallery|lookbook|photos|portfolio grid/i,
+  maps:/map|directions|location/i,
+  analytics:/analytics|tracking/i,
+  chat:/live chat|chat widget|whatsapp/i};
+var STYLE_WORDS={cinematic:/cinematic|filmic|dramatic|immersive/i,
+  minimal:/minimal|clean|simple|spare|understated/i,
+  editorial:/editorial|magazine|typographic|serif/i,
+  luxury:/luxur|premium|elegant|refined|high-?end/i,
+  playful:/playful|fun|bright|energetic|bold colou?r/i};
+var GOAL_WORDS={sell:/sell|purchase|buy|revenue|checkout/i,
+  book:/book|appointment|reservation/i,
+  lead:/enquir|inquir|lead|contact us|get in touch/i,
+  signup:/sign ?up|waitlist|subscribe|trial/i,
+  show:/showcase|portfolio|display our work/i};
+
+function matchOne(map,text){for(var k in map)if(map[k].test(text))return k;return ''}
+function matchMany(map,text){var o=[];for(var k in map)if(map[k].test(text))o.push(k);return o}
+
+/* Long, or written like a spec rather than an answer. */
+function isBriefLike(text){
+  if(text.length>=110)return true;
+  if(/\n/.test(text)&&text.length>60)return true;
+  return (text.split(/[.!?]\s/).length>2&&text.length>70);
+}
+
+function absorbBrief(text){
+  var b=S.brief,got=[];
+  if(!b.pitch){b.pitch=text.replace(/\s+/g,' ').trim().slice(0,240);got.push('the brief')}
+
+  var nm=text.match(/\b(?:called|named)\s+["'\u201c]?([A-Z][\w&' -]{1,28}?)["'\u201d]?(?=[\s,.:;]|$)/)
+        ||text.match(/["\u201c]([A-Z][\w&' -]{1,28})["\u201d]/);
+  if(nm&&!b.name){b.name=nm[1].trim();got.push('name <b>'+C.esc(b.name)+'</b>')}
+
+  if(!b.kind&&/\b(mobile app|ios|android|app store)\b/i.test(text)){b.kind='app';got.push('a mobile app')}
+  else if(!b.kind&&/\bwebsite|landing page|web ?site\b/i.test(text)){b.kind='website';got.push('a website')}
+
+  var ind=matchOne(IND_WORDS,text);
+  if(ind&&!b.industry){b.industry=ind;got.push(INDUSTRIES[ind]?INDUSTRIES[ind].l:ind)}
+
+  var gl=matchOne(GOAL_WORDS,text);
+  if(gl&&!b.goal){b.goal=gl;got.push(GOALS[gl]||gl)}
+
+  var st=matchOne(STYLE_WORDS,text);
+  if(st&&!b.style){b.style=st;got.push((STYLES[st]?STYLES[st].l:st)+' look')}
+
+  var fe=matchMany(FEAT_WORDS,text);
+  if(fe.length){
+    b.features=(b.features||[]).slice();
+    fe.forEach(function(f){if(b.features.indexOf(f)<0)b.features.push(f)});
+    got.push(fe.map(function(f){return FEATURES[f]?FEATURES[f].l:f}).join(', '));
+  }
+
+  var hex=text.match(/#([0-9a-f]{6}|[0-9a-f]{3})\b/i);
+  if(hex&&!b.accent){b.accent='#'+hex[1];got.push('accent <b>#'+C.esc(hex[1])+'</b>')}
+
+  /* Only skip what is now actually filled. */
+  S.skip=(S.skip||[]).slice();
+  [['name',b.name],['industry',b.industry],['pitch',b.pitch],['goal',b.goal],
+   ['style',b.style],['accent',b.accent],['kind',b.kind],
+   ['features',(b.features||[]).length]].forEach(function(pair){
+    if(pair[1]&&S.skip.indexOf(pair[0])<0)S.skip.push(pair[0]);
+  });
+  save();
+  return got;
+}
+
 function handleText(text){
   var atts=S.atts.slice();
   if(S.phase==='interview'){
@@ -2357,6 +2447,16 @@ function handleText(text){
       agentSay('Noted <b>'+C.esc(intent.ref)+'</b> as a reference. I will take the '+
         'layout and feel as direction — I build your own site from it, not a copy of theirs.');
       if(looksLikeBrief(st,text)){askCurrent(true);return}
+      return askCurrent(true);
+    }
+    /* A pasted brief or spec answers several questions at once. */
+    if(isBriefLike(text)){
+      userSay(text,atts);S.atts=[];renderAtts();
+      var got=absorbBrief(text);
+      agentSay(got.length
+        ? 'Read that as the brief. I took '+got.join(' · ')+'. I will ask only what is still missing.'
+        : 'Kept that as the brief.');
+      S.step=0;                        /* re-enter and let skip jump the answered ones */
       return askCurrent(true);
     }
     if(looksLikeBrief(st,text)){

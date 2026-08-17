@@ -10942,6 +10942,17 @@ function retargetLinks(root){
   }
 }
 
+/* Boot resolves /preset/<slug> partway down the file, before this layer has
+   pushed anything into TEMPLATES — so the wrapper above never sees a film on
+   a cold load, and the visitor lands on the marketing page instead. Handle the
+   URL here, where the entries actually exist. */
+(function(){
+  var m=location.pathname.match(/^\/preset\/([^\/?#]+)\/?$/);
+  if(!m)return;
+  var f=fileFor(slugOf(decodeURIComponent(m[1])));
+  if(f)location.replace(f);
+})();
+
 /* The gallery is injected by an earlier layer and re-rendered on navigation,
    so watch for it rather than racing it. */
 var mo=new MutationObserver(function(){retargetLinks(document)});

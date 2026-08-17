@@ -3257,7 +3257,7 @@ function renderTools(){
     out+='<span class="caps">'+grp[0]+'</span>';
     grp[2].forEach(function(t){
       var meta='';
-      if(t[0]==='brief')meta='<span class="cnt">'+briefFilled()+'/10</span>';
+      if(t[0]==='brief')meta=haveEnough(S.brief)?'<span class="cnt">ready</span>':'';
       if(t[0]==='plan'&&S.brief.pages.length)meta='<span class="cnt">'+S.brief.pages.length+'</span>';
       if(t[0]==='files'&&S.files.length)meta='<span class="cnt">'+S.files.length+'</span>';
       if(t[0]==='log'&&S.buildLog.length)meta='<span class="cnt">'+S.buildLog.length+'</span>';
@@ -3293,7 +3293,7 @@ function notWired(what){
 var PANE={};
 
 PANE.brief=function(){
-  var b=S.brief,f=briefFilled();
+  var b=S.brief;
   var rows=[
     ['Building',b.kind?({website:'Website',app:'Mobile app',both:'Website + app'})[b.kind]:''],
     ['Name',b.name],
@@ -3312,9 +3312,14 @@ PANE.brief=function(){
   ];
   return '<div class="pane">'+head('Brief',
     'Everything the agent has been told. It fills in as the conversation goes and it is what the build reads from.')+
-    '<div style="max-width:420px;margin-bottom:24px"><div style="display:flex;justify-content:space-between;font-size:12px;color:#8c8c98;margin-bottom:6px">'+
-    '<span>'+f+' of 10 essentials</span><span>'+Math.round(f/10*100)+'%</span></div>'+
-    '<div class="meter"><i style="width:'+(f/10*100)+'%"></i></div></div>'+
+    /* §16 — "3 of 10 essentials · 30%" read like a form you had to finish
+       before anything could happen. Nothing here ever gated the build, but the
+       bar said otherwise. It now reports readiness, and the brief keeps
+       growing during and after the build. */
+    '<div style="max-width:420px;margin-bottom:24px;font-size:12px;color:#8c8c98">'+
+    (haveEnough(b)?'<span style="color:#7ee787">Enough to start</span> — everything else is optional, and you can change any of it later.'
+                  :'Still gathering the basics. Tell me what you want and I will fill this in.')+
+    '</div>'+
     '<div class="brief-grid">'+rows.map(function(r){
       var filled=r[1]&&String(r[1]).length;
       return '<div class="bcard'+(filled?' filled':'')+'"><div class="k"><span class="dot'+(filled?'':' idle')+'"></span>'+

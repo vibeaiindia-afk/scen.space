@@ -2343,8 +2343,30 @@ var URL_RE=new RegExp(
   '\\b(https?:\\/\\/[^\\s]+'                                  /* explicit scheme wins */
   +'|(?:[a-z0-9-]+\\.)+(?:'+TLD+')(?![a-z])(?:\\/[^\\s]*)?)','i');
 var REF_RE=/\b(clone|cloan|copy|like|similar to|inspired by|same as)\b/i;
+/* What the sentence is trying to do. The name was already here but it only
+   ever pulled out a reference URL — every other message fell through to
+   "answer to whatever question is on screen", which is how "hero chota kro"
+   became someone's business name. Kinds map to routes, nothing else. */
+var INTENT={
+  greeting:/^\s*(hi+|hey|hello|yo|hola|namaste|sup|good (morning|evening|afternoon))\b[\s!.?]*$/i,
+  approve : /\b(approve|go ahead|build it|bana do|banao ab|start kro|shuru kro|theek hai|thik hai|ok(ay)? go|looks good|perfect|haan)\b/i,
+  reject  : /\b(nahi|nahin|no thanks|don'?t|mat |hatao|remove that|cancel|rehne do)\b/i,
+  edit    : /\b(chota|bada|badal|badlo|change|make it|hatao|nikal|add |jodo|daal|colour|color|font|bigger|smaller|darker|lighter|move |swap|instead)\b/i,
+  question: /\b(kitna|kitne|kya |kaise|kyu|why|how (long|much|do)|what (is|does)|can you|price|cost|time lagega)\b/i
+};
+function classify(text){
+  var t=String(text||'').trim();
+  if(!t)return 'empty';
+  if(INTENT.greeting.test(t))return 'greeting';
+  if(isBriefLike(t))return 'brief';
+  if(INTENT.question.test(t))return 'question';
+  if(INTENT.approve.test(t)&&t.length<40)return 'approve';
+  if(INTENT.edit.test(t))return 'edit';
+  if(INTENT.reject.test(t)&&t.length<40)return 'reject';
+  return 'answer';
+}
 function readIntent(text){
-  var out={ref:'',rest:text};
+  var out={ref:'',rest:text,kind:classify(text)};
   var m=text.match(URL_RE);
   if(m&&!/\.(png|jpg|jpeg|webp|mp4|gif)$/i.test(m[1])){
     out.ref=m[1];
@@ -2510,6 +2532,28 @@ function handleText(text){
     if(!st)return;
 
     var intent=readIntent(text);
+
+    /* A change request in the middle of the interview is not the answer to
+       whatever question happens to be on screen. "hero chota kro" used to be
+       filed as a business name. Only once there is something to change, and
+       only when the gateway can actually read it — otherwise carry on. */
+    if(intent.kind==='edit'&&S.brief.name&&X.usable()){
+      userSay(text,atts);S.atts=[];renderAtts();
+      var t0=Date.now();thinking();
+      X.readEdit(text,S.brief,transcript()).then(function(o){
+        clearThinking();setAiPill();
+        var changed=o?applyPatch(o):[];
+        if(changed.length){
+          agentSay(changed.join('<br/>'),Math.max(1,Math.round((Date.now()-t0)/1000)));
+          save();return askCurrent(true);        /* back to the open question */
+        }
+        agentSay(esc(String((o&&o.reply)||'').slice(0,240))||
+                 'I did not catch what to change \u2014 say it plainly and I will fix it.');
+        askCurrent(true);
+      }).catch(function(){clearThinking();askCurrent(true)});
+      return;
+    }
+
     if(intent.ref){
       userSay(text,atts);S.atts=[];renderAtts();
       S.brief.reference=intent.ref;

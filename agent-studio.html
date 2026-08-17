@@ -2647,8 +2647,71 @@ function absorbBrief(text){
   return got;
 }
 
+/* Everything the panels hold, reachable by asking. The studio put publishing,
+   domains, credits and the rest behind a sidebar; a client who only wants to
+   talk should not have to find them. Read-only answers come back in the chat;
+   anything that reaches the outside world opens its panel instead of firing,
+   so publishing is still a decision someone makes on purpose. */
+var PANEL_WORDS=[
+  [/\b(publish|publishing|live kar|deploy)\b/i,'publishing','Publishing'],
+  [/\b(domains?|url|address|dns)\b/i,'domains','Domain'],
+  [/\b(database|data|table)\b/i,'database','Data'],
+  [/\b(login|users|account|sign ?out|log ?out)\b/i,'users','Login & Users'],
+  [/\b(storage|files? upload|media)\b/i,'storage','Storage'],
+  [/\b(security|session|revoke)\b/i,'security','Security'],
+  [/\b(github|git|repo)\b/i,'git','GitHub'],
+  [/\b(api ?key|secret|token)\b/i,'secrets','API Keys'],
+  [/\b(connections?|integrat\w*|connect)\b/i,'integrations','Connections'],
+  [/\b(health|monitor|uptime)\b/i,'monitoring','Site Health'],
+  [/\b(activity|history|log)\b/i,'log','Activity'],
+  [/\b(plan|sections?|structure)\b/i,'plan','Plan'],
+  [/\b(files?|code)\b/i,'files','Files']
+];
+/* Questions worth answering outright, from state we already hold. */
+function answerAbout(text){
+  var t=String(text);
+  if(/\b(credit|balance|kitne credit)\b/i.test(t)){
+    var w=API.credits;
+    return w?'You have '+Number(w.available).toLocaleString()+' credits, and have used '+
+             Number(w.lifetimeUsed||0).toLocaleString()+'.'
+           :(signedIn()?'I cannot read your credits right now.':'Sign in and I can tell you.');
+  }
+  if(/\b(kitni files|how many files|files bani)\b/i.test(t))
+    return S.files.length?'The build made '+S.files.length+' files. They are all under Files, and downloadable.'
+                         :'Nothing is built yet.';
+  if(/\b(signed in|logged in|kaun|who am i)\b/i.test(t))
+    return signedIn()?'Signed in as '+esc(accountName())+'.':'Not signed in.';
+  return '';
+}
+function panelAsk(text){
+  /* "button ka code change karo" contains "code" and "karo" and is plainly an
+     edit, not a request for the Files panel. Any edit verb settles it — the
+     panels are asked for, never worked on. */
+  if(INTENT.edit.test(text))return null;
+  if(INTENT.feel.test(text))return null;
+  /* And the ask itself has to be navigational. "karo" alone is not; it ends
+     half the change requests in this language. */
+  if(!/\b(kholo|khol|dikha|dikhao|dekhna|show|open|where|kahan|kidhar|kaise|kaha)\b/i.test(text))return null;
+  for(var i=0;i<PANEL_WORDS.length;i++)if(PANEL_WORDS[i][0].test(text))return PANEL_WORDS[i];
+  return null;
+}
+
 function handleText(text){
   var atts=S.atts.slice();
+
+  /* Asking about the studio itself — credits, files, who am I — is answered
+     here rather than treated as a design change. */
+  var about=answerAbout(text);
+  if(about){userSay(text,atts);S.atts=[];renderAtts();agentSay(about);return}
+
+  var panel=panelAsk(text);
+  if(panel){
+    userSay(text,atts);S.atts=[];renderAtts();
+    if(uiMode()!=='advanced'&&['plan','files','log'].indexOf(panel[1])<0)setUiMode('advanced');
+    S.tool=panel[1];setTab('tools');save();renderTools();renderMain();
+    agentSay('Opened <b>'+esc(panel[2])+'</b> on the right.');
+    return;
+  }
 
   /* §37 — a message sent while the build runs used to go straight to the edit
      path, mutating the brief the generator was still reading. Hold it instead;

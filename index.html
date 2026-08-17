@@ -11351,5 +11351,91 @@ views.dashboard=function(){
 })();
 </script>
 
+
+<style id="scen-howitworks-css">
+/* How it works — the step the home page never had (spec §93). Draftly leads
+   with a six-step version of the same idea; four is enough for what Scen
+   actually asks of someone. */
+#howitworks{padding:96px 0;border-top:1px solid rgba(255,255,255,.06);background:#07070a}
+#howitworks .inner{max-width:1240px;margin:0 auto;padding:0 24px}
+.hiw-head{max-width:620px;margin-bottom:52px}
+.hiw-head span{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#8a8a95;font-weight:600}
+.hiw-head h2{font-size:clamp(30px,4.2vw,54px);line-height:1.02;letter-spacing:-.04em;font-weight:600;margin:16px 0 0}
+.hiw-head h2 em{font-style:normal;color:#8a8a95}
+.hiw-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.hiw{padding:22px 20px 24px;border:1px solid rgba(255,255,255,.07);border-radius:22px;background:#101015;
+  position:relative;overflow:hidden}
+.hiw:first-child{border-color:rgba(223,255,69,.26)}
+.hiw i{font-style:normal;font-size:11px;font-weight:700;letter-spacing:.1em;color:#5f5f6b;display:block;margin-bottom:26px}
+.hiw:first-child i{color:var(--acid)}
+.hiw b{display:block;font-size:17px;font-weight:600;letter-spacing:-.025em;margin-bottom:8px;color:#fff}
+.hiw p{font-size:13px;line-height:1.6;color:#8a8a95;margin:0}
+.hiw-foot{margin-top:34px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hiw-foot .note{font-size:12.5px;color:#6f6f79}
+@media(max-width:940px){.hiw-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.hiw-grid{grid-template-columns:1fr}#howitworks{padding:70px 0}}
+</style>
+
+<script id="scen-howitworks">
+/* Adds the missing How-it-works section and the missing meta description.
+   Injected rather than written into the markup, to stay consistent with how
+   every other layer in this file works. */
+(function(){
+'use strict';
+
+/* The page had no <meta name="description"> at all, so search results were
+   left to guess from body copy. */
+function meta(){
+  if(document.querySelector('meta[name="description"]'))return;
+  var m=document.createElement('meta');
+  m.name='description';
+  m.content='Scen turns one brief into a finished website — AI plans the pages, writes the copy, '+
+            'designs the motion and 3D scenes, then publishes to your own domain. Edit visually or '+
+            'just ask for changes.';
+  document.head.appendChild(m);
+}
+
+var STEPS=[
+  ['01','Describe','Tell Scen what the business is and what the site needs to do. One or two sentences is enough.'],
+  ['02','Direct','It plans the pages, picks a visual direction and writes the copy — you approve the plan before anything is built.'],
+  ['03','Refine','Click any element and edit it, or just say what you want changed. Scen edits the real site, not a copy.'],
+  ['04','Publish','It checks the site is ready, connects whatever it needs, and puts it live on your domain.']
+];
+
+function mount(){
+  if(document.getElementById('howitworks'))return;
+  var anchor=document.querySelector('#marketing #showcase');
+  if(!anchor)return;
+  var s=document.createElement('section');
+  s.id='howitworks';
+  s.innerHTML='<div class="inner">'+
+    '<div class="hiw-head"><span>How it works</span>'+
+    '<h2>Four steps.<br><em>Nothing technical in any of them.</em></h2></div>'+
+    '<div class="hiw-grid">'+STEPS.map(function(x){
+      return '<article class="hiw"><i>'+x[0]+'</i><b>'+x[1]+'</b><p>'+x[2]+'</p></article>';
+    }).join('')+'</div>'+
+    '<div class="hiw-foot"><button class="btn primary" data-action="heroFocus">Start with a sentence</button>'+
+    '<span class="note">No card needed. You only connect a domain when you want your own address.</span></div>'+
+    '</div>';
+  anchor.parentNode.insertBefore(s,anchor);
+}
+
+/* Sends someone back to the one input that starts everything. */
+document.addEventListener('click',function(e){
+  if(!e.target.closest('[data-action="heroFocus"]'))return;
+  e.preventDefault();
+  var box=document.getElementById('heroPrompt');
+  if(!box)return;
+  window.scrollTo({top:0,behavior:'smooth'});
+  setTimeout(function(){try{box.focus()}catch(err){}},420);
+},false);
+
+function boot(){meta();mount()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);
+else boot();
+setTimeout(mount,1200);
+})();
+</script>
+
 </body>
 </html>

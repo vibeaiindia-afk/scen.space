@@ -2688,11 +2688,17 @@ var PANEL_WORDS=[
 /* Questions worth answering outright, from state we already hold. */
 function answerAbout(text){
   var t=String(text);
-  if(/\b(credit|balance|kitne credit)\b/i.test(t)){
-    var w=API.credits;
-    return w?'You have '+Number(w.available).toLocaleString()+' credits, and have used '+
-             Number(w.lifetimeUsed||0).toLocaleString()+'.'
-           :(signedIn()?'I cannot read your credits right now.':'Sign in and I can tell you.');
+  /* On a phone the studio is now the whole workspace, and there is no billing
+     panel in here — so asking is the only way to see a balance. Say the number
+     and say plainly where topping up happens, rather than opening the project
+     Plan panel, which is about pages and has nothing to do with money. */
+  if(/\b(credit|credits|balance|billing|top ?up|recharge|kitne credit|paisa|payment|subscription)\b/i.test(t)){
+    var w=API.credits&&(API.credits.wallet||API.credits);
+    if(!signedIn())return 'Sign in and I can tell you your balance.';
+    if(!w)return 'I cannot read your balance right now.';
+    return 'You have '+Number(w.available).toLocaleString()+' credits, and have used '+
+           Number(w.lifetimeUsed||0).toLocaleString()+'.<br/><br/>'+
+           'Buying more is not something I can do from here \u2014 open Scen on a laptop for billing.';
   }
   if(/\b(kitni files|how many files|files bani)\b/i.test(t))
     return S.files.length?'The build made '+S.files.length+' files. They are all under Files, and downloadable.'

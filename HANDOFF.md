@@ -138,6 +138,32 @@ requirement is silently skipped. That was a real bug found in testing.
 
 ---
 
+## 6b. The studio chat does not understand intent — open bug
+
+Reported 2026-08-17 with a reproduction. A customer typed
+`cloan of http://netflix.com/browse`. The agent ignored it, carried on with its
+scripted questions, named the project **"lets make a"** — a fragment of the
+sentence — and shipped Velorah's agency copy.
+
+Two causes, both in `agent-studio.html`:
+
+1. **The interview is a fixed questionnaire, not a conversation.** `FLOW` is 14
+   steps (`kind, industry, name, pitch, goal, audience, pages, features, style,
+   accent, motion, content, languages, domain`). Whatever the customer types is
+   assigned to whichever step is current. Typing a whole brief at the `name`
+   step makes the brief the project name. Nothing parses intent first.
+2. **There is no concept of a reference site.** No URL handling exists anywhere
+   in the file — "clone of <url>" cannot be understood, so it lands as text in
+   the current field.
+
+Fixing it properly means parsing intent before the interview runs (detect a
+URL, a "clone/like X" reference, a full brief that answers several questions at
+once) and letting answers fill any step rather than only the current one. That
+is a feature, not a patch — do not attempt it as a quick fix.
+
+Until then the studio only works if the customer answers the questions as
+asked, one at a time.
+
 ## 7. What is NOT done — start here
 
 1. ~~`agent-studio.html` was not refactored.~~ **Done in `9f1f41c`** — 16 tool panels

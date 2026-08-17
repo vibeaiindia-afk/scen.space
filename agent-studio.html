@@ -2314,7 +2314,13 @@ function answer(value,label){
    The interview used to assign every message to the current step, so typing
    "clone of netflix.com/browse" at the name question made that the project
    name. Intent is read first now; only what is left becomes the answer. */
-var URL_RE=/\b((?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?)/i;
+/* A hostname, not a filename. "index.html", "App.tsx" and "index.css" all
+   matched the old pattern, so pasting a code spec made Scen announce
+   index.html as the reference site. Either a real scheme, or a real TLD. */
+var TLD='com|net|org|io|co|dev|app|ai|space|in|uk|us|me|xyz|design|studio|shop|store|site|tech|cloud|page|link';
+var URL_RE=new RegExp(
+  '\\b(https?:\\/\\/[^\\s]+'                                  /* explicit scheme wins */
+  +'|(?:[a-z0-9-]+\\.)+(?:'+TLD+')(?![a-z])(?:\\/[^\\s]*)?)','i');
 var REF_RE=/\b(clone|cloan|copy|like|similar to|inspired by|same as)\b/i;
 function readIntent(text){
   var out={ref:'',rest:text};

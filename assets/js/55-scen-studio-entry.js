@@ -10,16 +10,19 @@
 var STUDIO='/agent-studio.html';
 var SEED='scen.agentstudio.seed';
 
-/* The studio only looks for a handed-over brief when the address names one,
-   so carry the slug of whatever is waiting in storage. */
+/* The studio only looks for a handed-over brief when the address names one.
+   Carried once, and only by the flow that just wrote it: naming a stale seed
+   on an ordinary trip to the studio would re-seed it, and a seed whose label
+   differs from the open project resets that project. */
 function studioUrl(){
-  try{
-    var o=JSON.parse(localStorage.getItem(SEED)||'null');
-    if(o&&o.slug)return STUDIO+'?template='+encodeURIComponent(o.slug);
-  }catch(e){}
-  return STUDIO;
+  var slug='';
+  try{slug=state.pendingSeed||''}catch(e){}
+  if(!slug)return STUDIO;
+  try{state.pendingSeed='';saveState()}catch(e){}
+  return STUDIO+'?template='+encodeURIComponent(slug);
 }
 function goStudio(){location.href=studioUrl()}
+window.__scenStudioUrl=studioUrl;
 
 /* 1 ─ After sign-in. resumeRoute() decides where a restored session lands;
        when the studio was the intent, leave the SPA entirely. */
@@ -75,9 +78,11 @@ window.addEventListener('click',function(e){
       languages:['English']
     }));
   }catch(x){}
+  try{state.pendingSeed='brief'}catch(x){}
   if(typeof state!=='undefined'&&!state.auth){
     state.agentEntry=true;saveState();navigate('auth');return;
   }
+  saveState();
   goStudio();
 },true);
 

@@ -128,11 +128,14 @@
       background:linear-gradient(180deg,#010A17 0%,#0A4267 30%,#20658E 60%,#6BADC4 100%)}
     .rainbow{position:absolute;left:0;right:0;top:0;z-index:30;width:100%;
       will-change:transform;pointer-events:none}
-    .cloud{position:absolute;z-index:10;width:500px;opacity:0;
+    /* The overhang is measured from the cloud's own width. A percentage margin
+       would resolve against the section instead, so on a wide screen both
+       clouds would sit entirely outside the frame. */
+    .cloud{position:absolute;z-index:10;--cw:500px;width:var(--cw);opacity:0;
       will-change:transform,opacity;pointer-events:none}
-    @media(min-width:768px){.cloud{width:650px}}
-    .cloud--l{left:0;bottom:10%;margin-left:-50%;display:none}
-    .cloud--r{right:0;bottom:15%;margin-right:-75%;transform:scaleX(-1);display:none}
+    @media(min-width:768px){.cloud{--cw:650px}}
+    .cloud--l{left:0;bottom:10%;margin-left:calc(var(--cw) * -0.5);display:none}
+    .cloud--r{right:0;bottom:15%;margin-right:calc(var(--cw) * -0.75);transform:scaleX(-1);display:none}
     @media(min-width:640px){.cloud--l,.cloud--r{display:block}}
 
     .quote__inner{position:relative;z-index:20;height:100%;display:flex;flex-direction:column;

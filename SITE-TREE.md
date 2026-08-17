@@ -34,7 +34,7 @@ scen.space/
 │
 ├── [static files — served directly]
 │   ├── /agent-studio.html      the 4D Website Builder            ← main product entry
-│   ├── /prompt-library.json    124 prompt starting points (fetched by the Prompt Library view)
+│   ├── /prompt-library.json    126 prompt starting points (fetched by the Prompt Library view)
 │   ├── /ironclad.html          standalone "IRONCLAD Wrestling" page   ⚠ live, unlinked
 │   └── /mostar/                standalone 3-file site (index.html + styles.css + script.js)
 │       └──                     "Mostar city"                          ⚠ live, unlinked
@@ -212,7 +212,7 @@ Workspace
 ├── ⌂ Home                dashboard          greeting() · "Your spatial website workspace is ready."
 ├── ◫ Projects            projects           Create, organize and publish every website
 ├── ▦ Templates           templates          Premium starting points — preview before customizing
-└── ✧ Prompt library      library          + 124 starting points from /prompt-library.json
+└── ✧ Prompt library      library          + 126 starting points from /prompt-library.json
                                              (the link is a clone of the Templates link — the
                                               router reads data-nav, not data-route)
 
@@ -680,7 +680,7 @@ Tenant key is workspace_id, derived from the signed server session — never fro
 ## 8. Supporting files
 
 ```
-prompt-library.json   124 entries — {n, cat, area, prompt}. Long, production-shaped
+prompt-library.json   126 entries — {n, cat, area, prompt}. Long, production-shaped
                       prompts (React + TS + Vite + Tailwind + Framer Motion …).
                       Read by the Prompt Library view with cache:'force-cache'.
 manifests/            6 feature manifests — AI gateway · auth+email · database+storage ·

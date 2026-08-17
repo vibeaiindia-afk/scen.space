@@ -249,15 +249,18 @@
     <a href="#privacy-notice">Privacy Notice</a> and
     <a href="#service-contract">Service Contract</a>.
   </div>
-</section>
 
-<div class="menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Site menu" aria-hidden="true" inert>
-  <a href="#story" style="--i:0">Story</a>
-  <a href="#platforms" style="--i:1">Platforms</a>
-  <a href="#identity" style="--i:2">Identity</a>
-  <a href="#contact" style="--i:3">Contact</a>
-  <a class="menu__cta" href="#join" style="--i:4">Join up</a>
-</div>
+  <!-- Inside the hero, because `isolation: isolate` on it means a menu placed
+       outside would paint over the nav — and the nav has to stay above the
+       overlay for the close icon to be reachable. -->
+  <div class="menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Site menu" aria-hidden="true" inert>
+    <a href="#story" style="--i:0">Story</a>
+    <a href="#platforms" style="--i:1">Platforms</a>
+    <a href="#identity" style="--i:2">Identity</a>
+    <a href="#contact" style="--i:3">Contact</a>
+    <a class="menu__cta" href="#join" style="--i:4">Join up</a>
+  </div>
+</section>
 
 <script>
 (function(){

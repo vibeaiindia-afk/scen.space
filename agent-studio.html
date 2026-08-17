@@ -2390,6 +2390,22 @@ function isBriefLike(text){
   return (text.split(/[.!?]\s/).length>2&&text.length>70);
 }
 
+/* The bar for starting: a name, what it is, what trade, and pages to put it
+   on. Everything else has a defensible default. */
+function haveEnough(b){
+  return !!(b.name && b.kind && b.industry && (b.pages||[]).length);
+}
+/* Assumptions a designer would make without stopping to ask. All editable. */
+function fillDefaults(b){
+  if(!b.style)b.style='minimal';
+  if(!b.motion)b.motion='cinematic';
+  if(!b.content)b.content='agent';
+  if(!(b.languages||[]).length)b.languages=['English'];
+  if(!b.goal)b.goal=(b.features||[]).indexOf('store')>=0?'sell':
+                    ((b.features||[]).indexOf('bookings')>=0?'book':'lead');
+  if(!b.accent){var P=INDUSTRIES[b.industry];b.accent=(P&&P.accent)||'#dfff45'}
+}
+
 function absorbBrief(text){
   var b=S.brief,got=[];
   if(!b.pitch){b.pitch=text.replace(/\s+/g,' ').trim().slice(0,240);got.push('the brief')}
@@ -2479,10 +2495,29 @@ function handleText(text){
       if(looksLikeBrief(st,text)){askCurrent(true);return}
       return askCurrent(true);
     }
+    /* "Hi" is not a brief. Small talk should stay conversation — the machine
+       used to file it as the answer to whatever question was on screen. */
+    if(/^\s*(hi+|hey|hello|yo|hola|namaste|sup|good (morning|evening|afternoon))\b[\s!.?]*$/i.test(text)){
+      userSay(text,atts);S.atts=[];renderAtts();
+      agentSay('Hey. What do you want to build?');
+      return;
+    }
+
     /* A pasted brief or spec answers several questions at once. */
     if(isBriefLike(text)){
       userSay(text,atts);S.atts=[];renderAtts();
       var got=absorbBrief(text);
+      /* Enough to start beats asking the rest. Someone who wrote a brief
+         should see progress, not eleven more questions — the defaults are all
+         things they can change afterwards. */
+      if(haveEnough(S.brief)){
+        fillDefaults(S.brief);
+        agentSay((got.length?'Read that as the brief. I took '+got.join(' · ')+'.<br/><br/>':'')+
+                 'That is enough to start. Here is what I would build — change anything you like.');
+        S.skip=(S.skip||[]).concat(FLOW.map(function(f){return f.id}));
+        S.step=0;save();
+        return askCurrent(true);        /* walks past everything to finishInterview() */
+      }
       agentSay(got.length
         ? 'Read that as the brief. I took '+got.join(' · ')+'. I will ask only what is still missing.'
         : 'Kept that as the brief.');

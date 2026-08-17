@@ -1867,8 +1867,11 @@ var VOICE=
  'transform, revolutionise. No exclamation marks. Write about the business itself — never mention '+
  'websites, design, templates or the tool that built it.';
 
-function copyPrompt(b){
+function copyPrompt(b,hist){
   return 'Write the copy for this business.\n\nBRIEF:\n'+briefSummary(b)+
+  /* Same reason as readEdit: the brief cannot carry what was actually said —
+     an aside about tone, a name they rejected, the customer they described. */
+  (hist&&hist.length?'\n\nConversation so far (oldest first):\n'+hist.join('\n')+'\n':'')+
   '\n\nReturn exactly this shape:\n'+
   '{"kicker":"three short words joined by a middle dot",'+
   '"pitch":"one sentence under 22 words that sits below the headline",'+
@@ -1893,9 +1896,9 @@ function coerceCopy(o,b){
   out.__ai=true;
   return out;
 }
-function writeCopy(b){
+function writeCopy(b,hist){
   var t0=Date.now();
-  return post('chat',copyPrompt(b),VOICE,{maxOutputTokens:1400,temperature:.78})
+  return post('chat',copyPrompt(b,hist),VOICE,{maxOutputTokens:1400,temperature:.78})
     .then(function(d){
       record(d,Date.now()-t0);
       var o=jsonFrom(d.text);
@@ -1908,8 +1911,11 @@ function writeCopy(b){
 /* ---------- page plan ---------- */
 var SECTION_IDS=['logos','services','servicelist','showcase','stats','products','booking',
   'pricing','testimonial','faq','posts','team','contact','map','steps','prose'];
-function planPrompt(b){
+function planPrompt(b,hist){
   return 'Lay out the sections for each page of this website.\n\nBRIEF:\n'+briefSummary(b)+
+  /* Same reason as readEdit: the brief cannot carry what was actually said —
+     an aside about tone, a name they rejected, the customer they described. */
+  (hist&&hist.length?'\n\nConversation so far (oldest first):\n'+hist.join('\n')+'\n':'')+
   '\n\nAllowed section ids, use these exact strings:\n'+SECTION_IDS.join(', ')+
   '\n\nRules: 4 to 7 sections per page. Do not include a hero, a page header or a closing '+
   'call to action — those are added automatically. Only use "products" if the brief has a store, '+
@@ -1938,9 +1944,9 @@ function readPlan(o,b){
   });
   return hits?out:null;
 }
-function writePlan(b){
+function writePlan(b,hist){
   var t0=Date.now();
-  return post('planning',planPrompt(b),
+  return post('planning',planPrompt(b,hist),
     'You plan website structure. Reply with one JSON object and nothing else.',
     {maxOutputTokens:900,temperature:.4})
     .then(function(d){
@@ -2701,7 +2707,7 @@ function buildPlanSteps(){
 
   if(live)out.push({l:'Planning the structure',s:'asking the gateway to lay out the pages…',ms:560,
     run:function(){
-      return X.writePlan(b).then(function(r){
+      return X.writePlan(b,transcript()).then(function(r){
         if(!r){delete b.__plan;setAiPill();return 'gateway unavailable — used the local planner'}
         b.__plan=r.plan;setAiPill();
         return r.provider+' · '+r.model+' — '+Object.keys(r.plan).length+' pages laid out';
@@ -2714,7 +2720,7 @@ function buildPlanSteps(){
 
   if(live)out.push({l:'Writing copy',s:'asking the gateway for headlines, sections and FAQs…',ms:640,compose:true,
     run:function(){
-      return X.writeCopy(b).then(function(r){
+      return X.writeCopy(b,transcript()).then(function(r){
         if(!r){delete b.__copy;setAiPill();return 'gateway unavailable — used the local writer'}
         b.__copy=r.copy;setAiPill();
         return r.provider+' · '+r.model+' — '+r.ms+'ms, written for this brief';
@@ -2970,7 +2976,7 @@ function editHelp(t0){
 /* an edit that needs fresh copy: ask the gateway again, then rebuild */
 function rebuildWithCopy(summary,t0){
   thinking();
-  X.writeCopy(S.brief).then(function(r){
+  X.writeCopy(S.brief,transcript()).then(function(r){
     clearThinking();setAiPill();
     if(r){S.brief.__copy=r.copy;save()}
     rebuild(summary+(r?'<br/><br/>New copy written by '+esc(r.provider)+' · '+esc(r.model)+'.':

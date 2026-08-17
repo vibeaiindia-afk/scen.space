@@ -11686,5 +11686,88 @@ setTimeout(function(){build();wire()},1200);
 })();
 </script>
 
+
+<style id="scen-tplshot-css">
+/* The cards said LIVE TEMPLATE and showed a drawn rectangle — grey bars
+   standing in for a website. Same fix as the showcase: put the real page in
+   there and let it play. */
+#templates .tpl-shot{position:relative;overflow:hidden}
+#templates .tpl-shot .tpl-frame{position:absolute;inset:0;width:200%;height:200%;border:0;
+  transform:scale(.5);transform-origin:0 0;pointer-events:none;opacity:0;transition:opacity .45s ease}
+#templates .tpl-shot.ready .tpl-frame{opacity:1}
+/* The drawn placeholder stays as the loading state, then steps aside. */
+#templates .tpl-shot.ready .tpl-chrome{opacity:0;transition:opacity .35s ease}
+#templates .tpl-shot .tpl-tagpill{z-index:3}
+</style>
+
+<script id="scen-tplshot">
+(function(){
+'use strict';
+
+function scrub(frame){
+  var t=0,dir=1,raf=0,running=false;
+  function step(){
+    var w=frame.contentWindow,d=frame.contentDocument;
+    if(!w||!d||!d.body){raf=requestAnimationFrame(step);return}
+    var max=Math.max(1,d.documentElement.scrollHeight-w.innerHeight);
+    t+=dir*0.0016;
+    if(t>=1){t=1;dir=-1}else if(t<=0){t=0;dir=1}
+    try{w.scrollTo(0,t*max)}catch(e){}
+    raf=requestAnimationFrame(step);
+  }
+  return {
+    start:function(){if(running)return;running=true;step()},
+    stop:function(){running=false;cancelAnimationFrame(raf)}
+  };
+}
+
+/* Only cards actually on screen get an iframe. Forty-two at once would be a
+   wall of video decoders. */
+var io=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    var shot=e.target;
+    if(!e.isIntersecting){ if(shot.__scrub)shot.__scrub.stop(); return }
+    if(!shot.__loaded){
+      shot.__loaded=true;
+      var f=document.createElement('iframe');
+      f.className='tpl-frame';
+      f.setAttribute('scrolling','no');
+      f.setAttribute('tabindex','-1');
+      f.setAttribute('aria-hidden','true');
+      f.setAttribute('loading','lazy');
+      f.src=shot.dataset.preview;
+      f.addEventListener('load',function(){
+        shot.classList.add('ready');
+        shot.__scrub=scrub(f);
+        shot.__scrub.start();
+      });
+      shot.appendChild(f);
+    }else if(shot.__scrub){shot.__scrub.start()}
+  });
+},{threshold:.2});
+
+function wire(){
+  var cards=document.querySelectorAll('#templates .tpl-card');
+  for(var i=0;i<cards.length;i++){
+    var c=cards[i];
+    var shot=c.querySelector('.tpl-shot');
+    if(!shot||shot.dataset.preview)continue;
+    var a=c.querySelector('a.btn.ghost')||c.querySelector('a[href^="/templates/"],a[href^="/preset/"]');
+    if(!a)continue;
+    var href=a.getAttribute('href')||'';
+    if(!href)continue;
+    shot.dataset.preview=href;
+    io.observe(shot);
+  }
+}
+
+var mo=new MutationObserver(wire);
+function boot(){wire();mo.observe(document.body,{childList:true,subtree:true})}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);
+else boot();
+setTimeout(wire,1400);
+})();
+</script>
+
 </body>
 </html>

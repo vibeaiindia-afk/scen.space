@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Lumora</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{font-family:'Instrument Serif',serif}
+    body{background:#000;color:#fff;-webkit-font-smoothing:antialiased}
+    .ui{font-family:system-ui,sans-serif}
+
+    /* ── Stage ───────────────────────────────────────────────────────────────
+       One viewport, no scroll. Black underneath so nothing flashes while the
+       first video is still loading. */
+    .hero{position:relative;width:100%;height:100vh;overflow:hidden;background:#000}
+
+    /* Four videos stacked; only the active one is opaque. */
+    .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+      opacity:0;transition:opacity 1000ms ease-in-out}
+    .bg.on{opacity:1}
+
+    /* The transparent PNG rides on top of the film with a slow train-bob.
+       The constant 1.03 scale hides the edges the movement would expose. */
+    .overlay{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;
+      pointer-events:none;animation:train-bob 3s ease-in-out infinite}
+    @keyframes train-bob{
+      0%,100%{transform:translateY(0) scale(1.03)}
+      50%{transform:translateY(-6px) scale(1.03)}
+    }
+
+    /* ── Liquid glass ────────────────────────────────────────────────────── */
+    .liquid-glass{
+      background:rgba(255,255,255,.01);
+      background-blend-mode:luminosity;
+      backdrop-filter:blur(4px);
+      -webkit-backdrop-filter:blur(4px);
+      border:none;
+      box-shadow:inset 0 1px 1px rgba(255,255,255,.1);
+      position:relative;
+      overflow:hidden;
+    }
+    .liquid-glass::before{
+      content:'';
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      padding:1.4px;
+      background:linear-gradient(180deg,
+        rgba(255,255,255,.45) 0%, rgba(255,255,255,.15) 20%,
+        rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
+        rgba(255,255,255,.15) 80%, rgba(255,255,255,.45) 100%);
+      -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+      -webkit-mask-composite:xor;
+      mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+      mask-composite:exclude;
+      pointer-events:none;
+    }
+
+    /* ── Content column ──────────────────────────────────────────────────── */
+    .content{position:relative;z-index:2;display:flex;flex-direction:column;
+      height:100%;padding:1.25rem 1.25rem 1.5rem}
+    @media(min-width:640px){.content{padding:1.75rem 2rem 2rem}}
+
+    /* Nav — always white, whichever film is playing. It sits above the mobile
+       menu so the hamburger can crossfade into the close icon and still be
+       clickable while the overlay is open. */
+    .nav{position:relative;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .brand{color:#fff;font-style:italic;font-size:1.25rem;line-height:1}
+    @media(min-width:640px){.brand{font-size:1.5rem}}
+
+    .navpill{display:none;align-items:center;gap:1.5rem;border-radius:999px;padding:.5rem .5rem .5rem 1.5rem}
+    @media(min-width:768px){.navpill{display:flex}}
+    .navpill a{color:rgba(255,255,255,.9);font-size:.875rem;text-decoration:none;
+      transition:color .3s ease;position:relative;z-index:1}
+    .navpill a:hover{color:#fff}
+    .solid{background:#fff;color:#182C41;border:0;border-radius:999px;padding:.55rem 1.1rem;
+      font-size:.875rem;font-weight:500;cursor:pointer;position:relative;z-index:1;white-space:nowrap}
+
+    .burger{display:inline-flex;align-items:center;justify-content:center;width:2.75rem;height:2.75rem;
+      border-radius:1rem;cursor:pointer;color:#fff}
+    @media(min-width:768px){.burger{display:none}}
+    .burger .ico{position:absolute;transition:opacity .3s ease,transform .3s ease}
+    .burger .ico-menu{opacity:1;transform:rotate(0) scale(1)}
+    .burger .ico-x{opacity:0;transform:rotate(-90deg) scale(1)}
+    body.menu-open .burger .ico-menu{opacity:0;transform:rotate(90deg) scale(.75)}
+    body.menu-open .burger .ico-x{opacity:1;transform:rotate(0) scale(1)}
+
+    /* Mobile menu ---------------------------------------------------------- */
+    .menu{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:1.5rem;
+      background:rgba(0,0,0,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+      opacity:0;pointer-events:none;transition:opacity 500ms cubic-bezier(.4,0,.2,1)}
+    .menu.open{opacity:1;pointer-events:auto}
+    .menu a{color:#fff;font-size:1.875rem;text-decoration:none;
+      opacity:0;transform:translateY(1rem);
+      transition:opacity 500ms cubic-bezier(.4,0,.2,1),transform 500ms cubic-bezier(.4,0,.2,1)}
+    .menu .solid{margin-top:1rem;font-size:1rem;padding:.8rem 1.6rem;
+      opacity:0;transform:scale(.9);
+      transition:opacity 500ms cubic-bezier(.4,0,.2,1),transform 500ms cubic-bezier(.4,0,.2,1)}
+    .menu.open a,.menu.open .solid{opacity:1;transform:none}
+    .menu a:nth-child(1){transition-delay:100ms}
+    .menu a:nth-child(2){transition-delay:150ms}
+    .menu a:nth-child(3){transition-delay:200ms}
+    .menu a:nth-child(4){transition-delay:250ms}
+    .menu .solid{transition-delay:300ms}
+
+    /* Hero block ----------------------------------------------------------- */
+    .mid{display:flex;flex-direction:column;align-items:center;text-align:center;
+      margin-top:3.5rem}
+    @media(min-width:768px){.mid{margin-top:5rem}}
+
+    /* Everything marked .tone flips to the dark ink over the third film. */
+    .tone{color:#fff;transition:color 700ms ease}
+    .hero.dark .tone{color:#182C41}
+
+    .badge{display:inline-block;border-radius:999px;padding:.5rem 1.1rem;font-size:.75rem}
+    .badge span{position:relative;z-index:1}
+    @media(min-width:640px){.badge{font-size:.8125rem}}
+
+    h1{font-size:2.25rem;line-height:1.1;font-weight:400;max-width:56rem;margin:1.5rem 0 0}
+    @media(min-width:640px){h1{font-size:3rem}}
+    @media(min-width:768px){h1{font-size:4.5rem}}
+    @media(min-width:1024px){h1{font-size:5.5rem}}
+
+    .sub{max-width:36rem;line-height:1.625;font-size:.9375rem;margin-top:1.25rem;opacity:.9}
+    @media(min-width:640px){.sub{font-size:1rem}}
+
+    .signup{display:flex;align-items:center;gap:.5rem;width:100%;max-width:320px;
+      border-radius:999px;padding:.4rem .4rem .4rem 1.1rem;margin-top:1.75rem}
+    @media(min-width:640px){.signup{max-width:24rem}}
+    .signup input{flex:1;min-width:0;background:transparent;border:0;outline:0;
+      font-family:system-ui,sans-serif;font-size:.875rem;position:relative;z-index:1;color:inherit}
+    .signup input::placeholder{color:currentColor;opacity:.6}
+
+    .switch{display:flex;align-items:center;gap:1.25rem;margin-top:2rem;flex-wrap:wrap;
+      justify-content:center}
+    .switch button{background:none;border:0;border-bottom:1px solid transparent;
+      font-family:system-ui,sans-serif;font-size:.75rem;letter-spacing:.04em;padding:0 0 .3rem;
+      color:inherit;opacity:.5;cursor:pointer;transition:opacity .3s ease,border-color .3s ease}
+    .switch button:hover{opacity:.8}
+    .switch button.on{opacity:1;border-bottom-color:currentColor}
+    @media(min-width:640px){.switch button{font-size:.8125rem}}
+
+    .spacer{flex:1}
+
+    /* Bottom stats — white in every mode. */
+    .stats{display:flex;align-items:center;justify-content:center;gap:.75rem;flex-wrap:wrap;
+      color:rgba(255,255,255,.7);font-size:.75rem;text-align:center}
+    @media(min-width:640px){.stats{gap:1.25rem;font-size:.875rem}}
+    .stats i{display:none;font-style:normal;opacity:.45}
+    @media(min-width:640px){.stats i{display:inline}}
+
+    @media(prefers-reduced-motion:reduce){
+      .overlay{animation:none;transform:scale(1.03)}
+      .bg{transition:none}
+    }
+  </style>
+</head>
+<body>
+
+<section class="hero" id="hero">
+  <video class="bg on" data-v="0" autoplay muted loop playsinline preload="auto"
+    src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081127_0992a171-d3c6-4978-8213-0ec5df8b6d63.mp4"></video>
+  <video class="bg" data-v="1" autoplay muted loop playsinline preload="auto"
+    src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_092026_dd05b805-ea0f-40b2-8c52-332b88502592.mp4"></video>
+  <video class="bg" data-v="2" autoplay muted loop playsinline preload="auto"
+    src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081042_df7202bf-bd80-4b2b-bbc6-1f09ba2870e9.mp4"></video>
+  <video class="bg" data-v="3" autoplay muted loop playsinline preload="auto"
+    src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_080959_4cac5234-3573-464e-a5b7-76b94b8a7d61.mp4"></video>
+
+  <img class="overlay" alt=""
+    src="https://soft-zoom-63098134.figma.site/_assets/v11/0b4a435b2df2747593c43d7a1c9b4578f7d8d90c.png" />
+
+  <div class="content">
+    <nav class="nav">
+      <span class="brand">Lumora</span>
+
+      <div class="navpill liquid-glass ui">
+        <a href="#">How It Works</a>
+        <a href="#">Features</a>
+        <a href="#">Pricing</a>
+        <a href="#">Community</a>
+        <button class="solid ui" type="button">Get Started</button>
+      </div>
+
+      <button class="burger liquid-glass" type="button" id="burger" aria-label="Menu" aria-expanded="false">
+        <svg class="ico ico-menu" width="22" height="22" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/>
+        </svg>
+        <svg class="ico ico-x" width="22" height="22" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+        </svg>
+      </button>
+    </nav>
+
+    <div class="mid">
+      <div class="badge liquid-glass tone ui"><span>Over 10,000 minds already finding their clarity</span></div>
+
+      <h1 class="tone">Clarity in an Endlessly<br/>Noisy Universe</h1>
+
+      <p class="sub tone ui">Rise above the chaos of pings, infinite scrolling, and relentless demands.
+        Discover how to protect your presence and create with intention.</p>
+
+      <form class="signup liquid-glass tone" onsubmit="return false">
+        <input type="email" placeholder="Your Best Email" aria-label="Your Best Email" />
+        <button class="solid ui" type="submit">Get Early Access</button>
+      </form>
+
+      <div class="switch tone ui" id="switch">
+        <button type="button" class="on" data-go="0">Golden Hour</button>
+        <button type="button" data-go="1">Still Water</button>
+        <button type="button" data-go="2">Deep Woods</button>
+        <button type="button" data-go="3">Quiet Dawn</button>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="stats ui">
+      <span>60+ Deep Sessions</span><i>|</i>
+      <span>12,000+ Creators</span><i>|</i>
+      <span>4.8 User Satisfaction</span><i>|</i>
+      <span>Intentional-First Design</span>
+    </div>
+
+    <div class="menu ui" id="menu">
+      <a href="#">How It Works</a>
+      <a href="#">Features</a>
+      <a href="#">Pricing</a>
+      <a href="#">Community</a>
+      <button class="solid ui" type="button">Get Started</button>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  'use strict';
+  var hero=document.getElementById('hero');
+  var videos=[].slice.call(document.querySelectorAll('.bg'));
+  var buttons=[].slice.call(document.querySelectorAll('#switch button'));
+  var DARK=2;                 /* Deep Woods — the one film that needs dark ink */
+  var active=0,transitioning=false;
+
+  function show(next){
+    /* One crossfade at a time: the cooldown matches the CSS duration, so a
+       burst of clicks cannot leave two films half-faded. */
+    if(next===active||transitioning)return;
+    transitioning=true;
+    active=next;
+    videos.forEach(function(v,i){v.classList.toggle('on',i===active)});
+    buttons.forEach(function(b,i){b.classList.toggle('on',i===active)});
+    hero.classList.toggle('dark',active===DARK);
+    setTimeout(function(){transitioning=false},1000);
+  }
+
+  buttons.forEach(function(b){
+    b.addEventListener('click',function(){show(Number(b.dataset.go))});
+  });
+
+  var burger=document.getElementById('burger'),menu=document.getElementById('menu');
+  burger.addEventListener('click',function(){
+    var open=!document.body.classList.contains('menu-open');
+    document.body.classList.toggle('menu-open',open);
+    menu.classList.toggle('open',open);
+    burger.setAttribute('aria-expanded',open?'true':'false');
+  });
+  menu.addEventListener('click',function(e){
+    if(!e.target.closest('a')&&!e.target.closest('button'))return;
+    document.body.classList.remove('menu-open');
+    menu.classList.remove('open');
+    burger.setAttribute('aria-expanded','false');
+  });
+
+  /* Some browsers refuse the autoplay until the element is visible. */
+  videos.forEach(function(v){var p=v.play();if(p&&p.catch)p.catch(function(){})});
+})();
+</script>
+</body>
+</html>

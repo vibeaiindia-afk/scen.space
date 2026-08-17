@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Beyond Hero</title>
+
+  <!-- Bamboly Demo — display face for the stacked title and the marquee -->
+  <link href="https://db.onlinewebfonts.com/c/58ee300970307a1cc399e6bebd7617ce?family=Bamboly+Demo" rel="stylesheet">
+  <!-- Inter = body default · Poppins 500 = the side word columns -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:'Inter',sans-serif;background:#000;overflow-x:hidden}
+
+    /* ── Hero plane ──────────────────────────────────────────────────────────
+       120vh tall, so 20vh of scroll runs underneath the sticky type. */
+    .hero{position:relative;width:100%;height:120vh;overflow:hidden;background:#EC612C}
+
+    /* Character — in front of the title, bottom-anchored, never interactive. */
+    .figure{position:absolute;inset:0;z-index:10;pointer-events:none}
+    .figure img{position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+      display:block;width:auto;max-width:none;height:115%;max-height:115%;min-height:80%}
+
+    /* Type overlay — pinned for the whole scroll range. */
+    .type{position:sticky;top:0;z-index:5;height:100vh;width:100%}
+
+    /* BEYOND — four layers in one box, offset downward to make the stripes. */
+    .title-wrap{position:absolute;inset:0;display:flex;align-items:flex-start;
+      justify-content:center;padding-top:2vh}
+    .title-stack{position:relative}
+    .title{margin:0;font-family:"Bamboly Demo",sans-serif;font-size:clamp(7.5rem,30vw,28rem);
+      line-height:.85;letter-spacing:.02em;white-space:nowrap;
+      -webkit-user-select:none;user-select:none}
+    .title.layer{position:absolute;left:0;top:0;width:100%;text-align:center}
+    .title.l0{color:#89CFF0;transform:translateY(18px)}   /* back  — baby blue */
+    .title.l1{color:#EC612C;transform:translateY(12px)}   /* the orange gap   */
+    .title.l2{color:#90EE90;transform:translateY(6px)}    /* green            */
+    .title.l3{position:relative;color:#FFFFFF;transform:translateY(0)}
+    @media(min-width:768px){
+      .title-wrap{padding-top:3vh}
+      .title.l0{transform:translateY(36px)}
+      .title.l1{transform:translateY(24px)}
+      .title.l2{transform:translateY(12px)}
+    }
+
+    /* Side word columns — bottom corners, sliding inward as the page scrolls. */
+    .words{position:absolute;left:0;right:0;top:0;bottom:-8vh;display:flex;
+      align-items:flex-end;justify-content:space-between;padding:0 3vw;pointer-events:none}
+    .col{display:flex;flex-direction:column;gap:.25rem}
+    .col.right{align-items:flex-end;text-align:right}
+    .word{display:block;font-family:"Poppins",sans-serif;font-weight:500;
+      font-size:clamp(1.6rem,7vw,9rem);line-height:1.1;text-transform:uppercase;
+      color:rgba(255,255,255,.8);-webkit-user-select:none;user-select:none;
+      transition:transform .05s linear}
+    @media(min-width:768px){
+      .words{padding:0 6vw}
+      .col{gap:.5rem}
+    }
+
+    /* ── Marquee ─────────────────────────────────────────────────────────── */
+    .marquee{width:100%;background:#FFFFFF;overflow:hidden;padding:1.5rem 0}
+    @media(min-width:768px){.marquee{padding:2rem 0}}
+    .marquee-track{display:flex;white-space:nowrap;animation:marquee-scroll 18s linear infinite}
+    @keyframes marquee-scroll{
+      0%{transform:translateX(0)}
+      100%{transform:translateX(-50%)}
+    }
+    .marquee-track span{flex-shrink:0;font-family:"Bamboly Demo",sans-serif;text-transform:uppercase;
+      color:#EC612C;font-size:clamp(2.5rem,6vw,5rem);line-height:1;padding-right:.25em;
+      -webkit-user-select:none;user-select:none}
+
+    @media(prefers-reduced-motion:reduce){
+      .marquee-track{animation:none}
+      .word{transition:none}
+    }
+  </style>
+</head>
+<body>
+
+  <section class="hero" id="hero">
+    <!-- Type sits behind the character, and stays pinned while the tall
+         section scrolls past underneath it. -->
+    <div class="type">
+      <div class="title-wrap">
+        <div class="title-stack">
+          <h1 class="title layer l0">BEYOND</h1>
+          <h1 class="title layer l1">BEYOND</h1>
+          <h1 class="title layer l2">BEYOND</h1>
+          <h1 class="title l3">BEYOND</h1>
+        </div>
+      </div>
+
+      <div class="words">
+        <div class="col left">
+          <span class="word" data-side="left">spark</span>
+          <span class="word" data-side="left">imagine</span>
+          <span class="word" data-side="left">evolve</span>
+          <span class="word" data-side="left">render</span>
+        </div>
+        <div class="col right">
+          <span class="word" data-side="right">blaze</span>
+          <span class="word" data-side="right">genesis</span>
+          <span class="word" data-side="right">purpose</span>
+          <span class="word" data-side="right">ignite</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="figure">
+      <img
+        src="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260801_104316_80b428ea-dc99-4399-afb3-8ccb7b34b2d0.png&w=1280&q=85"
+        alt="" />
+    </div>
+  </section>
+
+  <section class="marquee">
+    <div class="marquee-track">
+      <span>SPARK &middot; RENDER &middot; IGNITE &middot; UNFOLD &middot; GENESIS &middot; EVOLVE &middot; PURPOSE &middot; BEYOND &middot; </span>
+      <span>SPARK &middot; RENDER &middot; IGNITE &middot; UNFOLD &middot; GENESIS &middot; EVOLVE &middot; PURPOSE &middot; BEYOND &middot; </span>
+      <span>SPARK &middot; RENDER &middot; IGNITE &middot; UNFOLD &middot; GENESIS &middot; EVOLVE &middot; PURPOSE &middot; BEYOND &middot; </span>
+      <span>SPARK &middot; RENDER &middot; IGNITE &middot; UNFOLD &middot; GENESIS &middot; EVOLVE &middot; PURPOSE &middot; BEYOND &middot; </span>
+    </div>
+  </section>
+
+<script>
+(function(){
+  'use strict';
+  var hero=document.getElementById('hero');
+  var left=[].slice.call(document.querySelectorAll('.word[data-side="left"]'));
+  var right=[].slice.call(document.querySelectorAll('.word[data-side="right"]'));
+  if(!hero)return;
+
+  var clamp=function(v){return v<0?0:v>1?1:v};
+
+  function frame(){
+    var rect=hero.getBoundingClientRect();
+    /* The sticky range is the section height minus one viewport. */
+    var range=hero.offsetHeight-window.innerHeight;
+    var progress=range>0?clamp(-rect.top/range):0;
+    var scale=window.innerWidth<768?0.5:1;
+    var opacity=0.35+progress*0.65;
+
+    for(var i=0;i<left.length;i++){
+      var d=(60+i*40)*scale*(1-progress);
+      left[i].style.transform='translateX('+(-d)+'px)';
+      left[i].style.opacity=opacity;
+    }
+    for(var j=0;j<right.length;j++){
+      var e=(60+j*40)*scale*(1-progress);
+      right[j].style.transform='translateX('+e+'px)';
+      right[j].style.opacity=opacity;
+    }
+  }
+
+  window.addEventListener('scroll',frame,{passive:true});
+  window.addEventListener('resize',frame);
+  frame();
+})();
+</script>
+</body>
+</html>

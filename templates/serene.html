@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Serene</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#0a0a0c;overflow-x:hidden}
+    .page{background:#0a0608}
+    .font-inter{font-family:'Inter',sans-serif}
+    .font-instrument{font-family:'Instrument Serif',serif}
+    .font-script{font-family:'Dancing Script',cursive}
+
+    .text-glow{text-shadow:0 0 40px rgba(255,255,255,.4),0 0 80px rgba(255,255,255,.2),0 0 120px rgba(255,255,255,.1)}
+    .button-glow{box-shadow:0 0 20px rgba(255,255,255,.3),0 0 40px rgba(255,255,255,.1)}
+
+    .liquid-glass{
+      background:rgba(255,255,255,.01);
+      background-blend-mode:luminosity;
+      backdrop-filter:blur(4px);
+      -webkit-backdrop-filter:blur(4px);
+      border:none;
+      box-shadow:inset 0 1px 1px rgba(255,255,255,.1);
+      position:relative;
+      overflow:hidden;
+    }
+    .liquid-glass::before{
+      content:'';
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      padding:1.4px;
+      background:linear-gradient(180deg,
+        rgba(255,255,255,.45) 0%, rgba(255,255,255,.15) 20%,
+        rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
+        rgba(255,255,255,.15) 80%, rgba(255,255,255,.45) 100%);
+      -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+      -webkit-mask-composite:xor;
+      mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+      mask-composite:exclude;
+      pointer-events:none;
+    }
+
+    /* The one button shape, used in the nav and under the headline. */
+    .pill{background:#fff;color:#000;padding:.875rem 2rem;border:0;border-radius:999px;
+      font-family:'Inter',sans-serif;font-weight:500;font-size:.875rem;letter-spacing:.025em;
+      cursor:pointer;transition:all .3s ease;
+      box-shadow:0 0 20px rgba(255,255,255,.3),0 0 40px rgba(255,255,255,.1)}
+    .pill:hover{background:rgba(255,255,255,.9)}
+
+    /* ── Navbar ──────────────────────────────────────────────────────────── */
+    .nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;
+      justify-content:space-between;padding:1.25rem 1.5rem}
+    @media(min-width:768px){.nav{padding:1.25rem 3rem}}
+    .brand{font-family:'Dancing Script',cursive;color:#fff;font-size:1.5rem;font-weight:600;line-height:1}
+    @media(min-width:768px){.brand{font-size:1.875rem}}
+
+    .nav__links{display:none;align-items:center;gap:3rem}
+    @media(min-width:768px){.nav__links{display:flex}}
+    .nav__links a{color:rgba(255,255,255,.8);text-decoration:none;font-size:.875rem;
+      letter-spacing:.025em;transition:color .3s ease}
+    .nav__links a:hover{color:#fff}
+    .nav__cta{display:none}
+    @media(min-width:768px){.nav__cta{display:inline-block}}
+
+    .burger{position:relative;display:block;width:2.5rem;height:2.5rem;background:none;border:0;cursor:pointer}
+    @media(min-width:768px){.burger{display:none}}
+    .burger span{position:absolute;left:.5rem;width:1.5rem;height:1.5px;background:#fff;border-radius:2px;
+      transition:transform .4s cubic-bezier(.22,1,.36,1),opacity .3s cubic-bezier(.22,1,.36,1)}
+    .burger span:nth-child(1){top:.875rem}
+    .burger span:nth-child(2){top:1.25rem}
+    .burger span:nth-child(3){top:1.625rem}
+    .burger[aria-expanded="true"] span:nth-child(1){transform:translateY(9px) rotate(45deg)}
+    .burger[aria-expanded="true"] span:nth-child(2){opacity:0;transform:scaleX(0)}
+    .burger[aria-expanded="true"] span:nth-child(3){transform:translateY(-9px) rotate(-45deg)}
+
+    /* Slide-in panel from the right. */
+    .drawer{position:fixed;top:0;right:0;bottom:0;z-index:40;width:85%;max-width:340px;
+      display:flex;flex-direction:column;justify-content:center;gap:1.75rem;padding:2rem;
+      background:rgba(10,6,8,.95);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+      border-left:1px solid rgba(255,255,255,.1);
+      transform:translateX(100%);transition:transform .5s cubic-bezier(.22,1,.36,1)}
+    .drawer.open{transform:translateX(0)}
+    @media(min-width:768px){.drawer{display:none}}
+    .drawer a{color:rgba(255,255,255,.85);text-decoration:none;font-size:1.125rem;letter-spacing:.025em;
+      opacity:0;transform:translateX(1.5rem);
+      transition:opacity .5s cubic-bezier(.22,1,.36,1),transform .5s cubic-bezier(.22,1,.36,1)}
+    .drawer .pill{opacity:0;transform:translateX(1.5rem);margin-top:.5rem;
+      transition:opacity .5s cubic-bezier(.22,1,.36,1),transform .5s cubic-bezier(.22,1,.36,1),background .3s ease}
+    .drawer.open a,.drawer.open .pill{opacity:1;transform:translateX(0)}
+    .drawer a:nth-of-type(1){transition-delay:150ms}
+    .drawer a:nth-of-type(2){transition-delay:225ms}
+    .drawer a:nth-of-type(3){transition-delay:300ms}
+    .drawer a:nth-of-type(4){transition-delay:375ms}
+    .drawer .pill{transition-delay:450ms}
+
+    /* ── Section 1 — hero ────────────────────────────────────────────────── */
+    .hero{position:relative;width:100%;height:100vh;overflow:hidden}
+    .hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    .hero__veil{position:absolute;inset:0;background:rgba(0,0,0,.2)}
+    .hero__center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;text-align:center;padding:0 1.5rem;margin-top:-120px}
+    .hero h1{font-family:'Instrument Serif',serif;color:#fff;font-size:36px;line-height:.9;
+      letter-spacing:-.025em;font-weight:400}
+    @media(min-width:768px){.hero h1{font-size:4.5rem}}
+    @media(min-width:1024px){.hero h1{font-size:110px}}
+    .hero p{color:rgba(255,255,255,.7);font-size:.875rem;margin-top:1.25rem;max-width:36rem;line-height:1.6}
+    @media(min-width:768px){.hero p{font-size:1rem;margin-top:1.75rem}}
+    .hero .pill{margin-top:1.5rem}
+    @media(min-width:768px){.hero .pill{margin-top:2.25rem}}
+
+    /* Sound cue — desktop only, bottom-left. */
+    .sound{position:absolute;left:2rem;bottom:2rem;display:none;align-items:center;gap:.75rem}
+    @media(min-width:768px){.sound{display:flex}}
+    .sound i{display:flex;align-items:center;justify-content:center;width:40px;height:40px;
+      border:1px solid rgba(255,255,255,.2);border-radius:50%}
+    .sound i b{display:block;width:14px;height:1.5px;background:rgba(255,255,255,.7)}
+    .sound span{color:rgba(255,255,255,.6);font-size:.75rem;line-height:1.35}
+
+    /* ── Section 2 — the quote ───────────────────────────────────────────── */
+    .quote{position:relative;width:100%;height:100vh;overflow:hidden;
+      background:linear-gradient(180deg,#010A17 0%,#0A4267 30%,#20658E 60%,#6BADC4 100%)}
+    .rainbow{position:absolute;left:0;right:0;top:0;z-index:30;width:100%;
+      will-change:transform;pointer-events:none}
+    .cloud{position:absolute;z-index:10;width:500px;opacity:0;
+      will-change:transform,opacity;pointer-events:none}
+    @media(min-width:768px){.cloud{width:650px}}
+    .cloud--l{left:0;bottom:10%;margin-left:-50%;display:none}
+    .cloud--r{right:0;bottom:15%;margin-right:-75%;transform:scaleX(-1);display:none}
+    @media(min-width:640px){.cloud--l,.cloud--r{display:block}}
+
+    .quote__inner{position:relative;z-index:20;height:100%;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;text-align:center;padding:0 1.5rem;max-width:56rem;margin:0 auto}
+    .quote blockquote{font-family:'Instrument Serif',serif;color:#fff;font-size:1.25rem;
+      line-height:1.45;font-weight:400}
+    @media(min-width:640px){.quote blockquote{font-size:1.5rem}}
+    @media(min-width:768px){.quote blockquote{font-size:2.25rem;line-height:1.5}}
+    @media(min-width:1024px){.quote blockquote{font-size:42px}}
+    .quote cite{display:block;margin-top:1.5rem;color:rgba(255,255,255,.8);font-family:'Inter',sans-serif;
+      font-size:.875rem;letter-spacing:.025em;font-style:normal}
+    @media(min-width:768px){.quote cite{margin-top:2rem;font-size:1rem}}
+
+    @media(prefers-reduced-motion:reduce){
+      .rainbow,.cloud{transition:none}
+      .cloud{opacity:1}
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <nav class="nav">
+    <span class="brand">Serene</span>
+    <div class="nav__links">
+      <a href="#">About</a>
+      <a href="#">Services</a>
+      <a href="#">Journal</a>
+      <a href="#">Contact</a>
+    </div>
+    <button class="pill nav__cta" type="button">Book a consultation</button>
+    <button class="burger" type="button" id="burger" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <aside class="drawer" id="drawer">
+    <a href="#">About</a>
+    <a href="#">Services</a>
+    <a href="#">Journal</a>
+    <a href="#">Contact</a>
+    <button class="pill" type="button">Book a consultation</button>
+  </aside>
+
+  <section class="hero">
+    <video autoplay muted loop playsinline preload="auto"
+      src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260613_180732_a54afbf6-b30d-470e-861f-669871f09f67.mp4"></video>
+    <div class="hero__veil"></div>
+
+    <div class="hero__center">
+      <h1 class="font-instrument text-glow">Gentle touch. Radiant presence.</h1>
+      <p>Expert beauty and holistic wellness, delivered with warmth and intention.</p>
+      <button class="pill" type="button">Begin your renewal</button>
+    </div>
+
+    <div class="sound">
+      <i><b></b></i>
+      <span>Experience<br/>with sound</span>
+    </div>
+  </section>
+
+  <section class="quote" id="quote">
+    <img class="rainbow" id="rainbow" alt=""
+      src="https://soft-zoom-63098134.figma.site/_assets/v11/8d520a7515d06cbfc403d0125e3d05b1a7ccd29c.png" />
+    <img class="cloud cloud--l" id="cloudL" alt=""
+      src="https://soft-zoom-63098134.figma.site/_assets/v11/0d6dfd3f90b930f21726f2ed56a3320d79b7a797.png" />
+    <img class="cloud cloud--r" id="cloudR" alt=""
+      src="https://soft-zoom-63098134.figma.site/_assets/v11/0d6dfd3f90b930f21726f2ed56a3320d79b7a797.png" />
+
+    <div class="quote__inner">
+      <blockquote>&ldquo;Serene was founded on a belief in beauty that honors your nature. We pursue
+        refined outcomes, considered approaches, and lasting vitality. We spend time learning what
+        matters to you before deciding what serves you best. No rushing, no excess &mdash; just
+        support that lets you feel radiant.&rdquo;</blockquote>
+      <cite>Dr. Mia Callahan &mdash; Founder</cite>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* Nav drawer ----------------------------------------------------------- */
+  var burger=document.getElementById('burger'),drawer=document.getElementById('drawer');
+  burger.addEventListener('click',function(){
+    var open=!drawer.classList.contains('open');
+    drawer.classList.toggle('open',open);
+    burger.setAttribute('aria-expanded',open?'true':'false');
+  });
+  drawer.addEventListener('click',function(e){
+    if(!e.target.closest('a')&&!e.target.closest('button'))return;
+    drawer.classList.remove('open');
+    burger.setAttribute('aria-expanded','false');
+  });
+
+  /* Parallax ------------------------------------------------------------- */
+  var section=document.getElementById('quote');
+  var rainbow=document.getElementById('rainbow');
+  var cloudL=document.getElementById('cloudL');
+  var cloudR=document.getElementById('cloudR');
+
+  var clamp=function(v,a,b){return v<a?a:v>b?b:v};
+  var lerp=function(cur,target,f){return cur+(target-cur)*f};
+
+  /* current values, smoothed toward their targets every frame */
+  var rY=120,lX=-200,rX=200,cY=0;
+
+  function frame(){
+    var rect=section.getBoundingClientRect();
+    var h=window.innerHeight;
+    var progress=clamp((h-rect.top)/(h+rect.height),0,1);
+
+    var rainbowTarget=120+progress*(-160-120);      /* +120px → -160px */
+    var inView=progress>0.12&&progress<0.92;
+    var cloudTargetY=progress*-50;
+
+    rY=lerp(rY,rainbowTarget,0.06);
+    lX=lerp(lX,inView?0:-200,0.04);
+    rX=lerp(rX,inView?0:200,0.04);
+    cY=lerp(cY,cloudTargetY,0.04);
+
+    rainbow.style.transform='translate3d(0,'+rY.toFixed(2)+'px,0)';
+
+    /* The clouds fade in as they arrive — opacity follows the distance left. */
+    cloudL.style.transform='translate3d('+lX.toFixed(2)+'px,'+cY.toFixed(2)+'px,0)';
+    cloudL.style.opacity=clamp(1-Math.abs(lX)/200,0,1).toFixed(3);
+    /* The right cloud is the same image mirrored, so its flip has to survive. */
+    cloudR.style.transform='translate3d('+rX.toFixed(2)+'px,'+cY.toFixed(2)+'px,0) scaleX(-1)';
+    cloudR.style.opacity=clamp(1-Math.abs(rX)/200,0,1).toFixed(3);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

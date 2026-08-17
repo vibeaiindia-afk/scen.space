@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Synthetic Nature</title>
+
+  <!-- Garamond — the display face -->
+  <link href="https://db.onlinewebfonts.com/c/2bf40ab72ea4897a3fd9b6e48b233a19?family=Garamond" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%}
+    body{background:#010101;color:#fff;overflow:hidden;
+      font-family:'Geist',-apple-system,BlinkMacSystemFont,sans-serif;
+      -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    .font-garamond{font-family:'Garamond','Times New Roman',serif}
+
+    .stage{position:relative;width:100%;height:100vh;overflow:hidden;background:#010101}
+    .film{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
+
+    /* ── Liquid glass ────────────────────────────────────────────────────── */
+    .liquid-glass{
+      background:rgba(255,255,255,.01);
+      background-blend-mode:luminosity;
+      backdrop-filter:blur(4px);
+      -webkit-backdrop-filter:blur(4px);
+      border:none;
+      box-shadow:inset 0 1px 1px rgba(255,255,255,.1);
+      position:relative;
+      overflow:hidden;
+    }
+    .liquid-glass::before{
+      content:'';
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      padding:1.4px;
+      background:linear-gradient(180deg,
+        rgba(255,255,255,.45) 0%, rgba(255,255,255,.15) 20%,
+        rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
+        rgba(255,255,255,.15) 80%, rgba(255,255,255,.45) 100%);
+      -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+      -webkit-mask-composite:xor;
+      mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+      mask-composite:exclude;
+      pointer-events:none;
+    }
+    .liquid-glass:hover{
+      background:rgba(255,255,255,.04);
+      box-shadow:inset 0 1px 2px rgba(255,255,255,.15);
+    }
+    .liquid-glass:active{transform:scale(.98)}
+
+    /* ── Navigation ──────────────────────────────────────────────────────── */
+    .nav{position:relative;z-index:20;display:flex;align-items:center;justify-content:space-between;
+      padding:1.5rem 1.25rem}
+    @media(min-width:768px){.nav{justify-content:center;gap:3rem;padding:2rem}}
+    .brand{color:#fff;text-transform:uppercase;letter-spacing:.25em;font-weight:300;font-size:.8125rem}
+    @media(min-width:768px){.brand{letter-spacing:.3em;font-size:.875rem}}
+    .links{display:none;align-items:center;gap:2.5rem}
+    @media(min-width:768px){.links{display:flex}}
+    .links a{color:rgba(255,255,255,.8);text-decoration:none;text-transform:uppercase;
+      letter-spacing:.2em;font-size:.6875rem;font-weight:300;transition:color 300ms ease}
+    .links a:hover{color:#fff}
+    .toggle{display:inline-flex;align-items:center;justify-content:center;background:none;border:0;
+      color:#fff;cursor:pointer;padding:0}
+    @media(min-width:768px){.toggle{display:none}}
+
+    /* Mobile dropdown — mounted only while open, like AnimatePresence. */
+    .mobile-menu-glass{
+      background:rgba(10,10,10,.7);
+      backdrop-filter:blur(20px);
+      -webkit-backdrop-filter:blur(20px);
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.1);
+    }
+    .drop{position:fixed;top:4rem;left:1rem;right:1rem;z-index:50;border-radius:1rem;
+      display:flex;flex-direction:column;align-items:center;gap:1.25rem;padding:2rem 0;
+      animation:drop-in 300ms ease-out both}
+    .drop.out{animation:drop-out 300ms ease-out both}
+    @media(min-width:768px){.drop{display:none}}
+    @keyframes drop-in{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes drop-out{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-10px)}}
+    .drop a{color:rgba(255,255,255,.9);text-decoration:none;text-transform:uppercase;
+      letter-spacing:.25em;font-weight:300;font-size:.8125rem;transition:color 300ms ease;
+      animation:link-in 300ms ease-out both}
+    .drop a:hover{color:#fff}
+    @keyframes link-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    .drop.out a{animation:none}
+
+    /* ── Hero ────────────────────────────────────────────────────────────── */
+    .hero{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;
+      text-align:center;padding:3rem 1.25rem 0}
+    @media(min-width:640px){.hero{padding:4rem 2rem 0}}
+    @media(min-width:768px){.hero{padding-top:6rem}}
+
+    h1{font-weight:400;color:#fff;line-height:1.08;letter-spacing:-.025em;
+      font-size:2.25rem;margin-bottom:1.5rem}
+    @media(min-width:640px){h1{font-size:3.75rem;margin-bottom:2rem}}
+    @media(min-width:768px){h1{font-size:6rem}}
+    @media(min-width:1024px){h1{font-size:8rem}}
+    h1 .line{display:block}
+    h1 .ch{display:inline-block;white-space:pre;opacity:0}
+    /* The keyframes are attached by the .in class rather than paused and
+       resumed — a paused animation is not reliably repainted everywhere. */
+    h1 .line.in .ch{animation:char-in 400ms ease-out both;animation-delay:calc(var(--i) * .07s)}
+    @keyframes char-in{from{opacity:0}to{opacity:1}}
+
+    .sub{color:rgba(255,255,255,.7);font-weight:300;line-height:1.625;max-width:20rem;
+      font-size:.875rem;margin-bottom:2rem;
+      animation:rise 800ms ease-out 1.6s both}
+    @media(min-width:640px){.sub{max-width:28rem;font-size:1rem;margin-bottom:2.5rem}}
+    @media(min-width:1024px){.sub{font-size:1.125rem}}
+    .sub br{display:none}
+    @media(min-width:640px){.sub br{display:inline}}
+    @keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+    .cta{border-radius:999px;color:rgba(255,255,255,.9);text-transform:uppercase;
+      letter-spacing:.18em;font-size:.6875rem;font-weight:300;font-family:inherit;cursor:pointer;
+      padding:.875rem 1.75rem;animation:rise 800ms ease-out 2s both}
+    .cta span{position:relative;z-index:1}
+    @media(min-width:640px){.cta{padding:1rem 2.5rem;letter-spacing:.2em;font-size:.75rem}}
+
+    @media(prefers-reduced-motion:reduce){
+      h1 .ch,.sub,.cta,.drop,.drop a{animation:none;opacity:1;transform:none}
+    }
+  </style>
+</head>
+<body>
+
+<div class="stage">
+  <video class="film" autoplay muted loop playsinline preload="auto"
+    src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260619_191346_9d19d66e-86a4-47f7-8dc6-712c1788c3b2.mp4"></video>
+
+  <nav class="nav">
+    <span class="brand">Organic Visions</span>
+    <div class="links">
+      <a href="#">Wander</a>
+      <a href="#">Archive</a>
+      <a href="#">Story</a>
+      <a href="#">Connect</a>
+    </div>
+    <button class="toggle" type="button" id="toggle" aria-label="Menu" aria-expanded="false">
+      <svg id="icoMenu" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/>
+      </svg>
+      <svg id="icoX" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+        <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+      </svg>
+    </button>
+  </nav>
+
+  <div class="hero">
+    <h1 class="font-garamond">
+      <span class="line" data-fade>WITNESS THE</span>
+      <span class="line" data-fade>HIDDEN REALM</span>
+    </h1>
+
+    <!-- The break only exists from 640px up; the space keeps the sentence
+         readable on the narrow layout where it is hidden. -->
+    <p class="sub">An odyssey through delicate living forms,<br/> revealed by lens and curiosity.</p>
+
+    <button class="cta liquid-glass" type="button"><span>Begin the Experience</span></button>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* Staggered fade — one span per character, 0.07s apart, played once when the
+     line comes into view. */
+  var lines=[].slice.call(document.querySelectorAll('[data-fade]'));
+  lines.forEach(function(line){
+    var text=line.textContent;
+    line.textContent='';
+    line.dataset.text=text;
+    for(var i=0;i<text.length;i++){
+      var s=document.createElement('span');
+      s.className='ch';
+      s.textContent=text.charAt(i);
+      s.style.setProperty('--i',i);
+      line.appendChild(s);
+    }
+  });
+
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting)return;
+      e.target.classList.add('in');    /* the class carries the keyframes */
+      io.unobserve(e.target);          /* once */
+    });
+  },{threshold:.2});
+  lines.forEach(function(l){io.observe(l)});
+
+  /* Mobile dropdown — created on open, animated out before it is removed. */
+  var toggle=document.getElementById('toggle');
+  var icoMenu=document.getElementById('icoMenu'),icoX=document.getElementById('icoX');
+  var LINKS=['Wander','Archive','Story','Connect'];
+  var drop=null;
+
+  function open(){
+    drop=document.createElement('div');
+    drop.className='drop mobile-menu-glass';
+    LINKS.forEach(function(name,i){
+      var a=document.createElement('a');
+      a.href='#';a.textContent=name;
+      a.style.animationDelay=(0.05+i*0.06)+'s';
+      drop.appendChild(a);
+    });
+    drop.addEventListener('click',function(e){if(e.target.closest('a'))close()});
+    document.body.appendChild(drop);
+    icoMenu.style.display='none';icoX.style.display='';
+    toggle.setAttribute('aria-expanded','true');
+  }
+  function close(){
+    if(!drop)return;
+    var el=drop;drop=null;
+    el.classList.add('out');
+    setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el)},300);
+    icoMenu.style.display='';icoX.style.display='none';
+    toggle.setAttribute('aria-expanded','false');
+  }
+  toggle.addEventListener('click',function(){drop?close():open()});
+
+  var film=document.querySelector('.film');
+  var p=film&&film.play();if(p&&p.catch)p.catch(function(){});
+})();
+</script>
+</body>
+</html>

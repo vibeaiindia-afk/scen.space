@@ -8931,7 +8931,7 @@ html.polish-high-contrast{--muted:#d0d0d4;--line:rgba(255,255,255,.19)}html.poli
 
 
 <!-- ===== PROMPT LIBRARY =============================================
-     119 starting prompts. They are prompts, not finished sites, so
+     124 starting prompts. They are prompts, not finished sites, so
      picking one writes the brief and runs the generator that already
      builds real sections — rather than pretending to be a template
      with content it does not have. -->
@@ -9012,7 +9012,7 @@ html.polish-high-contrast{--muted:#d0d0d4;--line:rgba(255,255,255,.19)}html.poli
         +'</div></article>';
     }).join('');
 
-    return viewHead('Prompt library','119 starting points. Pick one and the AI builds it into an editable site.',
+    return viewHead('Prompt library','124 starting points. Pick one and the AI builds it into an editable site.',
         '<button class="btn" data-nav="templates">Browse templates</button>')
       +'<div class="filters">'+chips+'</div>'
       +'<div class="pl-bar"><input class="pl-search" id="plSearch" placeholder="Search by name, category or words in the prompt" value="'+E(q)+'"/>'
@@ -10827,10 +10827,11 @@ try{navigate=window.navigate}catch(e){}
 /* ──────────────────────────────────────────────────────────────────────────
    Scroll-film templates.
 
-   The five entries below are complete standalone pages under /templates/,
+   The ten entries below are complete standalone pages under /templates/,
    not preset data. Every other TEMPLATES entry is a description that the
-   preset renderers draw; these are hand-built scroll-scrubbed films with
-   their own markup, so there is nothing for the renderer to draw from.
+   preset renderers draw; these are hand-built pages with their own markup,
+   so there is nothing for the renderer to draw from. The first five are
+   scroll-scrubbed films; the rest are single-viewport hero pages.
 
    They join the same gallery by carrying a `file` field. Anything holding
    one is served as a real file — Vercel checks the filesystem before the SPA
@@ -10875,7 +10876,42 @@ var FILMS=[
    palette:{accent:'#d50000',accent2:'#050505'},
    heroTitle:'FRaME',
    heroSubtitle:'Impossible scenes, cut like they happened. No seams, no explanation — just motion that feels remembered.',
-   components:['Home','Films','Studio','Index','Contact']}
+   components:['Home','Films','Studio','Index','Contact']},
+
+  {name:'Beyond Hero',file:'/templates/beyond-hero.html',category:'Creative',
+   tag:'Four-layer display type behind a 3D character',
+   palette:{accent:'#EC612C',accent2:'#000000'},
+   heroTitle:'Beyond',
+   heroSubtitle:'One word in four colour layers, side columns that slide inward as the page scrolls, and a marquee that never stops.',
+   components:['Home','Work','Studio','Journal','Contact']},
+
+  {name:'Lumora',file:'/templates/lumora.html',category:'Wellness',
+   tag:'Four films the visitor switches between, one hero',
+   palette:{accent:'#182C41',accent2:'#000000'},
+   heroTitle:'Clarity In An Endlessly Noisy Universe',
+   heroSubtitle:'A mindfulness hero where the film is the control: pick a mood and the whole page changes with it, ink and all.',
+   components:['Home','How It Works','Features','Pricing','Community']},
+
+  {name:'Synthetic Nature',file:'/templates/synthetic-nature.html',category:'Photography',
+   tag:'Garamond titles that arrive letter by letter',
+   palette:{accent:'#ffffff',accent2:'#010101'},
+   heroTitle:'Witness The Hidden Realm',
+   heroSubtitle:'Slow serif titles over a living film, glass on the one button, and nothing else asking for attention.',
+   components:['Home','Wander','Archive','Story','Connect']},
+
+  {name:'Echoid',file:'/templates/echoid.html',category:'Product',
+   tag:'Terminal-mono signup pinned beside a full-bleed film',
+   palette:{accent:'#ffffff',accent2:'#000000'},
+   heroTitle:'Echoid',
+   heroSubtitle:'A voice-identity sign-up: black negative space on the left, the form held on the right, sharp rectangles only.',
+   components:['Home','Story','Platforms','Identity','Contact']},
+
+  {name:'Serene',file:'/templates/serene.html',category:'Beauty',
+   tag:'A film, then a quote with drifting clouds',
+   palette:{accent:'#6BADC4',accent2:'#010A17'},
+   heroTitle:'Gentle Touch. Radiant Presence.',
+   heroSubtitle:'Two screens for a beauty and wellness studio — one cinematic, one a founder quote that clouds drift into.',
+   components:['Home','About','Services','Journal','Contact']}
 ];
 
 function slugOf(name){return String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')}
@@ -11529,7 +11565,7 @@ setTimeout(mount,1200);
 </style>
 
 <script id="scen-featured">
-/* Featured six: the five scroll films first — they are complete standalone
+/* Featured six: the standalone pages under /templates/ first — they are real
    sites rather than preset data, so they show the ceiling — then the strongest
    of the presets to fill the row. */
 (function(){

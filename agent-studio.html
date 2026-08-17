@@ -316,6 +316,20 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
   .chat{width:100%;border-right:0}.main{display:none}
   body.pane-open .chat{display:none}body.pane-open .main{display:block}
 }
+/* §51 — on a phone the header ran to 904px on a 375px screen, so Invite,
+   Publish and the account pill sat off the edge with nothing to scroll them
+   into view. The row now wraps and the tabs scroll on their own. */
+@media (max-width:560px){
+  .toolbar{flex-wrap:wrap;height:auto;padding:8px 10px;gap:8px;align-items:center}
+  .tb-left{min-width:0;flex:1}
+  .tb-right{margin-left:0;order:3;width:100%;justify-content:flex-start;gap:6px}
+  .tb-right .btn,.tb-right .pill{flex:1;min-width:0;text-align:center;white-space:nowrap}
+  .tb-center{order:2;width:100%;margin-left:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tb-center::-webkit-scrollbar{display:none}
+  .tb-center .tab{flex:0 0 auto}
+  /* iOS zooms the whole page when a focused field is under 16px. */
+  #input,.comp textarea,.comp input{font-size:16px}
+}
 </style>
 </head>
 <body>

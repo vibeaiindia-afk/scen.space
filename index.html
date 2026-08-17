@@ -11666,6 +11666,19 @@ else boot();
 .sc-body p{font-size:12.5px;line-height:1.55;color:#8a8a95;margin:0}
 .sc-open{margin-top:13px;font-size:12px;font-weight:600;color:var(--acid)}
 @media(max-width:940px){#showcase .show-grid{grid-template-columns:1fr}.sc-shot{height:190px}}
+
+/* ── Tablet ────────────────────────────────────────────────────────────────
+   Between phone and desktop everything was collapsing straight to one column,
+   so a 768px tablet showed three stat tiles stacked at 744px wide each and a
+   showcase card alone on a row while its siblings sat two-up. Give the band
+   its own answer instead of letting it inherit the phone's. */
+@media(min-width:700px) and (max-width:939px){
+  #showcase .show-grid{grid-template-columns:repeat(2,1fr)!important}
+  #showcase .show-grid > .sc-card:nth-child(3){grid-column:1 / -1}
+  .ui2-stats{grid-template-columns:repeat(3,1fr)!important}
+  .ui2-split{grid-template-columns:1fr!important}
+  .sx-grid{grid-template-columns:repeat(2,1fr)}
+}
 </style>
 
 <script id="scen-showcase">

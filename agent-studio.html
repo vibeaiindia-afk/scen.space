@@ -1972,6 +1972,8 @@ function editPrompt(text,b,hist){
   '"addFeatures":[],"dropFeatures":[],"rewriteCopy":false,'+
   '"reply":"one short sentence, past tense, describing what you changed"}\n'+
   'Feature names must come from: '+Object.keys(FEATURES).join(', ')+'. '+
+  'If the client asked a question rather than requesting a change, answer it '+
+  'in "reply" and return no other keys. '+
   'If nothing about the site should change, return only {"reply":"..."}.';
 }
 function readEdit(text,b,hist){
@@ -2351,7 +2353,10 @@ var INTENT={
   greeting:/^\s*(hi+|hey|hello|yo|hola|namaste|sup|good (morning|evening|afternoon))\b[\s!.?]*$/i,
   approve : /\b(approve|go ahead|build it|bana do|banao ab|start kro|shuru kro|theek hai|thik hai|ok(ay)? go|looks good|perfect|haan)\b/i,
   reject  : /\b(nahi|nahin|no thanks|don'?t|mat |hatao|remove that|cancel|rehne do)\b/i,
-  edit    : /\b(chota|bada|badal|badlo|change|make it|hatao|nikal|add |jodo|daal|colour|color|font|bigger|smaller|darker|lighter|move |swap|instead)\b/i,
+  /* Hinglish carries the instruction in the verb at the end — "kr do", "kro",
+     "rakho" — and the thing being changed is often just a noun. Without these
+     "theek hai but accent gold kr do" scored as plain approval and built. */
+  edit    : /\b(chota|bada|badal|badlo|change|make it|hatao|nikal|add |jodo|daal|colour|color|font|bigger|smaller|darker|lighter|move |swap|instead|k[ar]r? ?do|kro|karo|rakho|rakh ?do|lagao|lga ?do|hata ?do|badha|ghata)\b/i,
   question: /\b(kitna|kitne|kya |kaise|kyu|why|how (long|much|do)|what (is|does)|can you|price|cost|time lagega)\b/i
 };
 function classify(text){
@@ -2360,7 +2365,10 @@ function classify(text){
   if(INTENT.greeting.test(t))return 'greeting';
   if(isBriefLike(t))return 'brief';
   if(INTENT.question.test(t))return 'question';
-  if(INTENT.approve.test(t)&&t.length<40)return 'approve';
+  /* A sentence that agrees AND asks for a change is a change, not approval —
+     "theek hai but accent gold kr do" must not start a build. Edit verbs
+     therefore veto both confirmations. */
+  if(INTENT.approve.test(t)&&t.length<40&&!INTENT.edit.test(t))return 'approve';
   if(INTENT.edit.test(t))return 'edit';
   if(INTENT.reject.test(t)&&t.length<40)return 'reject';
   return 'answer';
@@ -2537,7 +2545,7 @@ function handleText(text){
        whatever question happens to be on screen. "hero chota kro" used to be
        filed as a business name. Only once there is something to change, and
        only when the gateway can actually read it — otherwise carry on. */
-    if(intent.kind==='edit'&&S.brief.name&&X.usable()){
+    if((intent.kind==='edit'||intent.kind==='question')&&S.brief.name&&X.usable()){
       userSay(text,atts);S.atts=[];renderAtts();
       var t0=Date.now();thinking();
       X.readEdit(text,S.brief,transcript()).then(function(o){
@@ -2714,6 +2722,18 @@ function offerChange(){
   body.appendChild(box);scrollChat();
 }
 function handleReviewText(text){
+  var kind=classify(text);
+
+  /* "haan theek hai" is the same instruction as the Approve button. Typing it
+     used to fall through to the edit reader, which found nothing to change
+     and offered a menu. */
+  if(kind==='approve')return startBuild();
+  if(kind==='reject'){
+    agentSay('Held off. Tell me what to change and I will redo the plan \u2014 '+
+             'a page, the look, the colour, anything.');
+    return finishReviewButtons();
+  }
+
   var applied=parseEdit(text);
   if(applied){
     agentSay(applied+'<br/><br/>Plan updated on the right. Approve when it looks right.');

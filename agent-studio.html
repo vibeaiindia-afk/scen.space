@@ -2653,11 +2653,29 @@ function handleReviewText(text){
   if(applied){
     agentSay(applied+'<br/><br/>Plan updated on the right. Approve when it looks right.');
     renderMain();finishReviewButtons();
+  }else if(X.usable()){
+    /* The pattern reader could not place it. Review used to stop here with a
+       menu, while the post-build path handed the same sentence to the model.
+       There is no reason review should understand less than editing does. */
+    var t0=Date.now();thinking();
+    X.readEdit(text,S.brief).then(function(o){
+      clearThinking();setAiPill();
+      var changed=o?applyPatch(o):[];
+      if(changed.length){
+        agentSay(changed.join('<br/>')+'<br/><br/>Plan updated on the right. Approve when it looks right.',
+                 Math.max(1,Math.round((Date.now()-t0)/1000)));
+        renderMain();
+      }else{
+        agentSay(esc(String((o&&o.reply)||'').slice(0,240))||reviewEditHelp());
+      }
+      finishReviewButtons();
+    }).catch(function(){clearThinking();agentSay(reviewEditHelp());finishReviewButtons()});
   }else{
-    agentSay("I can change the name, the one-liner, the pages, the features, the style, the accent colour or the motion. Say it plainly — “make it warm gold”, “add a pricing page”, “drop the blog”.");
+    agentSay(reviewEditHelp());
     finishReviewButtons();
   }
 }
+function reviewEditHelp(){ return "I can change the name, the one-liner, the pages, the features, the style, the accent colour or the motion. Say it plainly — “make it warm gold”, “add a pricing page”, “drop the blog”."; }
 
 /* ============================================================
    The build run

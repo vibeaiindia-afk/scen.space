@@ -110,8 +110,8 @@ button.pill:hover{border-color:rgba(255,255,255,.28);color:#fff}
 .msg.agent .text code{background:#16161d;border:1px solid var(--line);padding:1px 5px;border-radius:5px;font-size:12px;color:var(--cyan)}
 .msg.agent .text ul{margin:8px 0 0;padding-left:17px}
 .msg.agent .text li{margin-bottom:4px}
-.msg .worked{display:flex;align-items:center;gap:8px;margin-top:11px;color:#5f5f6a;font-size:11.5px}
-.msg .worked .ring{width:15px;height:15px;border-radius:50%;border:1.5px solid #2a2a34;border-top-color:#6e6e7c}
+.msg .worked{display:inline-flex;align-items:center;gap:5px;margin-left:9px;color:#5f5f6a;font-size:11px;font-weight:400}
+.msg .worked .ring{width:10px;height:10px;border-radius:50%;border:1.5px solid #2a2a34;border-top-color:#6e6e7c}
 .msg .worked.run .ring{animation:spin .8s linear infinite}
 
 .typing{display:inline-flex;gap:4px;align-items:center;height:16px}
@@ -2182,9 +2182,13 @@ function nodeFor(m){
       (m.atts&&m.atts.length?'<div class="att-row">'+m.atts.map(function(a){
         return '<img class="att" src="'+a.url+'" alt=""/>'}).join('')+'</div></div>':'');
   }else{
-    d.innerHTML='<div class="who"><span class="avatar"></span><b>Scen Agent</b></div>'+
-      '<div class="text">'+m.html+'</div>'+
-      (m.worked?'<div class="worked"><span class="ring"></span>Worked for '+m.worked+' second'+(m.worked===1?'':'s')+'</div>':'');
+    /* Timing belongs on the name line, not under the reply. Sitting below the
+       text it read as part of the answer; beside the name it reads as what it
+       is — a note about the turn. */
+    d.innerHTML='<div class="who"><span class="avatar"></span><b>Scen Agent</b>'+
+      (m.worked?'<span class="worked"><span class="ring"></span>'+m.worked+'s</span>':'')+
+      '</div>'+
+      '<div class="text">'+m.html+'</div>';
   }
   return d;
 }

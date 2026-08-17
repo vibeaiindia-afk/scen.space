@@ -11293,8 +11293,11 @@ else{mountWs();mo.observe(document.body,{childList:true,subtree:true})}
   color:#8a8a95!important;font-weight:500!important;box-shadow:none!important}
 .mactions .nav-ghost:hover,.mactions a[href="/agent-studio.html"]:hover{color:#fff!important}
 
-/* Any chapter rail / vertical edge label the mockup does not have. */
-.hero .index,.hero-index,.chapter-rail,.hero-chapters,.scroll-dots{display:none!important}
+/* The 01–05 dot rail on the right edge. It paged through the cinematic
+   world's chapters — which the single-statement hero no longer has, so it
+   was navigating nothing. Hidden on the marketing page only; the class is
+   still used by the sequencer inside the product. */
+#marketing .cinema-chapter-rail{display:none!important}
 
 /* Sites table — the mockup's scannable list. */
 .ui2-tbl{margin-top:16px}

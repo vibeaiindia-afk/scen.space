@@ -2305,14 +2305,14 @@ function renderAnswerBox(){
   body.appendChild(box);scrollChat();
 }
 
-function answer(value,label){
+function answer(value,label,quiet){
   var st=step();if(!st)return;
   clearAnswerBox();
   var show=Array.isArray(value)?(value.length?value.join(', '):'Nothing extra'):
     (value==='__skip'?'Skip':(label||value));
   var atts=S.atts.slice();
   if(atts.length){S.brief.refs=S.brief.refs.concat(atts);S.atts=[];renderAtts()}
-  userSay(show,atts);
+  if(!quiet)userSay(show,atts);
   if(value!=='__skip'||!st.optional)st.set(S.brief,value);
   else st.set(S.brief,'__skip');
   S.pending=null;
@@ -2393,6 +2393,24 @@ function readIntent(text){
   }
   return out;
 }
+/* Worth asking the model about? One or two words are an answer, and text that
+   matches an option on screen is an answer. Everything else, once there is a
+   project to change, is a real question the regex cannot settle. */
+function ambiguous(st,text){
+  var w=String(text).trim().split(/\s+/).length;
+  if(w<3)return false;
+  if(st.opts){
+    var os=st.opts()||[],lc=text.toLowerCase();
+    for(var i=0;i<os.length;i++){
+      var v=String(os[i].v||'').toLowerCase(),l=String(os[i].l||'').toLowerCase();
+      if(v&&lc.indexOf(v)>=0)return false;
+      if(l&&lc.indexOf(l)>=0)return false;
+    }
+    return true;
+  }
+  return w>=4;
+}
+
 /* A short field should not swallow a paragraph. */
 function looksLikeBrief(st,text){
   return (st.id==='name')&&(text.length>36||URL_RE.test(text));
@@ -2620,6 +2638,25 @@ function handleText(text){
       userSay(text,atts);S.atts=[];renderAtts();
       S.brief.pitch=text;save();
       agentSay('Got it — I have kept that as the brief. What should the site be <b>called</b>?');
+      return;
+    }
+
+    /* The word lists ran out. Rather than growing them forever, let the model
+       settle it: hand it the sentence and the conversation, and if it comes
+       back with nothing to change then it was an answer after all. Gated hard
+       so the ordinary case stays instant and free. */
+    if(intent.kind==='answer'&&S.brief.name&&X.usable()&&ambiguous(st,text)){
+      userSay(text,atts);S.atts=[];renderAtts();
+      var at0=Date.now();thinking();
+      X.readEdit(text,S.brief,transcript()).then(function(o){
+        clearThinking();setAiPill();
+        var changed=o?applyPatch(o):[];
+        if(changed.length){
+          agentSay(changed.join('<br/>'),Math.max(1,Math.round((Date.now()-at0)/1000)));
+          save();return askCurrent(true);
+        }
+        answer(text,text,true);          /* quiet: the echo is already on screen */
+      }).catch(function(){clearThinking();answer(text,text,true)});
       return;
     }
 

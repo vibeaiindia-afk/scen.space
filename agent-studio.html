@@ -2394,8 +2394,12 @@ function absorbBrief(text){
         ||text.match(/["\u201c]([A-Z][\w&' -]{1,28})["\u201d]/);
   if(nm&&!b.name){b.name=nm[1].trim();got.push('name <b>'+C.esc(b.name)+'</b>')}
 
+  /* Step 0 carries the agent's introduction, so leaving kind unset made the
+     agent introduce itself again after the customer had already written a
+     brief. Read it from the ordinary words people use. */
   if(!b.kind&&/\b(mobile app|ios|android|app store)\b/i.test(text)){b.kind='app';got.push('a mobile app')}
-  else if(!b.kind&&/\bwebsite|landing page|web ?site\b/i.test(text)){b.kind='website';got.push('a website')}
+  else if(!b.kind&&/\b(website|web ?site|landing page|hero section|home ?page|web app)\b/i.test(text)){b.kind='website';got.push('a website')}
+  else if(!b.kind&&/\bapp\b/i.test(text)){b.kind='app';got.push('an app')}
 
   var ind=matchOne(IND_WORDS,text);
   if(ind&&!b.industry){b.industry=ind;got.push(INDUSTRIES[ind]?INDUSTRIES[ind].l:ind)}
@@ -2423,6 +2427,12 @@ function absorbBrief(text){
    ['features',(b.features||[]).length]].forEach(function(pair){
     if(pair[1]&&S.skip.indexOf(pair[0])<0)S.skip.push(pair[0]);
   });
+  /* advance() is what normally pushes the name into the top bar; absorbing
+     skips it, so the project stayed "Untitled project" with a name in hand. */
+  if(b.name&&!S.projectName){
+    S.projectName=b.name;
+    var el=$('#projName');if(el)el.textContent=b.name;
+  }
   save();
   return got;
 }

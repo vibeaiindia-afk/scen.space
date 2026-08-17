@@ -4,6 +4,8 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Scen — 3D AI Website Builder</title>
+<script>/* /agent is the Scen Agent Studio now — redirect before the app boots */
+if(/^\/agent\/?$/i.test(location.pathname))location.replace('/agent-studio.html');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://api.fontshare.com">
@@ -566,7 +568,7 @@ html[data-mobile3d="full"] .canvas-device.mobile .builder-scene-fx{opacity:1}
   <div class="mnav-wrap"><nav class="mnav">
     <a class="logo" href="#" data-nav="marketing"><span class="logo-mark"></span><span data-brand-name>Scen</span></a>
     <div class="mlinks"><a href="#features">Features</a><a href="#showcase">Showcase</a><a href="#pricing">Pricing</a><a href="#" data-action="openTemplatesMarketing">Templates</a><a href="#" data-nav="helpdocs">Docs</a></div>
-    <div class="mactions"><a class="btn agent-cta" href="/agent" target="_blank" rel="noopener"><span class="dot"></span>4D Website Builder</a><button class="btn ghost" data-nav="auth">Log in</button><button class="btn light" data-nav="auth">Start building <span>↗</span></button></div>
+    <div class="mactions"><a class="btn agent-cta" href="/agent-studio.html"><span class="dot"></span>4D Website Builder</a><button class="btn ghost" data-nav="auth">Log in</button><button class="btn light" data-nav="auth">Start building <span>↗</span></button></div>
   </nav></div>
   <header class="hero">
     <div class="cinematic-field" aria-hidden="true"><div class="depth-grid"></div><div class="cinematic-halo halo-a"></div><div class="cinematic-halo halo-b"></div><div class="cinematic-cursor"></div><div class="scan-line"></div></div>
@@ -619,7 +621,7 @@ html[data-mobile3d="full"] .canvas-device.mobile .builder-scene-fx{opacity:1}
   <aside class="app-sidebar">
     <button class="new-project" data-nav="create">＋ New project</button>
     <div class="nav-group"><div class="nav-label">Workspace</div><a class="side-link" data-route="dashboard" data-nav="dashboard">⌂ Home</a><a class="side-link" data-route="projects" data-nav="projects">◫ Projects</a><a class="side-link" data-route="templates" data-nav="templates">▦ Templates</a></div>
-    <div class="nav-group"><div class="nav-label">Create</div><a class="side-link" data-route="studio" data-nav="studio">✦ AI Studio</a><a class="side-link" data-route="media" data-nav="media">◉ Media</a><a class="side-link" data-route="domains" data-nav="domains">◎ Domains</a></div>
+    <div class="nav-group"><div class="nav-label">Create</div><a class="side-link" href="/agent-studio.html">✦ Agent Studio</a><a class="side-link" data-route="media" data-nav="media">◉ Media</a><a class="side-link" data-route="domains" data-nav="domains">◎ Domains</a></div>
     <div class="nav-group"><div class="nav-label">Business</div><a class="side-link" data-route="analytics" data-nav="analytics">⌁ Analytics</a><a class="side-link" data-route="events" data-nav="events">◈ Events</a><a class="side-link" data-route="leads" data-nav="leads">◌ Leads</a><a class="side-link" data-route="forms" data-nav="forms">▤ Forms</a><a class="side-link" data-route="cms" data-nav="cms">▥ CMS</a><a class="side-link" data-route="store" data-nav="store">◫ Store</a><a class="side-link" data-route="productdetail" data-nav="productdetail">◇ Product Detail</a><a class="side-link" data-route="inventory" data-nav="inventory">▥ Inventory</a><a class="side-link" data-route="orders" data-nav="orders">▣ Orders</a><a class="side-link" data-route="discounts" data-nav="discounts">% Discounts</a><a class="side-link" data-route="shipping" data-nav="shipping">◇ Shipping & Tax</a><a class="side-link" data-route="checkoutdesign" data-nav="checkoutdesign">◫ Checkout Design</a><a class="side-link" data-route="bookings" data-nav="bookings">◷ Bookings</a><a class="side-link" data-route="bookingcalendar" data-nav="bookingcalendar">▦ Booking Calendar</a><a class="side-link" data-route="availability" data-nav="availability">◷ Availability Rules</a><a class="side-link" data-route="funnels" data-nav="funnels">↳ Funnels</a><a class="side-link" data-route="search" data-nav="search">⌕ Site Search</a></div><div class="nav-group"><div class="nav-label">Site Ops</div><a class="side-link" data-route="localization" data-nav="localization">文 Languages</a><a class="side-link" data-route="pagetranslations" data-nav="pagetranslations">文 Per-page Copy</a><a class="side-link" data-route="redirects" data-nav="redirects">↪ Redirects & 404</a><a class="side-link" data-route="backups" data-nav="backups">⇩ Backup / Import</a><a class="side-link" data-route="privacy" data-nav="privacy">◉ Privacy</a><a class="side-link" data-route="customcode" data-nav="customcode">&lt;/&gt; Custom Code</a><a class="side-link" data-route="projectsettings" data-nav="projectsettings">⚙ Project Settings</a><a class="side-link" data-route="notifications" data-nav="notifications">✉ Email Templates</a><a class="side-link" data-route="members" data-nav="members">◉ Membership</a><a class="side-link" data-route="accounts" data-nav="accounts">♙ User Accounts</a></div><div class="nav-group"><div class="nav-label">Team & QA</div><a class="side-link" data-route="collaboration" data-nav="collaboration">◎ Collaboration</a><a class="side-link" data-route="accessibility" data-nav="accessibility">◒ Accessibility</a></div>
     <div class="nav-group"><div class="nav-label">Account</div><a class="side-link" data-route="billing" data-nav="billing">◇ Billing & Credits</a><a class="side-link" data-route="team" data-nav="team">♙ Team</a><a class="side-link" data-route="settings" data-nav="settings">⚙ Settings</a></div>
     <div class="nav-group"><div class="nav-label">Builder Power Tools</div><a class="side-link" data-route="commandcenter" data-nav="commandcenter">⌘ Command Center</a><a class="side-link" data-route="recovery" data-nav="recovery">↻ Autosave & Recovery</a><a class="side-link" data-route="designtokens" data-nav="designtokens">◈ Design Tokens</a><a class="side-link" data-route="variants" data-nav="variants">▦ Component Variants</a><a class="side-link" data-route="motionlab" data-nav="motionlab">〽 Motion Lab</a><a class="side-link" data-route="scenes" data-nav="scenes">◈ 3D Scene Library</a><a class="side-link" data-route="sequencer" data-nav="sequencer">◆ Cinematic Sequencer</a><a class="side-link" data-route="breakpoints" data-nav="breakpoints">▣ Breakpoints</a></div>
@@ -1137,6 +1139,26 @@ const escV=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const CIN_FIGMA="https://raft-blast-61784561.figma.site/_assets/v11/";
 const CIN_PIN="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/";
 const TEMPLATES=[
+  {"name": "Velorah", "category": "Agency", "tag": "A four-person studio that says no a lot", "palette": {"accent": "#ff5a3c", "accent2": "#f4efe6"}, "heroTitle": "Four people. Six projects a year.", "heroSubtitle": "We take on what we can finish properly, publish what it cost, and hand over everything at the end.", "ctas": ["See the six", "Ask about a slot"], "components": ["Year", "Clients", "How it runs", "Rates", "Questions"], "sectionCopy": ["What last year actually looked like.", "Who trusted us with it.", "Three phases, one price, no surprises.", "What a project costs before you ask.", "The things people ask on the first call."], "sections": [{"kind": "metrics", "eyebrow": "Year", "items": [{"k": "Projects", "v": "6", "sub": "finished"}, {"k": "Turned down", "v": "31", "sub": "asked"}, {"k": "On date", "v": "6 of 6", "sub": "agreed up front"}, {"k": "Team", "v": "4", "sub": "no contractors"}]}, {"kind": "logos", "eyebrow": "Clients", "names": ["NORTHWIND", "KESTREL", "SABLE", "ORBIT", "VANE", "MERIDIAN"]}, {"kind": "timeline", "eyebrow": "How it runs", "steps": [{"when": "PHASE 01", "title": "Two weeks, paid", "copy": "We decide together whether the work is worth doing at all. You keep the notes either way."}, {"when": "PHASE 02", "title": "Six weeks, building", "copy": "Two of us on it full time. You see it every Friday, finished or not."}, {"when": "PHASE 03", "title": "One week, handover", "copy": "Files, access, and an hour on video. Then it is yours."}]}, {"kind": "pricing", "eyebrow": "Rates", "plans": [{"name": "Identity", "amt": "9,000", "per": "project", "items": ["Wordmark and type", "Colour and usage", "One page site"]}, {"name": "Site", "amt": "18,000", "per": "project", "items": ["Up to eight pages", "Copy written with you", "CMS you can actually use", "Six weeks"]}, {"name": "Both", "amt": "24,000", "per": "project", "items": ["Everything above", "One price", "Ten weeks", "A year of small fixes"]}]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Why do you turn so much down?", "a": "Because six is what four people can finish without cutting corners."}, {"q": "Can you start next week?", "a": "Almost never. The next free slot is usually eight to ten weeks out."}, {"q": "Who owns the work?", "a": "You do, from the first invoice. Source files included."}, {"q": "What if it goes wrong?", "a": "We say so on the Friday it goes wrong, not at the end."}]}]},
+  {"name": "Aetheris Voyage", "category": "Travel", "tag": "Six windows a year, twelve routes", "palette": {"accent": "#74b5e0", "accent2": "#f7e7c8"}, "heroTitle": "Where the light lands last", "heroSubtitle": "Slow routes through the high valleys, walked at the pace they were made for, booked in one conversation.", "ctas": ["Plan a route", "See the windows"], "components": ["Season", "Routes", "Guides", "What it costs", "Questions"], "sectionCopy": ["The weather decides, so we plan around it.", "Twelve routes, none of them rushed.", "Nine people who have walked every one.", "Everything included, nothing added later.", "Asked before almost every booking."], "sections": [{"kind": "metrics", "eyebrow": "Season", "items": [{"k": "Windows", "v": "6", "sub": "per year"}, {"k": "Routes", "v": "12", "sub": "live"}, {"k": "Group", "v": "8", "sub": "maximum"}, {"k": "Return", "v": "68%", "sub": "come back"}]}, {"kind": "table", "eyebrow": "Routes", "cols": ["Route", "Days", "Season", "Nights out", "Grade"], "rows": [["The Long Meadow", "4", "May, Sep", "1", "easy"], ["Saltmarsh Line", "6", "Jun, Aug", "3", "moderate"], ["High Corrie", "8", "Jul", "5", "hard"], ["Winter Traverse", "5", "Feb", "2", "hard"]]}, {"kind": "scroller", "eyebrow": "Guides", "cards": [{"label": "14 YEARS", "title": "Ines Marchetti", "copy": "Walked every route we sell, most of them in both directions."}, {"label": "9 YEARS", "title": "Tomas Berg", "copy": "Reads weather better than the forecast does, which is why we listen."}, {"label": "11 YEARS", "title": "Aiko Tanaka", "copy": "Runs the winter traverse and refuses to run it in bad light."}]}, {"kind": "split", "eyebrow": "What it costs", "bullets": ["One price, from the trailhead to the last night", "Food, huts and permits included", "No single supplement, ever", "Full refund if we move your dates"]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "How fit do I need to be?", "a": "Comfortable walking six hours with a day pack. We will tell you honestly if a route is wrong for you."}, {"q": "What if the weather turns?", "a": "We move you to another window at no cost. That is why there are six."}, {"q": "Can I come alone?", "a": "Most people do. Groups cap at eight."}]}]},
+  {"name": "Securify", "category": "SaaS", "tag": "Security posture, in numbers you can act on", "palette": {"accent": "#5ee6a8", "accent2": "#7beeff"}, "heroTitle": "Know what is exposed. Today.", "heroSubtitle": "Continuous checks across your cloud, your code and your people, with a single number that only moves when something real changes.", "ctas": ["Start a free scan", "Book a walkthrough"], "components": ["Coverage", "What it checks", "Findings", "Plans", "Questions"], "sectionCopy": ["Connected in an afternoon, not a quarter.", "Four surfaces, one score.", "What a typical first week turns up.", "Priced per seat, not per finding.", "Asked in almost every security review."], "sections": [{"kind": "metrics", "eyebrow": "Coverage", "items": [{"k": "Setup", "v": "3h", "sub": "median"}, {"k": "Checks", "v": "1,240", "sub": "continuous"}, {"k": "Noise cut", "v": "71%", "sub": "vs raw alerts"}, {"k": "Teams", "v": "430", "sub": "using it"}]}, {"kind": "split", "eyebrow": "What it checks", "bullets": ["Cloud accounts, every region, every hour", "Dependencies and the licences that come with them", "Secrets in code, history included", "Access that outlived the person who needed it"]}, {"kind": "table", "eyebrow": "Findings", "cols": ["Severity", "Typical count", "Median fix", "Owner"], "rows": [["Critical", "2", "4 hours", "platform"], ["High", "9", "2 days", "platform"], ["Medium", "34", "2 weeks", "product"], ["Informational", "210", "backlog", "—"]]}, {"kind": "pricing", "eyebrow": "Plans", "plans": [{"name": "Team", "amt": "29", "per": "seat", "items": ["One cloud account", "Daily checks", "Slack alerts"]}, {"name": "Company", "amt": "59", "per": "seat", "items": ["Unlimited accounts", "Hourly checks", "SSO and audit log", "Named contact"]}, {"name": "Regulated", "amt": "talk", "per": "to us", "items": ["Everything above", "Evidence export", "Custom retention", "Quarterly review"]}]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Do you store our code?", "a": "No. Scanning happens in your account and only findings leave it."}, {"q": "How long until the first result?", "a": "Usually under an hour after the first connection."}, {"q": "Will it wake us up at night?", "a": "Only for critical, and only if you ask it to."}]}]},
+  {"name": "Prisma", "category": "Landing Page", "tag": "One product, explained in ninety seconds", "palette": {"accent": "#c9a4ff", "accent2": "#ffd166"}, "heroTitle": "Ship the thing you keep describing", "heroSubtitle": "A working draft in a day, a real page by Friday, and every word still editable by the person who wrote it.", "ctas": ["Start a draft", "See a finished one"], "components": ["Before and after", "How it works", "Proof", "Pricing", "Questions"], "sectionCopy": ["What changes in the first week.", "Four steps, no meetings required.", "Numbers from teams already using it.", "Two plans, both monthly.", "Asked before most sign-ups."], "sections": [{"kind": "metrics", "eyebrow": "Before and after", "items": [{"k": "First draft", "v": "1 day", "sub": "was 3 weeks"}, {"k": "Live page", "v": "5 days", "sub": "was 2 months"}, {"k": "Edits", "v": "you", "sub": "was a ticket"}, {"k": "Cost", "v": "−74%", "sub": "vs agency"}]}, {"kind": "timeline", "eyebrow": "How it works", "steps": [{"when": "01", "title": "Describe it", "copy": "One paragraph about what the product does and who it is for."}, {"when": "02", "title": "Read the draft", "copy": "Sections, copy and layout, generated and already arranged."}, {"when": "03", "title": "Type on it", "copy": "Click any line and change it. No fields, no forms."}, {"when": "04", "title": "Publish", "copy": "Your address, live, with the media served from it."}]}, {"kind": "quote", "eyebrow": "Proof", "quote": "We replaced a six-week agency cycle with a Tuesday afternoon.", "attr": "Head of product, a fintech in Berlin"}, {"kind": "pricing", "eyebrow": "Pricing", "plans": [{"name": "Solo", "amt": "19", "per": "month", "items": ["Three projects", "Custom domain", "Publish unlimited"]}, {"name": "Studio", "amt": "79", "per": "month", "items": ["Unlimited projects", "Five seats", "Client review", "Priority generation"]}]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Do I need a designer?", "a": "No, but if you have one they can change everything."}, {"q": "Can I use my own domain?", "a": "Yes. You add two DNS records and it goes live."}, {"q": "What happens if I stop paying?", "a": "Your published sites stay up for thirty days and you can export everything."}]}]},
+  {"name": "Max Reed", "category": "Portfolio", "tag": "A director's reel that reads like a document", "palette": {"accent": "#ffffff", "accent2": "#ff4d6d"}, "heroTitle": "Nine films. One question each.", "heroSubtitle": "Commercial and documentary work made over seven years, listed with what it was for and whether it worked.", "ctas": ["See the nine", "Start a conversation"], "components": ["Body of work", "Selected", "How a film gets made", "Credits", "Before you write"], "sectionCopy": ["Seven years, nine films that still hold up.", "The work, newest first.", "Three decisions, in the order they get made.", "Who else is usually in the room.", "What helps a first email."], "sections": [{"kind": "metrics", "eyebrow": "Body of work", "items": [{"k": "Films", "v": "9", "sub": "selected from 44"}, {"k": "Years", "v": "7", "sub": "working"}, {"k": "Longest", "v": "68", "sub": "minutes"}, {"k": "Crew", "v": "5", "sub": "typical"}]}, {"kind": "gallery", "eyebrow": "Selected", "tiles": ["Low Tide", "Kiln", "The Long Room", "Nightshift", "Salt", "Verge"]}, {"kind": "timeline", "eyebrow": "How a film gets made", "steps": [{"when": "01", "title": "The question", "copy": "Every film starts as one sentence. If it cannot, it is not ready."}, {"when": "02", "title": "The look", "copy": "Decided on paper before the shoot, so nothing is invented under pressure."}, {"when": "03", "title": "The cut", "copy": "First assembly is deliberately too long. We take away until it stops improving."}]}, {"kind": "logos", "eyebrow": "Credits", "names": ["ARRI", "KODAK", "BFI", "CHANNEL 4", "ARTE", "NOWNESS"]}, {"kind": "split", "eyebrow": "Before you write", "bullets": ["Tell me what the film is for, not what it should look like", "Say the budget, even roughly", "Say when it has to exist", "If there is a script, send it"]}]},
+  {"name": "Celestial Renewal", "category": "Wellness", "tag": "A studio that counts what matters", "palette": {"accent": "#a8ff5c", "accent2": "#7beeff"}, "heroTitle": "Show up. We handle the rest.", "heroSubtitle": "Small-group strength and breathing, coached by name, capped at ten so nobody trains unsupervised.", "ctas": ["Book a trial", "See the week"], "components": ["Studio", "Week", "Coaching", "Membership", "Questions"], "sectionCopy": ["One room, proper equipment, ten people maximum.", "What a week actually looks like.", "How coaching works here.", "What it costs, monthly.", "Asked at almost every trial."], "sections": [{"kind": "metrics", "eyebrow": "Studio", "items": [{"k": "Cap", "v": "10", "sub": "per session"}, {"k": "Coaches", "v": "4", "sub": "all full time"}, {"k": "Sessions", "v": "34", "sub": "per week"}, {"k": "Retention", "v": "81%", "sub": "at 12 months"}]}, {"kind": "scroller", "eyebrow": "Week", "cards": [{"label": "MON", "title": "Lower strength", "copy": "Squat and hinge, loaded across a six-week block."}, {"label": "TUE", "title": "Breath and pace", "copy": "Intervals set to your numbers, not the room's."}, {"label": "THU", "title": "Upper strength", "copy": "Press and pull, accessories chosen per person."}, {"label": "SAT", "title": "Long easy", "copy": "Ninety minutes, conversational, outdoors when dry."}]}, {"kind": "split", "eyebrow": "Coaching", "bullets": ["Your coach knows your name and your last three sessions", "Every load is written down, by you", "Nothing is scaled without saying why", "If you miss two weeks we call, once"]}, {"kind": "pricing", "eyebrow": "Membership", "plans": [{"name": "Twice a week", "amt": "89", "per": "month", "items": ["Two sessions", "Programme", "Open gym Sundays"]}, {"name": "Unlimited", "amt": "139", "per": "month", "items": ["Any session", "Programme", "Two guest passes", "Quarterly check-in"]}]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "I have never lifted before.", "a": "Most people here started that way. The first month is teaching."}, {"q": "Can I freeze?", "a": "Yes, twice a year, up to six weeks."}, {"q": "Is there a joining fee?", "a": "No."}]}]},
+  {"name": "TrustFlow", "category": "Finance", "tag": "Close the month in a morning", "palette": {"accent": "#7bff9e", "accent2": "#7beeff"}, "heroTitle": "Close the month in a morning", "heroSubtitle": "Reconciliation that reads your bank feed, matches what it can, and shows its working on everything it cannot.", "ctas": ["See a live close", "Talk to finance"], "components": ["Close", "What it matches", "Controls", "Plans", "Questions"], "sectionCopy": ["What a month-end looks like now.", "Four sources, one ledger.", "Who approved what, and when.", "Per entity, billed yearly.", "Asked in every finance review."], "sections": [{"kind": "metrics", "eyebrow": "Close", "items": [{"k": "Close time", "v": "4h", "sub": "was 6 days"}, {"k": "Auto-matched", "v": "93%", "sub": "of lines"}, {"k": "Entities", "v": "12", "sub": "one view"}, {"k": "Audit prep", "v": "1 day", "sub": "was 3 weeks"}]}, {"kind": "table", "eyebrow": "What it matches", "cols": ["Source", "Volume", "Auto", "Left to review"], "rows": [["Bank feed", "41,200", "96%", "1,650"], ["Card spend", "8,900", "94%", "530"], ["Invoices", "3,100", "88%", "370"], ["Payroll", "740", "99%", "8"]]}, {"kind": "timeline", "eyebrow": "Controls", "steps": [{"when": "DAY 01", "title": "Freeze", "copy": "The period locks and every later edit is recorded against a name."}, {"when": "DAY 01", "title": "Review", "copy": "Only the exceptions come to a human, ranked by value."}, {"when": "DAY 02", "title": "Sign off", "copy": "Two approvers, one export, and the trail goes with it."}]}, {"kind": "pricing", "eyebrow": "Plans", "plans": [{"name": "Single entity", "amt": "390", "per": "month", "items": ["One ledger", "Bank and card feeds", "Two approvers"]}, {"name": "Group", "amt": "1,200", "per": "month", "items": ["Up to twelve entities", "Intercompany matching", "SSO and audit log", "Named accountant"]}]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Which ledgers do you support?", "a": "Xero, NetSuite and Sage, plus CSV for anything else."}, {"q": "Do you move money?", "a": "No. We read, match and explain. Payments stay where they are."}, {"q": "How long to onboard?", "a": "One entity in a week, a group in about a month."}]}]},
+  {"name": "Innovation Lab", "category": "Technology", "tag": "Research you can read in one sitting", "palette": {"accent": "#ffb454", "accent2": "#5ad1ff"}, "heroTitle": "We publish the misses too", "heroSubtitle": "A small applied research group working on materials and sensing, with every result posted whether or not it went the way we hoped.", "ctas": ["Read the papers", "Work with us"], "components": ["Output", "Papers", "How we work", "Partners", "Questions"], "sectionCopy": ["Four years of published work.", "Newest first, misses included.", "Three rules that decide what we take on.", "Who funds and builds with us.", "Asked by most people who write in."], "sections": [{"kind": "metrics", "eyebrow": "Output", "items": [{"k": "Papers", "v": "31", "sub": "published"}, {"k": "Negative", "v": "9", "sub": "posted anyway"}, {"k": "Replicated", "v": "84%", "sub": "by others"}, {"k": "People", "v": "11", "sub": "full time"}]}, {"kind": "table", "eyebrow": "Papers", "cols": ["Year", "Title", "Field", "Result"], "rows": [["2026", "Low-drift strain sensing on flexible substrate", "Sensing", "held up"], ["2025", "Recycled binder in cast components", "Materials", "partial"], ["2025", "Acoustic mapping in tight enclosures", "Sensing", "did not hold"], ["2024", "Thermal cycling of printed contacts", "Materials", "held up"]]}, {"kind": "split", "eyebrow": "How we work", "bullets": ["If it cannot be replicated, it is not finished", "Negative results get the same page as positive ones", "No project runs longer than eighteen months", "Every dataset ships with the paper"]}, {"kind": "logos", "eyebrow": "Partners", "names": ["ETH", "FRAUNHOFER", "TU DELFT", "KTH", "IMEC", "CSIRO"]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Can we fund a specific question?", "a": "Yes, if we can publish the answer."}, {"q": "Do you do consulting?", "a": "Rarely, and never on something we are also researching."}, {"q": "Where is the data?", "a": "Linked from every paper, no request needed."}]}]},
+  {"name": "ADHD Planner", "category": "App", "tag": "One screen, one next thing", "palette": {"accent": "#ff8f6b", "accent2": "#c9a4ff"}, "heroTitle": "One next thing, not twenty", "heroSubtitle": "A planner that hides everything except what you are doing now, and forgives you completely when a day gets away.", "ctas": ["Try it free", "See how it works"], "components": ["Today", "What it does", "What it will not do", "Plans", "Questions"], "sectionCopy": ["What the app shows when you open it.", "Four things, done properly.", "The features we deliberately left out.", "Free, or a small yearly fee.", "Asked by most people who try it."], "sections": [{"kind": "metrics", "eyebrow": "Today", "items": [{"k": "On screen", "v": "1", "sub": "task at a time"}, {"k": "Setup", "v": "0", "sub": "projects to build"}, {"k": "Streaks", "v": "none", "sub": "on purpose"}, {"k": "Rated", "v": "4.8", "sub": "12,400 reviews"}]}, {"kind": "split", "eyebrow": "What it does", "bullets": ["Shows one task, chosen for you, with a way to swap it", "Breaks anything vague into a first step you can start", "Lets you dump everything at once and sort later, or never", "Forgets yesterday unless you ask it not to"]}, {"kind": "split", "eyebrow": "What it will not do", "bullets": ["No streaks to break", "No productivity score", "No nested projects and sub-projects", "No notifications you did not ask for"]}, {"kind": "pricing", "eyebrow": "Plans", "plans": [{"name": "Free", "amt": "0", "per": "forever", "items": ["Everything on one device", "Unlimited tasks"]}, {"name": "Sync", "amt": "24", "per": "year", "items": ["All your devices", "Backups", "Widgets"]}]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Is my data private?", "a": "It stays on your device unless you turn on sync, and it is encrypted when you do."}, {"q": "What if I stop paying?", "a": "Everything keeps working on one device."}, {"q": "Is this medical advice?", "a": "No. It is a planner made with people who have ADHD."}]}]},
+  {"name": "Blog Showcase", "category": "Blog", "tag": "Writing that people finish", "palette": {"accent": "#e8c98a", "accent2": "#c9a4ff"}, "heroTitle": "Long pieces, published slowly", "heroSubtitle": "One essay a fortnight on how things are actually made, with the research notes attached to every one.", "ctas": ["Read the latest", "Subscribe"], "components": ["The archive", "Recent", "How it is written", "Support", "Questions"], "sectionCopy": ["Four years of fortnightly pieces.", "The last four, newest first.", "Three habits that keep it honest.", "What a subscription pays for.", "Asked by readers most often."], "sections": [{"kind": "metrics", "eyebrow": "The archive", "items": [{"k": "Essays", "v": "96", "sub": "since 2022"}, {"k": "Median", "v": "4,100", "sub": "words"}, {"k": "Finished", "v": "62%", "sub": "read to the end"}, {"k": "Readers", "v": "31k", "sub": "subscribed"}]}, {"kind": "timeline", "eyebrow": "Recent", "steps": [{"when": "12 AUG", "title": "The cost of a quiet motor", "copy": "Why the expensive fan is quieter, and what that costs to manufacture."}, {"when": "29 JUL", "title": "Six weeks in a paper mill", "copy": "What actually happens between a forest and a page."}, {"when": "15 JUL", "title": "The last hand-cut file", "copy": "One workshop, one process, and why it survived."}]}, {"kind": "split", "eyebrow": "How it is written", "bullets": ["Nothing runs until someone in the trade has read it", "Every claim links to where it came from", "Corrections stay on the page, dated", "No sponsored pieces, ever"]}, {"kind": "pricing", "eyebrow": "Support", "plans": [{"name": "Free", "amt": "0", "per": "always", "items": ["Every essay", "Full archive"]}, {"name": "Member", "amt": "60", "per": "year", "items": ["Research notes", "Two live sessions a year", "Pays for the travel"]}]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Why fortnightly?", "a": "Because weekly would mean thinner work and we tried it."}, {"q": "Is anything paywalled?", "a": "No essay is. Only the notes."}, {"q": "Can I republish?", "a": "Yes, with a link and no changes."}]}]},
+  {"name": "Nexto 404", "category": "404", "tag": "A dead end that still helps", "palette": {"accent": "#ff4d6d", "accent2": "#7beeff"}, "heroTitle": "That page moved on", "heroSubtitle": "The link you followed does not point anywhere now. Here is what is usually behind it, and a way to tell us if we broke something.", "ctas": ["Back to the start", "Tell us what broke"], "components": ["Try these", "What happened", "Report it"], "sectionCopy": ["The four places most people were heading.", "Why a link stops working.", "Thirty seconds, and it reaches a person."], "sections": [{"kind": "gallery", "eyebrow": "Try these", "tiles": ["Home", "What we make", "Pricing", "Support"]}, {"kind": "split", "eyebrow": "What happened", "bullets": ["The page was renamed and the old link was not redirected", "It was retired on purpose", "There is a typo in the address", "Something on our side is broken, which is worth telling us"]}, {"kind": "faq", "eyebrow": "Report it", "items": [{"q": "Where did you come from?", "a": "If a link on our own site sent you here, that is a bug and we want it."}, {"q": "Do you read these?", "a": "Yes. They go to the same inbox as support."}]}]},
+  {"name": "No-Code Waitlist", "category": "Waitlist", "tag": "A queue with an honest position", "palette": {"accent": "#dfff45", "accent2": "#7d6cff"}, "heroTitle": "Join, and know where you stand", "heroSubtitle": "We let people in every Tuesday in the order they joined, and the number on this page is the real one.", "ctas": ["Join the list", "See who is already in"], "components": ["The queue", "How it moves", "Who is in", "Questions"], "sectionCopy": ["Live, updated when the page loads.", "One rule, applied every week.", "The kind of teams already using it.", "Asked by most people before joining."], "sections": [{"kind": "metrics", "eyebrow": "The queue", "items": [{"k": "Waiting", "v": "2,418", "sub": "right now"}, {"k": "Let in", "v": "120", "sub": "each Tuesday"}, {"k": "Typical wait", "v": "3 wks", "sub": "from joining"}, {"k": "Skipped", "v": "0", "sub": "no queue jumping"}]}, {"kind": "timeline", "eyebrow": "How it moves", "steps": [{"when": "MON", "title": "We count", "copy": "Whoever has been waiting longest is next. No exceptions, including for us."}, {"when": "TUE", "title": "Invites go out", "copy": "One email, valid for seven days, with your position at the time."}, {"when": "WED", "title": "Support catches up", "copy": "Everyone let in gets a real reply within a day."}]}, {"kind": "logos", "eyebrow": "Who is in", "names": ["ORBIT", "KESTREL", "LUMEN", "VANE", "SABLE", "ATLAS"]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Can I pay to skip?", "a": "No. That is the point of publishing the number."}, {"q": "What if I miss my invite?", "a": "You go back in at the same position, not the end."}, {"q": "Will you email me otherwise?", "a": "Once, when you get in. Nothing else."}]}]},
+  {"name": "Build With Us", "category": "Contact", "tag": "One form, answered by a person", "palette": {"accent": "#7beeff", "accent2": "#dfff45"}, "heroTitle": "Tell us what you need", "heroSubtitle": "One short message reaches the two people who would actually do the work, and you get a real answer within a day.", "ctas": ["Start a message", "Book a call instead"], "components": ["Response", "What helps", "Who replies", "Questions"], "sectionCopy": ["What happens after you send it.", "Four lines that make the first reply useful.", "No account managers in between.", "Asked before most first messages."], "sections": [{"kind": "metrics", "eyebrow": "Response", "items": [{"k": "First reply", "v": "6h", "sub": "median"}, {"k": "By a person", "v": "100%", "sub": "no autoresponder"}, {"k": "Quoted", "v": "2 days", "sub": "if it fits"}, {"k": "Turned down", "v": "fast", "sub": "and with a reason"}]}, {"kind": "split", "eyebrow": "What helps", "bullets": ["What the thing has to do, in a sentence", "Roughly what you can spend", "When it has to exist", "Anything that already exists, even if it is bad"]}, {"kind": "scroller", "eyebrow": "Who replies", "cards": [{"label": "BUILD", "title": "Dana Okoye", "copy": "Answers anything technical, usually the same afternoon."}, {"label": "DESIGN", "title": "Petra Lund", "copy": "Answers anything about scope, timing and what it will cost."}]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Do you sign NDAs?", "a": "Yes, before the first call if you want."}, {"q": "Will I get a sales sequence?", "a": "No. One reply, then only if you write back."}]}]},
+  {"name": "Rocket Pricing", "category": "Pricing", "tag": "Three plans, no hidden line", "palette": {"accent": "#ff5a3c", "accent2": "#ffd166"}, "heroTitle": "Priced before you ask", "heroSubtitle": "Every number on this page is the number you pay. No setup fee, no minimum term, and no call required to see it.", "ctas": ["Start free", "Compare the plans"], "components": ["Plans", "What is included everywhere", "What costs extra", "Questions"], "sectionCopy": ["Monthly, cancel whenever.", "The things we refuse to charge for.", "The two things that are usage-based, and their rates.", "Asked before almost every upgrade."], "sections": [{"kind": "pricing", "eyebrow": "Plans", "plans": [{"name": "Free", "amt": "0", "per": "month", "items": ["One project", "Community support", "Publish to a shared address"]}, {"name": "Pro", "amt": "24", "per": "month", "items": ["Ten projects", "Custom domain", "Email support", "Remove branding"]}, {"name": "Team", "amt": "96", "per": "month", "items": ["Unlimited projects", "Five seats", "Review and approvals", "Priority support"]}]}, {"kind": "split", "eyebrow": "What is included everywhere", "bullets": ["Custom domains on every paid plan", "Unlimited publishes", "Your data exportable at any time", "Support from the people who built it"]}, {"kind": "table", "eyebrow": "What costs extra", "cols": ["Item", "Included", "Then", "Notes"], "rows": [["Image generation", "50 / month", "25 credits each", "charged as used"], ["Video generation", "none", "12–45 credits / second", "by resolution"]]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Is there an annual discount?", "a": "Two months free if you pay yearly."}, {"q": "Can I change plan mid-month?", "a": "Yes, and we pro-rate both ways."}, {"q": "What happens to my sites if I downgrade?", "a": "They stay published. You just get fewer projects to edit."}]}]},
+  {"name": "Orbis Hello", "category": "About", "tag": "Who we are, without the mission statement", "palette": {"accent": "#c2a878", "accent2": "#8fd3c3"}, "heroTitle": "Eleven people, one floor", "heroSubtitle": "We started in 2019 doing one thing badly, stopped, and have been doing a narrower thing properly since.", "ctas": ["See the work", "Open roles"], "components": ["Us", "How we got here", "How we work", "Roles", "Questions"], "sectionCopy": ["The company in four numbers.", "The turns that actually mattered.", "Four rules we do not break.", "What we are hiring for now.", "Asked at almost every interview."], "sections": [{"kind": "metrics", "eyebrow": "Us", "items": [{"k": "People", "v": "11", "sub": "one office"}, {"k": "Since", "v": "2019", "sub": "still here"}, {"k": "Clients", "v": "38", "sub": "total"}, {"k": "Left", "v": "2", "sub": "in six years"}]}, {"kind": "timeline", "eyebrow": "How we got here", "steps": [{"when": "2019", "title": "Too many services", "copy": "We offered nine things and were good at two of them."}, {"when": "2021", "title": "Cut seven", "copy": "Revenue dropped for a year and then doubled."}, {"when": "2024", "title": "Stopped growing", "copy": "Eleven is the number where everyone still knows the work."}]}, {"kind": "split", "eyebrow": "How we work", "bullets": ["Nobody works a weekend to cover a bad estimate", "Every project has one owner, named to the client", "We say what a thing costs before we are asked", "If we get it wrong we say so the same week"]}, {"kind": "table", "eyebrow": "Roles", "cols": ["Role", "Level", "Where", "Status"], "rows": [["Designer", "mid", "on site", "open"], ["Engineer", "senior", "on site", "open"], ["Producer", "any", "hybrid", "closed"]]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Are you remote?", "a": "No, and that is a real trade-off we accept."}, {"q": "What is the interview?", "a": "A conversation, then a paid day on a real problem."}]}]},
+  {"name": "Glow Features", "category": "Features", "tag": "Four things, done properly", "palette": {"accent": "#a8ff5c", "accent2": "#ff8f6b"}, "heroTitle": "Four things. Nothing else.", "heroSubtitle": "We removed twenty features last year and the product got faster, smaller and easier to explain.", "ctas": ["See what is left", "Read the changelog"], "components": ["What is left", "What we removed", "Numbers", "Questions"], "sectionCopy": ["The four that survived.", "And what happened when they went.", "What removal actually bought.", "Asked whenever something goes."], "sections": [{"kind": "split", "eyebrow": "What is left", "bullets": ["Capture, from anywhere, in one keystroke", "Search that finds it even when you misremember", "Share, with a link that expires when you say", "Export, everything, any time, no ticket"]}, {"kind": "table", "eyebrow": "What we removed", "cols": ["Feature", "Used by", "Removed", "Complaints"], "rows": [["Boards", "4%", "Mar", "11"], ["Templates", "9%", "Apr", "3"], ["Automations", "2%", "Jun", "0"], ["Themes", "31%", "kept", "—"]]}, {"kind": "metrics", "eyebrow": "Numbers", "items": [{"k": "Load", "v": "−61%", "sub": "first paint"}, {"k": "Bundle", "v": "−44%", "sub": "shipped JS"}, {"k": "Support", "v": "−38%", "sub": "tickets"}, {"k": "Churn", "v": "−12%", "sub": "same period"}]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "What if I used a removed feature?", "a": "We wrote to everyone who did, before it went, with an export."}, {"q": "Will you remove more?", "a": "Probably. We publish the usage numbers first."}]}]},
+  {"name": "Mind-Body Healing", "category": "Medicine", "tag": "A clinic that publishes its outcomes", "palette": {"accent": "#8fd3c3", "accent2": "#f4efe6"}, "heroTitle": "We publish what happens next", "heroSubtitle": "A small pain clinic that follows every patient for a year and posts the results, including the ones that did not improve.", "ctas": ["Book an assessment", "Read the outcomes"], "components": ["Outcomes", "How it works", "The team", "Costs", "Questions"], "sectionCopy": ["Twelve months after treatment, all patients.", "Three appointments, then a decision together.", "Who you actually see.", "Published, per appointment.", "Asked at almost every first visit."], "sections": [{"kind": "metrics", "eyebrow": "Outcomes", "items": [{"k": "Improved", "v": "71%", "sub": "at 12 months"}, {"k": "No change", "v": "22%", "sub": "at 12 months"}, {"k": "Worse", "v": "7%", "sub": "at 12 months"}, {"k": "Followed up", "v": "96%", "sub": "of patients"}]}, {"kind": "timeline", "eyebrow": "How it works", "steps": [{"when": "VISIT 01", "title": "Assessment", "copy": "Ninety minutes, mostly listening, no treatment on the day."}, {"when": "VISIT 02", "title": "A plan, with odds", "copy": "What we expect, how likely it is, and what happens if it does not work."}, {"when": "VISIT 03", "title": "Decide together", "copy": "Continue, change, or stop. Stopping is a normal outcome here."}]}, {"kind": "scroller", "eyebrow": "The team", "cards": [{"label": "PAIN MEDICINE", "title": "Dr Anwar Sethi", "copy": "Fourteen years, and the person who insisted we publish the misses."}, {"label": "PHYSIOTHERAPY", "title": "Lena Fischer", "copy": "Runs the twelve-month follow-up that most clinics skip."}, {"label": "PSYCHOLOGY", "title": "Dr Marta Ruiz", "copy": "Sees every patient at least once, by default."}]}, {"kind": "table", "eyebrow": "Costs", "cols": ["Appointment", "Length", "Cost", "Covered"], "rows": [["Assessment", "90 min", "180", "most insurers"], ["Follow-up", "45 min", "95", "most insurers"], ["Physio", "45 min", "70", "varies"]]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Do I need a referral?", "a": "No, but bring any imaging you already have."}, {"q": "Why publish bad outcomes?", "a": "Because a clinic that only publishes good ones is telling you nothing."}]}]},
+  {"name": "AI Image Generator", "category": "AI", "tag": "What it can and cannot do, up front", "palette": {"accent": "#7d6cff", "accent2": "#7beeff"}, "heroTitle": "Good at four things. Bad at three.", "heroSubtitle": "An image model tuned for product and interior work, with the failure cases documented on the same page as the wins.", "ctas": ["Try five free", "See the failures"], "components": ["Where it is strong", "Where it fails", "Speed and cost", "Rights", "Questions"], "sectionCopy": ["Tested against a fixed set, monthly.", "Published because you will find them anyway.", "Per image, at each size.", "Who owns what comes out.", "Asked before most sign-ups."], "sections": [{"kind": "split", "eyebrow": "Where it is strong", "bullets": ["Products on plain and textured ground", "Interiors with real daylight", "Materials — metal, glass, fabric, stone", "Consistent lighting across a whole set"]}, {"kind": "split", "eyebrow": "Where it fails", "bullets": ["Hands holding small objects", "Legible text of more than three words", "Exact brand colours without a reference"]}, {"kind": "table", "eyebrow": "Speed and cost", "cols": ["Size", "Time", "Credits", "Best for"], "rows": [["1K", "4s", "25", "drafts"], ["2K", "11s", "45", "web"], ["4K", "34s", "110", "print"]]}, {"kind": "split", "eyebrow": "Rights", "bullets": ["You own what you generate, commercially", "We do not train on your prompts or outputs", "Your uploads are deleted after thirty days", "Nothing is shown publicly unless you publish it"]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Can I upload a reference?", "a": "Yes, and it stays private to your workspace."}, {"q": "Why publish the failures?", "a": "So you do not spend credits discovering them."}]}]},
+  {"name": "CodeNest", "category": "Education", "tag": "Learn by shipping, not by watching", "palette": {"accent": "#5ad1ff", "accent2": "#dfff45"}, "heroTitle": "You will ship in week one", "heroSubtitle": "Twelve weeks, four real projects, and a reviewer who reads every line you write and tells you what is wrong with it.", "ctas": ["See the twelve weeks", "Apply"], "components": ["Cohort", "The twelve weeks", "Reviewing", "Cost", "Questions"], "sectionCopy": ["Small on purpose.", "What gets built, and when.", "The part most courses skip.", "One price, refundable in week two.", "Asked by almost every applicant."], "sections": [{"kind": "metrics", "eyebrow": "Cohort", "items": [{"k": "Places", "v": "24", "sub": "per cohort"}, {"k": "Reviewers", "v": "6", "sub": "working engineers"}, {"k": "Finished", "v": "89%", "sub": "of those who start"}, {"k": "Hired", "v": "64%", "sub": "within six months"}]}, {"kind": "timeline", "eyebrow": "The twelve weeks", "steps": [{"when": "WK 01–03", "title": "A tool you use", "copy": "Small, ugly, yours, and running by Friday of week one."}, {"when": "WK 04–07", "title": "Something with data", "copy": "A real schema, real migrations, and the mistakes that come with them."}, {"when": "WK 08–10", "title": "Something with users", "copy": "Auth, permissions and the first time you break production."}, {"when": "WK 11–12", "title": "Your own", "copy": "Whatever you want, reviewed like the rest."}]}, {"kind": "split", "eyebrow": "Reviewing", "bullets": ["Every pull request read by a working engineer", "Comments within one working day", "You rewrite it, and it gets read again", "Nothing is marked done because you ran out of time"]}, {"kind": "pricing", "eyebrow": "Cost", "plans": [{"name": "Upfront", "amt": "2,400", "per": "course", "items": ["Twelve weeks", "All reviews", "Full refund in week two"]}, {"name": "Monthly", "amt": "900", "per": "month", "items": ["Three payments", "Same course", "Same refund window"]}]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Do I need experience?", "a": "You should have written some code before, badly is fine."}, {"q": "Is it part time?", "a": "Yes. Expect fifteen hours a week and be honest with yourself about it."}]}]},
+  {"name": "Radial", "category": "Testimonials", "tag": "Quotes with the numbers attached", "palette": {"accent": "#ffd166", "accent2": "#ff5a3c"}, "heroTitle": "Quotes, with the numbers", "heroSubtitle": "Every line on this page comes with what it replaced, what it cost, and a name you can look up.", "ctas": ["Read the cases", "Ask for a reference"], "components": ["What changed", "In their words", "The cases", "Questions"], "sectionCopy": ["Across the twelve customers who agreed to be named.", "Three of them, unedited.", "What each one actually did.", "Asked whenever someone checks references."], "sections": [{"kind": "metrics", "eyebrow": "What changed", "items": [{"k": "Time saved", "v": "11h", "sub": "per week, median"}, {"k": "Tools dropped", "v": "3", "sub": "average"}, {"k": "Payback", "v": "7 wks", "sub": "median"}, {"k": "Named", "v": "12", "sub": "of 40 customers"}]}, {"kind": "quote", "eyebrow": "In their words", "quote": "It replaced two tools and a spreadsheet nobody wanted to own.", "attr": "Operations lead, a logistics firm in Rotterdam"}, {"kind": "table", "eyebrow": "The cases", "cols": ["Company", "Size", "Replaced", "Payback"], "rows": [["Kestrel", "40", "2 tools", "6 weeks"], ["Vane", "120", "1 tool + sheet", "9 weeks"], ["Sable", "18", "spreadsheet", "4 weeks"], ["Atlas", "310", "3 tools", "11 weeks"]]}, {"kind": "faq", "eyebrow": "Questions", "items": [{"q": "Can I talk to one of them?", "a": "Yes. We will introduce you to a customer your size."}, {"q": "Why only twelve names?", "a": "Those are the ones who agreed. The other twenty-eight did not, and that is fine."}]}]},
   {"name":"Mostar","category":"Travel","tag":"A cinematic three-screen scroll story",
    "palette":{"accent":"#74b5e0","accent2":"#fdf1e1"},
    "heroTitle":"MOSTAR","heroSubtitle":"A stone arch, emerald water, and a compact old city made for slow mornings, late light, and one unforgettable crossing.",
@@ -8516,207 +8538,7 @@ html.polish-high-contrast{--muted:#d0d0d4;--line:rgba(255,255,255,.19)}html.poli
 </script>
 
 
-<!-- ===== CLIENT REVIEW — REAL COMMENTS =============================
-     The panel showed "0 open comments" and "Approved 2/4" no matter
-     what. The review_comments table has existed since the first
-     migration with nothing reading it. These are those rows. -->
-<style id="reviewCss">
-.rv-wrap{display:grid;gap:10px;margin-top:10px}
-.rv-stat{display:flex;gap:8px;flex-wrap:wrap}
-.rv-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;
-  border:1px solid var(--line);font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase}
-.rv-chip.open{border-color:rgba(224,166,63,.5);color:#e0a63f}
-.rv-chip.done{border-color:rgba(95,208,138,.5);color:#5fd08a}
-.rv-item{border:1px solid var(--line);border-radius:11px;padding:10px 11px;background:#0e0e13;display:grid;gap:6px}
-.rv-item.done{opacity:.6}
-.rv-item .who{font-family:ui-monospace,monospace;font-size:9px;letter-spacing:.12em;color:var(--muted)}
-.rv-item .body{font-size:12px;line-height:1.45}
-.rv-item .row{display:flex;gap:6px}
-.rv-item .row button{border:1px solid var(--line);border-radius:7px;height:25px;padding:0 9px;font-size:10px}
-.rv-item .row button:hover{border-color:var(--ink)}
-.rv-item .row .rm{color:#e0616b;margin-left:auto}
-.rv-new{display:grid;gap:6px;margin-top:4px}
-.rv-new textarea{width:100%;min-height:56px;resize:vertical;padding:8px 10px;border-radius:9px;
-  border:1px solid #24242d;background:#0b0b10;color:var(--ink);font:inherit;font-size:12px}
-.rv-msg{font-size:11px;color:var(--muted);min-height:14px}
-.rv-err{color:#e0616b}
-.review-thread.resolved{opacity:.55}
-</style>
 
-<script>
-(function(){
-  'use strict';
-  var E=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
-
-  var comments=null, note='', busy=false;
-  // the same rows back two surfaces now — the builder panel and the review hub
-  function redraw(){try{render(state.route)}catch(e){}}
-
-  /**
-   * api() hands back the raw response body when it is not JSON, so a gateway
-   * or proxy error page arrives here as a whole HTML document. Print that and
-   * the panel fills with markup, so anything unreadable becomes the status.
-   */
-  function why(e,what){
-    var s=e&&e.status,t=String(e&&e.message||e||'').trim();
-    if(s===401)return 'Sign in to load '+(what||'review comments')+'.';
-    if(s===403)return 'You do not have access to this project.';
-    if(s===404)return 'This project is not on the server yet.';
-    if(/<[a-z!/]/i.test(t)||t.length>160)return s?('Server error ('+s+').'):'Could not reach the server.';
-    return t||'Something went wrong.';
-  }
-
-  /**
-   * Comments hang off a real project row, but the builder keeps projects in
-   * localStorage. Find the row by name, or create it the first time.
-   */
-  async function projectId(){
-    if(state.projectDbId)return state.projectDbId;
-    var name=state.projectName||'Untitled project';
-    var d=await api('/api/projects');
-    var found=(d.projects||[]).find(function(p){return p.name===name});
-    if(!found){
-      var c=await api('/api/projects',{method:'POST',body:JSON.stringify({name:name})});
-      found=c.project;
-    }
-    state.projectDbId=found.id;
-    saveState();
-    return found.id;
-  }
-
-  async function load(force){
-    if(comments!==null&&!force)return;
-    try{
-      var id=await projectId();
-      var d=await api('/api/projects/'+encodeURIComponent(id)+'/comments');
-      comments=d.comments||[];note='';
-    }catch(e){
-      comments=[];
-      note=why(e);
-    }
-    redraw();
-  }
-  window.__reviewReload=function(){comments=null;load(true)};
-  window.__review={
-    ready:function(){return comments!==null},
-    list:function(){return comments||[]},
-    note:function(){return note},
-    load:load
-  };
-  // one project row per builder project, shared by everything that needs it
-  window.__projectId=projectId;
-  window.__apiWhy=why;
-
-  function panelHtml(){
-    if(comments===null){load();return '<h3>Client review</h3><div class="rv-msg">Loading comments&hellip;</div>'}
-    var open=comments.filter(function(c){return c.status==='open'});
-    var done=comments.length-open.length;
-    return '<h3>Client review</h3>'
-      +'<div class="rv-stat">'
-        +'<span class="rv-chip open">'+open.length+' open</span>'
-        +'<span class="rv-chip done">'+done+' resolved</span>'
-      +'</div>'
-      +'<div class="rv-wrap">'
-      +(comments.length?comments.map(function(c){
-        var d=c.createdAt?new Date(c.createdAt).toLocaleDateString(undefined,{day:'numeric',month:'short'}):'';
-        return '<div class="rv-item '+(c.status==='open'?'':'done')+'">'
-          +'<span class="who">'+E(c.authorEmail||'someone')+' &middot; '+E(d)+'</span>'
-          +'<span class="body">'+E(c.body)+'</span>'
-          +'<div class="row">'
-            +'<button data-rv="'+(c.status==='open'?'resolve':'reopen')+'" data-id="'+E(c.id)+'">'
-              +(c.status==='open'?'Resolve':'Reopen')+'</button>'
-            +'<button class="rm" data-rv="del" data-id="'+E(c.id)+'">Delete</button>'
-          +'</div></div>';
-      }).join(''):(note?'':'<div class="rv-msg">No comments yet. Leave the first one below.</div>'))
-      +'</div>'
-      +'<div class="rv-new"><textarea id="rvBody" placeholder="What needs changing on this page?"></textarea>'
-      +'<button class="btn primary" id="rvAdd"'+(busy?' disabled':'')+'>'
-      +(busy?'Saving…':'Add comment')+'</button></div>'
-      +'<div class="rv-msg '+(note?'rv-err':'')+'">'+E(note)+'</div>'
-      +'<button class="btn" style="width:100%;margin-top:8px" data-rv="present">Present to client &rarr;</button>';
-  }
-
-  var basePanel=window.builderPanel;
-  window.builderPanel=function(){
-    if(state.builderTab!=='review')return basePanel.apply(this,arguments);
-    return panelHtml();
-  };
-
-  // the old panel's fixed numbers, replaced wherever they are rendered
-  new MutationObserver(function(){
-    if(state.route!=='builder')return;
-    var host=document.querySelector('.builder-panel');
-    if(!host)return;
-    if(!/CLIENT REVIEW|Client review/i.test(host.textContent))return;
-    if(host.dataset.rvDone==='1'&&comments!==null)return;
-    if(host.querySelector('#rvAdd'))return;
-    host.dataset.rvDone='1';
-    host.innerHTML=panelHtml();
-  }).observe(document.body,{childList:true,subtree:true});
-
-  document.addEventListener('click',async function(e){
-    if(e.target.closest('#rvAdd')){
-      var ta=document.getElementById('rvBody');
-      var text=(ta&&ta.value||'').trim();
-      if(!text){note='Write something first.';redraw();return}
-      busy=true;redraw();
-      try{
-        var id=await projectId();
-        var d=await api('/api/projects/'+encodeURIComponent(id)+'/comments',
-          {method:'POST',body:JSON.stringify({body:text,objectRef:state.selected||null})});
-        comments=[d.comment].concat(comments||[]);note='';
-        toast('Comment added');
-      }catch(err){note=why(err)}
-      busy=false;redraw();
-      return;
-    }
-
-    var b=e.target.closest('[data-rv]');
-    if(!b)return;
-    var act=b.dataset.rv;
-
-    if(act==='present'){
-      e.preventDefault();
-      if(state.publishedUrl)window.open(state.publishedUrl,'_blank','noopener');
-      else{toast('Publish the site first, then share the link');
-        if(window.publishModal)publishModal()}
-      return;
-    }
-
-    if(act==='resolve'||act==='reopen'){
-      var next=act==='resolve'?'resolved':'open';
-      b.disabled=true;
-      try{
-        var id=await projectId();
-        await api('/api/projects/'+encodeURIComponent(id)+'/comments/'+encodeURIComponent(b.dataset.id),
-          {method:'PATCH',body:JSON.stringify({status:next})});
-        comments=(comments||[]).map(function(c){
-          return c.id===b.dataset.id?Object.assign({},c,{status:next}):c});
-        redraw();
-      }catch(err){note=why(err);redraw()}
-      return;
-    }
-
-    if(act==='del'){
-      b.disabled=true;
-      try{
-        var pid=await projectId();
-        await api('/api/projects/'+encodeURIComponent(pid)+'/comments/'+encodeURIComponent(b.dataset.id),
-          {method:'DELETE'});
-        comments=(comments||[]).filter(function(c){return c.id!==b.dataset.id});
-        redraw();toast('Comment removed');
-      }catch(err){note=why(err);redraw()}
-      return;
-    }
-  });
-
-  // the database id belongs to one project, so it has to travel with it
-  try{
-    if(Array.isArray(PROJECT_KEYS)&&PROJECT_KEYS.indexOf('projectDbId')<0)PROJECT_KEYS.push('projectDbId');
-  }catch(e){}
-})();
-</script>
 
 
 <!-- ===== CLIENT REVIEW HUB — SAME REAL ROWS =========================
@@ -9106,5 +8928,577 @@ html.polish-high-contrast{--muted:#d0d0d4;--line:rgba(255,255,255,.19)}html.poli
 })();
 </script>
 
+
+<!-- ===== PROMPT LIBRARY =============================================
+     119 starting prompts. They are prompts, not finished sites, so
+     picking one writes the brief and runs the generator that already
+     builds real sections — rather than pretending to be a template
+     with content it does not have. -->
+<style id="libraryCss">
+.pl-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 6px}
+.pl-search{flex:1;min-width:200px;padding:10px 13px;border-radius:10px;border:1px solid #24242d;
+  background:#0b0b10;color:var(--ink);font:inherit;font-size:13px}
+.pl-count{font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.14em;color:var(--muted);white-space:nowrap}
+.pl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:14px}
+.pl-card{border:1px solid var(--line);border-radius:14px;background:var(--panel,#121319);
+  padding:15px 16px 14px;display:flex;flex-direction:column;gap:8px;text-align:left;
+  transition:border-color .22s ease,transform .22s ease}
+.pl-card:hover{border-color:var(--line-2,rgba(255,255,255,.2));transform:translateY(-2px)}
+.pl-card .cat{font-family:ui-monospace,monospace;font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--acid,#dfff45)}
+.pl-card b{font-size:15px;line-height:1.2}
+.pl-card p{margin:0;font-size:12px;line-height:1.5;color:var(--muted);
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pl-card .row{display:flex;gap:7px;margin-top:auto;padding-top:8px}
+.pl-card .row button{flex:1;height:31px;border:1px solid var(--line);border-radius:8px;font-size:11px}
+.pl-card .row button.go{background:var(--acid,#dfff45);color:#0b0b0f;border-color:transparent;font-weight:700}
+.pl-empty{padding:34px;text-align:center;border:1px dashed var(--line);border-radius:14px;margin-top:14px}
+.pl-full{white-space:pre-wrap;font-size:12px;line-height:1.6;max-height:52vh;overflow:auto;
+  border:1px solid var(--line);border-radius:12px;padding:14px;background:#0b0b10}
+</style>
+
+<script>
+(function(){
+  'use strict';
+  var E=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+
+  var lib=null, cat='All', q='', note='';
+
+  async function load(){
+    if(lib!==null)return;
+    try{
+      var r=await fetch('/prompt-library.json',{cache:'force-cache'});
+      if(!r.ok)throw new Error('Could not load the library ('+r.status+')');
+      lib=await r.json();
+      note='';
+    }catch(e){lib=[];note=String(e&&e.message||e)}
+    if(state.route==='library')render('library');
+  }
+
+  function cats(){
+    var seen={},out=['All'];
+    (lib||[]).forEach(function(x){if(!seen[x.cat]){seen[x.cat]=1;out.push(x.cat)}});
+    return out;
+  }
+
+  function match(x){
+    if(cat!=='All'&&x.cat!==cat)return false;
+    if(!q)return true;
+    var s=(x.n+' '+x.cat+' '+x.prompt).toLowerCase();
+    return s.indexOf(q.toLowerCase())>-1;
+  }
+
+  views.library=function(){
+    if(lib===null){load();}
+    var list=(lib||[]).filter(match);
+    var chips=cats().map(function(c){
+      return '<button class="chip '+(cat===c?'active':'')+'" data-plc="'+E(c)+'">'+E(c)+'</button>';
+    }).join('');
+    var body;
+    if(lib===null)body='<div class="pl-empty"><span class="tiny muted">Loading the library&hellip;</span></div>';
+    else if(!list.length)body='<div class="pl-empty"><b>Nothing matches</b>'
+      +'<p class="small muted" style="margin-top:6px">Try another word or category.</p></div>';
+    else body='<div class="pl-grid">'+list.map(function(x,i){
+      var idx=(lib||[]).indexOf(x);
+      return '<article class="pl-card">'
+        +'<span class="cat">'+E(x.cat)+'</span>'
+        +'<b>'+E(x.n)+'</b>'
+        +'<p>'+E(x.prompt.slice(0,190))+'</p>'
+        +'<div class="row">'
+          +'<button data-pl="read" data-i="'+idx+'">Read</button>'
+          +'<button class="go" data-pl="use" data-i="'+idx+'">Build this</button>'
+        +'</div></article>';
+    }).join('');
+
+    return viewHead('Prompt library','119 starting points. Pick one and the AI builds it into an editable site.',
+        '<button class="btn" data-nav="templates">Browse templates</button>')
+      +'<div class="filters">'+chips+'</div>'
+      +'<div class="pl-bar"><input class="pl-search" id="plSearch" placeholder="Search by name, category or words in the prompt" value="'+E(q)+'"/>'
+      +'<span class="pl-count">'+list.length+' of '+((lib||[]).length)+'</span></div>'
+      +(note?'<div class="tiny muted" style="color:#e0616b">'+E(note)+'</div>':'')
+      +body;
+  };
+
+  document.addEventListener('click',function(e){
+    var c=e.target.closest('[data-plc]');
+    if(c){cat=c.dataset.plc;render('library');return}
+
+    var b=e.target.closest('[data-pl]');
+    if(!b)return;
+    var item=(lib||[])[Number(b.dataset.i)];
+    if(!item)return;
+
+    if(b.dataset.pl==='read'){
+      modal('<div class="modal-head"><div><span class="caps">'+E(item.cat)+'</span>'
+        +'<b style="display:block;margin-top:4px">'+E(item.n)+'</b></div>'
+        +'<button class="close" data-action="closeModal">&times;</button></div>'
+        +'<div class="modal-body"><div class="pl-full">'+E(item.prompt)+'</div>'
+        +'<div style="display:flex;gap:8px;margin-top:12px">'
+        +'<button class="btn" data-pl-copy="'+Number(b.dataset.i)+'">Copy prompt</button>'
+        +'<span class="grow"></span>'
+        +'<button class="btn primary" data-pl="use" data-i="'+Number(b.dataset.i)+'">Build this</button>'
+        +'</div></div>');
+      return;
+    }
+
+    if(b.dataset.pl==='use'){
+      closeModal();
+      startNewProject(item.n);
+      state.prompt=item.prompt;
+      state.category=item.cat;
+      saveState();
+      navigate('generation');
+      toast('Building "'+item.n+'" — the AI writes the sections');
+      return;
+    }
+  });
+
+  document.addEventListener('click',async function(e){
+    var c=e.target.closest('[data-pl-copy]');
+    if(!c)return;
+    var item=(lib||[])[Number(c.dataset.plCopy)];
+    if(!item)return;
+    try{await navigator.clipboard.writeText(item.prompt);toast('Prompt copied')}
+    catch(err){toast('Select the text and copy it')}
+  });
+
+  document.addEventListener('input',function(e){
+    if(e.target.id!=='plSearch')return;
+    q=e.target.value;
+    clearTimeout(window.__plT);
+    window.__plT=setTimeout(function(){
+      render('library');
+      var el=document.getElementById('plSearch');
+      if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length)}
+    },220);
+  });
+
+  // reachable from the sidebar, next to Templates
+  new MutationObserver(function(){
+    var tpl=document.querySelector('.side-link[data-route="templates"]');
+    if(!tpl||document.querySelector('.side-link[data-route="library"]'))return;
+    // the router reads data-nav, not data-route — cloning the Templates link
+    // and only renaming data-route left it navigating to Templates
+    var a=tpl.cloneNode(true);
+    a.classList.remove('active');
+    a.setAttribute('data-route','library');
+    a.setAttribute('data-nav','library');
+    a.textContent='\u2727 Prompt library';
+    tpl.parentNode.insertBefore(a,tpl.nextSibling);
+  }).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+
+<!-- ===== AGENT STUDIO ENTRY POINTS =================================
+     The old in-app AI Studio panel is retired. Every entry point that
+     used to open it — the sidebar link, the /agent path, the 4D
+     Website Builder button and the "Open AI Studio" buttons scattered
+     through Media and the hero editor — now opens the Scen Agent
+     Studio at /agent-studio.html, which runs the brief → plan → build
+     conversation and writes the source.
+     This block also puts the template gallery on the public landing
+     page, where Customize hands the template straight to the agent. -->
+<style id="agent-entry-css">
+#templates .tpl-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+#templates .tpl-tab{padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:#111116;
+  color:#adadb7;font-size:12px;transition:.18s}
+#templates .tpl-tab:hover{color:#fff;border-color:rgba(255,255,255,.26)}
+#templates .tpl-tab.on{border-color:var(--acid);color:var(--acid);background:rgba(223,255,69,.08)}
+#templates .tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+#templates .tpl-card{border:1px solid var(--line);border-radius:20px;background:#0b0b10;overflow:hidden;
+  display:flex;flex-direction:column;transition:.25s ease}
+#templates .tpl-card:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.22)}
+#templates .tpl-shot{aspect-ratio:16/10;position:relative;overflow:hidden;
+  background:linear-gradient(150deg,color-mix(in srgb,var(--a) 42%,#0b0b10),#0b0b10 62%,#08080c)}
+#templates .tpl-chrome{position:absolute;inset:12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
+  background:rgba(9,9,13,.42);backdrop-filter:blur(5px);overflow:hidden}
+#templates .tpl-chrome:before{content:"";display:block;height:15px;background:rgba(255,255,255,.07);
+  border-bottom:1px solid rgba(255,255,255,.1)}
+#templates .tpl-lines{padding:14px 15px}
+#templates .tpl-lines i{display:block;height:6px;border-radius:20px;background:rgba(255,255,255,.16);margin-bottom:8px}
+#templates .tpl-lines i:first-child{width:62%;height:11px;background:var(--a);opacity:.85}
+#templates .tpl-lines i:nth-child(3){width:76%}
+#templates .tpl-lines i:nth-child(4){width:44%}
+#templates .tpl-tagpill{position:absolute;left:20px;top:20px;z-index:2;font-size:9.5px;letter-spacing:.16em;
+  text-transform:uppercase;padding:5px 10px;border-radius:999px;background:rgba(6,6,10,.66);
+  backdrop-filter:blur(6px);color:#e8e8ee}
+#templates .tpl-body{padding:16px 17px 17px;display:flex;flex-direction:column;gap:4px;flex:1}
+#templates .tpl-body b{font-size:16px;letter-spacing:-.02em}
+#templates .tpl-body .tpl-meta{font-size:11.5px;color:#8b8b96}
+#templates .tpl-acts{display:flex;gap:8px;margin-top:14px}
+#templates .tpl-acts .btn{padding:9px 14px;font-size:12.5px;border-radius:11px}
+#templates .tpl-note{margin-top:26px;font-size:12.5px;color:#7d7d89;display:flex;gap:9px;align-items:flex-start}
+@media (max-width:980px){#templates .tpl-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:620px){#templates .tpl-grid{grid-template-columns:1fr}}
+</style>
+<script id="agent-entry-runtime">
+(function(){
+  var STUDIO='/agent-studio.html';
+
+  /* 1 — /agent used to open the old in-app builder. It is the studio now. */
+  if(/^\/agent\/?$/i.test(location.pathname)){location.replace(STUDIO);return}
+
+  /* 2 — the retired route never renders again, wherever it is called from */
+  if(window.state&&state.route==='studio')state.route='dashboard';
+  var _navigate=window.navigate;
+  if(typeof _navigate==='function'){
+    window.navigate=function(route){
+      if(route==='studio'){location.href=STUDIO;return}
+      return _navigate.apply(this,arguments);
+    };
+  }
+  document.addEventListener('click',function(e){
+    var el=e.target.closest('[data-nav="studio"],[data-route="studio"]');
+    if(!el)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    location.href=STUDIO;
+  },true);
+
+  /* 3 — the leftover buttons said "Open AI Studio" and went to a panel
+         that no longer exists. Same destination, honest label. */
+  function relabel(){
+    document.querySelectorAll('[data-nav="studio"]').forEach(function(b){
+      if(/AI Studio/i.test(b.textContent))b.textContent=b.textContent.replace(/AI Studio/i,'Agent Studio');
+    });
+  }
+  new MutationObserver(relabel).observe(document.body,{childList:true,subtree:true});
+  relabel();
+
+  /* 4 — template gallery on the public landing page ------------------ */
+  var STARTS=[
+    ['restaurant','Restaurant & café','#ff8a3d','Menu · Gallery · Reservations'],
+    ['fashion','Fashion & retail','#ff5fbf','Shop · Lookbook · About'],
+    ['realestate','Real estate','#5ab7ff','Listings · About · Contact'],
+    ['agency','Creative agency','#dfff45','Work · Services · About'],
+    ['saas','SaaS product','#7d6cff','Product · Pricing · Docs'],
+    ['portfolio','Portfolio','#7beeff','Work · About · Contact'],
+    ['clinic','Clinic & wellness','#2fd6c3','Treatments · Team · Book'],
+    ['fitness','Gym & fitness','#3ddc84','Classes · Membership · Trainers'],
+    ['education','Education','#ffb838','Courses · Faculty · Admissions'],
+    ['events','Events','#a86bff','Events · Tickets · Venue'],
+    ['travel','Travel & place','#74b5e0','Guide · Gallery · Routes']
+  ];
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+
+  /* a preset knows more than a query string can carry, so Customize writes the
+     whole seed into storage and the studio picks it up by slug */
+  var CAT2IND={Travel:'travel',Entertainment:'events',Agency:'agency','Real Estate':'realestate',
+    Wellness:'fitness',Portfolio:'portfolio',Luxury:'fashion',SaaS:'saas',Restaurant:'restaurant',
+    Research:'education',Fashion:'fashion',Health:'clinic',Education:'education',Events:'events'};
+  function seedFor(t){
+    var slug=String(t.name||'').toLowerCase();
+    var pages=(t.components||[]).filter(function(p){return p&&!/^home$/i.test(p)}).slice(0,5);
+    pages=['Home'].concat(pages);
+    if(!pages.some(function(p){return /contact/i.test(p)}))pages.push('Contact');
+    return{slug:slug,label:'the '+t.name+' template',name:t.name,
+      industry:CAT2IND[t.category]||'other',
+      pitch:t.heroSubtitle||t.tag||'',
+      accent:(t.palette&&t.palette.accent)||'',
+      style:'cinematic',motion:'full',kind:'website',content:'agent',
+      pages:pages,languages:['English']};
+  }
+
+  function shot(accent,label){
+    return '<div class="tpl-shot" style="--a:'+esc(accent)+'">'+
+      '<span class="tpl-tagpill">'+esc(label)+'</span>'+
+      '<div class="tpl-chrome"><div class="tpl-lines"><i></i><i></i><i></i><i></i></div></div></div>';
+  }
+  function liveCards(){
+    var list=(typeof TEMPLATES!=='undefined'?TEMPLATES:[]);
+    return list.map(function(t){
+      var slug=String(t.name||'').toLowerCase();
+      var accent=(t.palette&&t.palette.accent)||'#dfff45';
+      var count=t.sections?t.sections.length+' sections':'3D scenes';
+      return '<article class="tpl-card" data-group="live">'+shot(accent,'Live template')+
+        '<div class="tpl-body"><b>'+esc(t.name)+'</b>'+
+        '<span class="tpl-meta">'+esc(t.category||'')+' · '+esc(count)+'</span>'+
+        '<span class="tpl-meta">'+esc(t.tag||'')+'</span>'+
+        '<div class="tpl-acts">'+
+          '<a class="btn ghost" href="/preset/'+esc(slug)+'" target="_blank" rel="noopener">Preview ↗</a>'+
+          '<a class="btn primary" data-seed="'+esc(JSON.stringify(seedFor(t)))+'" '+
+            'href="'+STUDIO+'?template='+encodeURIComponent(slug)+'">Customize</a>'+
+        '</div></div></article>';
+    }).join('');
+  }
+  function startCards(){
+    return STARTS.map(function(s){
+      return '<article class="tpl-card" data-group="start">'+shot(s[2],'Agent start')+
+        '<div class="tpl-body"><b>'+esc(s[1])+'</b>'+
+        '<span class="tpl-meta">'+esc(s[3])+'</span>'+
+        '<span class="tpl-meta">Written from scratch for your business</span>'+
+        '<div class="tpl-acts">'+
+          '<a class="btn primary" href="'+STUDIO+'?start='+encodeURIComponent(s[0])+'">Customize</a>'+
+        '</div></div></article>';
+    }).join('');
+  }
+
+  function mountTemplates(){
+    if(document.getElementById('templates'))return;
+    var anchor=document.querySelector('#marketing #pricing')||document.querySelector('#marketing #features');
+    if(!anchor)return;
+    var sec=document.createElement('section');
+    sec.className='msection';sec.id='templates';
+    sec.innerHTML='<div class="inner">'+
+      '<div class="section-head"><h2>Start from a template.<br>Then tell it what to change.</h2>'+
+      '<p>Customize opens the Scen Agent with the brief already filled in. It writes the pages, the styles and the '+
+      'code — and after that you edit the site by talking to it.</p></div>'+
+      '<div class="tpl-tabs">'+
+        '<button class="tpl-tab on" data-group="all">All</button>'+
+        '<button class="tpl-tab" data-group="live">Live templates</button>'+
+        '<button class="tpl-tab" data-group="start">Agent starts</button>'+
+      '</div>'+
+      '<div class="tpl-grid">'+liveCards()+startCards()+'</div>'+
+      '<p class="tpl-note"><span>◐</span><span>Live templates have a full preview you can open. '+
+      'Agent starts have nothing to preview yet — the agent writes that site while you watch.</span></p>'+
+      '</div>';
+    anchor.parentNode.insertBefore(sec,anchor);
+
+    sec.addEventListener('click',function(e){
+      var a=e.target.closest('a[data-seed]');if(!a)return;
+      try{localStorage.setItem('scen.agentstudio.seed',a.dataset.seed)}catch(x){}
+    },true);
+
+    sec.querySelector('.tpl-tabs').addEventListener('click',function(e){
+      var b=e.target.closest('.tpl-tab');if(!b)return;
+      sec.querySelectorAll('.tpl-tab').forEach(function(x){x.classList.toggle('on',x===b)});
+      var g=b.dataset.group;
+      sec.querySelectorAll('.tpl-card').forEach(function(c){
+        c.style.display=(g==='all'||c.dataset.group===g)?'':'none';
+      });
+    });
+
+    // the nav link used to jump into the logged-in Templates page
+    var link=document.querySelector('#marketing .mlinks [data-action="openTemplatesMarketing"]');
+    if(link){link.removeAttribute('data-action');link.setAttribute('href','#templates')}
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountTemplates);
+  else mountTemplates();
+})();
+</script>
+
+
+<!-- ===== SAVE A BUILT SITE AS A TEMPLATE ===========================
+     The library holds prompts, not sites. Once the AI has actually
+     built one, it can be kept as a template — and then it behaves like
+     any other: a live preview card, a preset page and Customize. -->
+<style id="myTplCss">
+.mt-save{position:fixed;right:18px;bottom:18px;z-index:70;display:none;align-items:center;gap:10px;
+  padding:11px 14px;border-radius:14px;border:1px solid var(--line);
+  background:rgba(10,10,14,.92);backdrop-filter:blur(14px);box-shadow:0 18px 44px rgba(0,0,0,.5)}
+.mt-save.on{display:flex}
+.mt-save span{font-size:12px}
+.mt-save button{height:32px;padding:0 14px;border-radius:9px;border:1px solid var(--line);font-size:12px}
+.mt-save button.go{background:var(--acid,#dfff45);color:#0b0b0f;border-color:transparent;font-weight:700}
+.template.mine .template-info b::after{content:' · yours';font-size:10px;color:var(--muted);font-weight:400}
+</style>
+
+<script>
+(function(){
+  'use strict';
+
+  function mine(){
+    if(!Array.isArray(state.myTemplates))state.myTemplates=[];
+    return state.myTemplates;
+  }
+  window.__myTemplates=mine;
+
+  /** The live project, in the shape a template needs. */
+  function asTemplate(name){
+    var pal=state.templatePalette||{};
+    var comps=(state.components||[]).slice(0,7);
+    var t={
+      name:String(name||state.projectName||'Untitled').slice(0,40),
+      category:state.category||'Custom',
+      tag:String(state.heroSubtitle||'').slice(0,90),
+      palette:{accent:pal.accent||'#dfff45',accent2:pal.accent2||'#7beeff'},
+      heroTitle:state.heroTitle||'',
+      heroSubtitle:state.heroSubtitle||'',
+      ctas:(state.heroCtas||[]).slice(0,3),
+      components:comps,
+      sectionCopy:(state.sectionCopy||[]).slice(0,comps.length),
+      sections:Array.isArray(state.templateSections)?state.templateSections.slice(0,comps.length):null,
+      mine:true
+    };
+    // a cinematic project keeps its scene, so the preset page plays it
+    try{
+      if(window.__cinState&&window.__cinState().enabled&&window.__cinConfig){
+        t.cinema=window.__cinConfig(false);
+      }
+    }catch(e){}
+    return t;
+  }
+
+  function save(name){
+    var t=asTemplate(name);
+    if(!t.heroTitle){toast('Build the site first, then save it');return null}
+    var list=mine();
+    var at=list.findIndex(function(x){return x.name===t.name});
+    if(at>-1)list[at]=t;else list.unshift(t);
+    // TEMPLATES is what every gallery and /preset/<name> reads
+    var i=TEMPLATES.findIndex(function(x){return x.name===t.name});
+    if(i>-1)TEMPLATES[i]=t;else TEMPLATES.unshift(t);
+    saveState();
+    return t;
+  }
+  window.__saveAsTemplate=save;
+
+  // user templates have to survive a reload
+  function rehydrate(){
+    mine().forEach(function(t){
+      if(!TEMPLATES.some(function(x){return x.name===t.name}))TEMPLATES.unshift(t);
+    });
+  }
+  rehydrate();
+
+  /* ---------- the offer, once a build has finished ---------- */
+
+  var bar=document.createElement('div');
+  bar.className='mt-save';
+  bar.innerHTML='<span><b>Site built.</b> Keep it as a template?</span>'
+    +'<button data-mt="no">Not now</button>'
+    +'<button class="go" data-mt="save">Save as template</button>';
+  document.body.appendChild(bar);
+
+  var shown='';
+  new MutationObserver(function(){
+    var ready=state.generation>=7&&state.heroTitle&&(state.route==='builder'||state.route==='generation');
+    var already=mine().some(function(t){return t.name===state.projectName});
+    var key=state.projectName+'|'+state.heroTitle;
+    if(ready&&!already&&shown!==key){bar.classList.add('on')}
+    if(!ready||already)bar.classList.remove('on');
+  }).observe(document.body,{childList:true,subtree:true});
+
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('[data-mt]');
+    if(!b)return;
+    if(b.dataset.mt==='no'){shown=state.projectName+'|'+state.heroTitle;bar.classList.remove('on');return}
+    var t=save(state.projectName);
+    if(!t)return;
+    bar.classList.remove('on');
+    toast('"'+t.name+'" is in Templates — preview or customise it like any other');
+  });
+
+  /* ---------- library cards know what has been built ---------- */
+
+  var baseLib=views.library;
+  if(baseLib){
+    views.library=function(){
+      var html=baseLib.apply(this,arguments);
+      // mark the ones already saved
+      mine().forEach(function(t){
+        html=html.replace(new RegExp('(<b>'+t.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'</b>)'),
+          '$1<span class="cat" style="color:#5fd08a">in templates</span>');
+      });
+      return html;
+    };
+  }
+
+  /* ---------- keep them out of the way of the built-ins ---------- */
+
+  // "/preset/<name>" is built by lowercasing the name, which leaves a space in
+  // any multi-word template and never routes. Both ends now use the same slug.
+  function slug(n){return String(n||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')}
+  window.__tplSlug=slug;
+
+  var baseFromPath=window.presetFromPath;
+  window.presetFromPath=function(){
+    var m=location.pathname.match(/^\/preset\/([a-z0-9-]+)\/?$/i);
+    if(!m)return baseFromPath?baseFromPath.apply(this,arguments):null;
+    var want=m[1].toLowerCase();
+    return TEMPLATES.find(function(t){return slug(t.name)===want})
+        || (baseFromPath?baseFromPath.apply(this,arguments):null);
+  };
+
+  var baseTemplates=views.templates;
+  views.templates=function(){
+    rehydrate();
+    var html=baseTemplates.apply(this,arguments);
+    return html.replace(/href="\/preset\/([^"]*)"/g,function(_,n){
+      return 'href="/preset/'+slug(decodeURIComponent(n))+'"';
+    });
+  };
+})();
+</script>
+
+<!-- ===== PUBLISHED AGENT BUILDS ====================================
+     /api/publish stores whatever snapshot it is given. The Agent Studio
+     stores real pages, one stylesheet and one script, which the preset
+     renderer cannot draw. This branch serves those directly and keeps
+     multi-page navigation working through the address bar. -->
+<script id="agent-build-renderer">
+(function(){
+  var base=window.showPublishedSite;
+  if(typeof base!=='function')return;
+  function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+
+  var BRIDGE='<scr'+'ipt>document.addEventListener("click",function(e){'+
+    'var a=e.target.closest&&e.target.closest("a[href$=\\".html\\"]");'+
+    'if(a){e.preventDefault();parent.postMessage({scenNav:a.getAttribute("href")},"*")}'+
+    '},true);</scr'+'ipt>';
+
+  function renderAgentBuild(slug,d,s){
+    var byFile={};
+    s.pages.forEach(function(p){if(p&&p.file)byFile[p.file]=p});
+    var first=(s.pages[0]||{}).file||'index.html';
+    if(!byFile[first])return false;
+
+    document.title=(d.projectName||slug)+' — built with Scen';
+    // The builder's loaders keep animating against their own nodes, so hiding
+    // beats removing: nothing it holds a reference to disappears, and anything
+    // it renders later (toasts, modals) stays hidden too.
+    var hide=document.createElement('style');
+    hide.textContent='html,body{margin:0;height:100%;overflow:hidden}'+
+      'body>*:not(#scenAgentFrame){display:none!important}';
+    document.head.appendChild(hide);
+    var frame=document.createElement('iframe');
+    frame.id='scenAgentFrame';
+    frame.title=d.projectName||slug;
+    // viewport units, not percentages: the builder puts a perspective on an
+    // ancestor, which makes it the containing block for position:fixed
+    frame.style.cssText='position:fixed;top:0;left:0;width:100vw;height:100vh;border:0;'+
+      'display:block;background:#07070b;z-index:2147483647';
+    document.body.appendChild(frame);
+
+    function docFor(file){
+      var p=byFile[file]||byFile[first];
+      return String(p.html||'')
+        .replace('<link rel="stylesheet" href="styles.css"/>','<style>'+(s.css||'')+'</style>')
+        .replace('<scr'+'ipt src="app.js"></scr'+'ipt>','<scr'+'ipt>'+(s.js||'')+'</scr'+'ipt>'+BRIDGE);
+    }
+    function show(file,push){
+      var f=byFile[file]?file:first;
+      frame.srcdoc=docFor(f);
+      if(push)history.pushState({f:f},'','/s/'+slug+(f===first?'':'#'+f));
+    }
+    addEventListener('message',function(e){
+      if(e.data&&e.data.scenNav)show(String(e.data.scenNav),true);
+    });
+    addEventListener('popstate',function(){
+      show((location.hash||'').replace(/^#/,'')||first,false);
+    });
+    show((location.hash||'').replace(/^#/,'')||first,false);
+    return true;
+  }
+
+  window.showPublishedSite=async function(slug){
+    try{
+      var r=await fetch('/api/sites/'+encodeURIComponent(slug),{cache:'no-store'});
+      if(r.ok){
+        var d=await r.json(),s=d.site;
+        if(typeof s==='string'){try{s=JSON.parse(s)}catch(e){}}
+        if(s&&s.kind==='scen-agent-build'&&Array.isArray(s.pages)&&s.pages.length){
+          if(renderAgentBuild(slug,d,s))return true;
+        }
+      }
+    }catch(e){}
+    return base.apply(this,arguments);
+  };
+})();
+</script>
 </body>
 </html>

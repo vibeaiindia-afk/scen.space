@@ -151,11 +151,15 @@ requirement is silently skipped. That was a real bug found in testing.
    reuses existing status helpers, but was only tested against a browser stub.
 3. **Pre-existing fake data remains** in wrapped views — `views.funnels` still shows a
    hardcoded "24,810 users". Not introduced here, not fixed here.
-4. **Repo vs live divergence** (`SITE-TREE.md` finding #1): this repo has **1 template**,
-   live scen.space has **37**, and `.vercel/project.json` still points at the
-   `scen-space` project. **Deploying from this repo would cut the gallery to one card.**
-   Resolve before any deploy.
-5. **Not pushed.** `git push origin agent-studio` when ready.
+4. ~~Repo vs live divergence.~~ **Resolved in `fe7159f`.** The cause: the live
+   deployment was built from commit `57d728e` with `gitDirty="1"` — the 37 templates
+   existed only as uncommitted working-tree changes and were never committed. They
+   were recovered from the deployed artifact (the only surviving copy) and TEMPLATES
+   is now 42. **The lesson stands: do not deploy from a dirty tree.** Anything not
+   committed exists only until that working copy changes.
+5. **No git remote exists.** `git remote -v` is empty; there is no `origin` to push to.
+   Five commits of IA work plus this recovery live only in this working copy.
+   Committing is not a backup here — set up a remote.
 
 ---
 

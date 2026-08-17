@@ -2182,12 +2182,8 @@ function nodeFor(m){
       (m.atts&&m.atts.length?'<div class="att-row">'+m.atts.map(function(a){
         return '<img class="att" src="'+a.url+'" alt=""/>'}).join('')+'</div></div>':'');
   }else{
-    /* Timing belongs on the name line, not under the reply. Sitting below the
-       text it read as part of the answer; beside the name it reads as what it
-       is — a note about the turn. */
-    d.innerHTML='<div class="who"><span class="avatar"></span><b>Scen Agent</b>'+
-      (m.worked?'<span class="worked"><span class="ring"></span>'+m.worked+'s</span>':'')+
-      '</div>'+
+    /* No timing on replies. A chat does not report how long it thought. */
+    d.innerHTML='<div class="who"><span class="avatar"></span><b>Scen Agent</b></div>'+
       '<div class="text">'+m.html+'</div>';
   }
   return d;
@@ -3466,6 +3462,9 @@ PANE.users=function(){
       ['Credits',w?Number(w.available).toLocaleString()+' available · '+Number(w.lifetimeUsed||0).toLocaleString()+' used':'—'],
       ['Active sessions',Array.isArray(API.sessions)?String(API.sessions.length):'loading…']
     ]:[],'Sign in to see your account.')+
+    /* The studio had no way out. Security could sign out every OTHER device,
+       which left the one you are sitting at logged in for good. */
+    (signedIn()?'<div style="margin-top:12px"><button class="btn" data-act="signOut">Sign out</button></div>':'')+
     '<h2>For the site being built</h2>'+
     listRows([
       ['Accounts module',G.has(S.brief,'accounts')?'<b style="color:#dfff45">in this brief</b>':'not selected'],
@@ -3699,6 +3698,7 @@ $('#mainPane').addEventListener('click',function(e){
   if(a==='publish')return publishFlow();
   if(a==='saveProject')return saveProjectFlow(t);
   if(a==='addDomain')return addDomainFlow(t);
+  if(a==='signOut')return signOutFlow(t);
   if(a==='revokeOthers')return revokeFlow(t);
   if(a==='heroClear'){delete S.brief.__heroImage;save();rebuild('Put the gradient art back in the hero.');return renderMain()}
   if(a==='heroImage')return heroImageFlow(t);
@@ -3800,6 +3800,17 @@ function addDomainFlow(t){
   N.addDomain(host,S.pubSlug||slug(S.brief.name||'')).then(function(){
     undo();renderMain();toast(host+' claimed — create the DNS records shown');
   },function(e){undo();toast(N.msg(e))});
+}
+
+/* Same call the main app makes. The redirect is unconditional: if the POST
+   fails the cookie may still be gone, and leaving someone on a studio that
+   thinks they are signed in is worse than an extra trip to the front page. */
+function signOutFlow(btn){
+  if(btn){btn.disabled=true;btn.textContent='Signing out…'}
+  fetch('/api/auth/logout',{method:'POST',credentials:'same-origin'})
+    .catch(function(){})
+    .then(function(){try{localStorage.removeItem('scen.agentstudio.v1')}catch(e){}
+                     location.href='/'});
 }
 
 function revokeFlow(t){

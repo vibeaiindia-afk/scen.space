@@ -359,7 +359,7 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
         <b style="font-size:12.5px;font-weight:600" id="chatTitle">Scen Agent</b>
         <span class="grow"></span>
         <button class="pill" id="aiPill" title="Live AI gateway status">Checking…</button>
-        <span class="pill" id="phasePill">Interview</span>
+        <span class="pill" id="phasePill" style="display:none"></span>
       </div>
 
       <div class="chat-body" id="chatBody"></div>
@@ -2911,9 +2911,9 @@ function reviewEditHelp(){ return "I can change the name, the one-liner, the pag
    ============================================================ */
 function buildPlanSteps(){
   var b=S.brief,pro=S.depth==='pro',P=planData(),out=[],live=X.usable();
-  out.push({l:'Reading the brief',s:FLOW.length+' answers · '+b.pages.length+' pages',ms:420});
+  out.push({l:'Setting up your pages',s:b.pages.length+' pages',ms:420});
 
-  if(live)out.push({l:'Planning the structure',s:'asking the gateway to lay out the pages…',ms:560,
+  if(live)out.push({l:'Laying out the sections',s:'',ms:560,
     run:function(){
       return X.writePlan(b,transcript()).then(function(r){
         if(!r){delete b.__plan;setAiPill();return 'gateway unavailable — used the local planner'}
@@ -2922,11 +2922,11 @@ function buildPlanSteps(){
       });
     }});
   else{delete b.__plan;
-    out.push({l:'Planning the structure',s:P.sections+' sections across '+P.pages.length+' pages',ms:560})}
+    out.push({l:'Laying out the sections',s:P.sections+' sections across '+P.pages.length+' pages',ms:560})}
 
-  out.push({l:'Building the design system',s:STYLES[b.style].l+' · '+b.accent+' · '+b.motion+' motion',ms:520});
+  out.push({l:'Designing the interface',s:STYLES[b.style].l+' · '+b.accent,ms:520});
 
-  if(live)out.push({l:'Writing copy',s:'asking the gateway for headlines, sections and FAQs…',ms:640,compose:true,
+  if(live)out.push({l:'Adding the content',s:'',ms:640,compose:true,
     run:function(){
       return X.writeCopy(b,transcript()).then(function(r){
         if(!r){delete b.__copy;setAiPill();return 'gateway unavailable — used the local writer'}
@@ -2935,7 +2935,7 @@ function buildPlanSteps(){
       });
     }});
   else{delete b.__copy;
-    out.push({l:'Writing copy',compose:true,
+    out.push({l:'Adding the content',compose:true,
       s:(b.content==='own'?'draft copy, marked for replacement':'headlines, sections, FAQs and buttons'),ms:640})}
   P.pages.forEach(function(p){
     out.push({l:'Writing site/'+p.file,ms:300,file:'site/'+p.file,
@@ -2943,14 +2943,14 @@ function buildPlanSteps(){
       // read at write time, so a live plan that arrives mid-build is what gets logged
       subFn:function(){return G.sectionsFor(p.name,b,pro).map(function(x){return SECLABEL[x]||x}).join(' · ')}})});
   out.push({l:'Compiling styles.css',s:'tokens, layout, responsive rules',ms:460,file:'site/styles.css'});
-  out.push({l:'Wiring behaviour',s:'scrolling, menus and forms',ms:380,file:'site/app.js'});
+  out.push({l:'Adding the interactions',s:'scrolling, menus and forms',ms:380,file:'site/app.js'});
   b.features.forEach(function(f){out.push({l:'Wiring '+FEATURES[f].l,s:FEATURES[f].mod,ms:300})});
   if(b.kind==='app'||b.kind==='both'){
     out.push({l:'Generating app/App.jsx',s:'screens, tab bar and shared tokens',ms:520,file:'app/App.jsx'});
     out.push({l:'Generating app/theme.js',s:'one set of colours for the site and the app',ms:280,file:'app/theme.js'});
   }
   out.push({l:'Writing brief.json + README',s:'so the build can be rerun from the same answers',ms:300,file:'brief.json'});
-  out.push({l:'Running checks',s:'headings, link targets, contrast, mobile widths',ms:640});
+  out.push({l:'Finishing the preview',s:'headings, links, contrast, mobile widths',ms:640});
   return out;
 }
 
@@ -3352,7 +3352,7 @@ PANE.plan=function(){
         return '<div class="row"><span>'+FEATURES[f].e+' '+esc(FEATURES[f].l)+'</span><span style="font-size:11.5px;color:#7d7d88">'+esc(FEATURES[f].mod)+'</span></div>'
       }).join(''):'<div class="row"><span>None selected</span><span>—</span></div>')+
     '</div>'+
-    '<div class="spec"><span class="caps">Design system</span>'+
+    '<div class="spec"><span class="caps">The look</span>'+
       '<div class="row"><span>Style</span><span>'+(b.style?STYLES[b.style].l:'—')+'</span></div>'+
       '<div class="row"><span>Accent</span><span><span class="swatch" style="background:'+esc(b.accent||'#333')+'"></span>'+esc(b.accent||'—')+'</span></div>'+
       '<div class="row"><span>Motion</span><span>'+esc(b.motion||'—')+'</span></div>'+
@@ -3413,9 +3413,9 @@ PANE.aigateway=function(){
     ['Last error',AI.lastError?'<span style="color:#ffcf87">'+esc(AI.lastError)+'</span>':'none']
   ];
   var uses=[
-    ['Planner','<code>planning</code> — picks the sections for every page',!!S.brief.__plan],
-    ['Copywriter','<code>chat</code> — kicker, headline, services, stats, FAQ, buttons',!!S.brief.__copy],
-    ['Editor','<code>analysis</code> — turns a plain sentence into a change',AI.requests>0]
+    ['Page layout','<code>planning</code> — picks the sections for every page',!!S.brief.__plan],
+    ['Written content','<code>chat</code> — kicker, headline, services, stats, FAQ, buttons',!!S.brief.__copy],
+    ['Your change requests','<code>analysis</code> — turns a plain sentence into a change',AI.requests>0]
   ];
   return head+
     '<div class="info'+(status[0]==='warn'?' warn':'')+'"><em>'+(live||ready?'✦':'◐')+'</em><div><b>'+esc(status[1])+'</b>'+esc(status[2])+'</div></div>'+
@@ -3677,17 +3677,20 @@ PANE.secrets=function(){return simple('Secrets',
    ['Where they belong','server environment, never in page source'],['Required now','nothing']],
   'This studio never asks for a key, and the generated files contain none.')};
 PANE.skills=function(){
-  var rows=[['Interview','asks the questions and fills the brief'],
-    ['Planner','turns the brief into pages and sections'],
-    ['Copywriter','writes headlines, sections, FAQs and buttons'],
-    ['Design system','works out the colours, type and movement from your choices'],
-    ['Code writer','emits HTML, CSS, JS and the React Native screens'],
-    ['Editor','applies plain-language changes and rebuilds']];
-  return '<div class="pane">'+head('Agent Skills','The six things this agent actually does, in the order it does them.')+
+  /* §2 and §45 — this used to list six named agents with "running" pills
+     beside them, which is the internal architecture, not something a client
+     needs. Same capabilities, described as what you get. */
+  var rows=[['Understands what you ask for','in English, Hindi or Hinglish, and remembers the conversation'],
+    ['Plans the pages','works out what your business needs on each one'],
+    ['Writes the words','headlines, services, FAQs and buttons'],
+    ['Designs the look','colours, type and movement, chosen to suit the trade'],
+    ['Writes the code','HTML, CSS, JS and the React Native screens'],
+    ['Changes anything you ask','say it plainly and it rebuilds']];
+  return '<div class="pane">'+head('What Scen can do','Everything here happens in the chat — you never have to pick a step.')+
     '<div class="spec">'+rows.map(function(r,i){
       return '<div class="row"><span style="color:#d8d8e0">'+(i+1)+'. '+esc(r[0])+'</span>'+
         '<span style="color:#7d7d88;text-align:left;flex:1;margin-left:16px">'+esc(r[1])+'</span>'+
-        '<span class="pill ok">running</span></div>'}).join('')+'</div>'+
+        '</div>'}).join('')+'</div>'+
     '<div class="info" style="margin-top:18px"><em>✦</em><div><b>Two of them call the gateway</b>'+
     'The planner and the copywriter post to <code>/api/ai/generate</code> when a session is available, and the '+
     'editor uses it for sentences the pattern reader cannot place. The rest are deterministic generators in this '+
@@ -3954,8 +3957,11 @@ function setMode(m){
   if(m==='design')scrollChat();
 }
 function setPhasePill(){
-  var p=$('#phasePill'),map={interview:'Interview',review:'Plan',building:'Building…',built:'Live preview'};
-  p.textContent=map[S.phase]||'Interview';
+  /* §29 — "Interview" was a mode name, and naming the mode is what made this
+     feel like onboarding software. While talking there is nothing to label. */
+  var p=$('#phasePill'),map={review:'Plan',building:'Building…',built:'Live preview'};
+  p.textContent=map[S.phase]||'';
+  p.style.display=map[S.phase]?'':'none';
   p.className='pill'+(S.phase==='built'?' ok':S.phase==='building'?' acid':'');
   $('#liveDot').classList.toggle('idle',S.phase==='interview');
 }

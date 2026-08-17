@@ -1953,8 +1953,12 @@ function writePlan(b){
 }
 
 /* ---------- change requests the regex parser could not read ---------- */
-function editPrompt(text,b){
+function editPrompt(text,b,hist){
   return 'Current project:\n'+briefSummary(b)+
+  /* The brief is a filled form; it cannot say what was already discussed,
+     refused or asked twice. Without the transcript the model re-reads the
+     same struct every turn and answers as if the client just walked in. */
+  (hist&&hist.length?'\n\nConversation so far (oldest first):\n'+hist.join('\n'):'')+
   '\n\nThe client said: "'+String(text).slice(0,600)+'"\n\n'+
   'Return only the keys that should change:\n'+
   '{"name":"","pitch":"","accent":"#rrggbb","style":"cinematic|minimal|editorial|luxury|playful",'+
@@ -1964,9 +1968,9 @@ function editPrompt(text,b){
   'Feature names must come from: '+Object.keys(FEATURES).join(', ')+'. '+
   'If nothing about the site should change, return only {"reply":"..."}.';
 }
-function readEdit(text,b){
+function readEdit(text,b,hist){
   var t0=Date.now();
-  return post('analysis',editPrompt(text,b),
+  return post('analysis',editPrompt(text,b,hist),
     'You turn a website change request into JSON. Reply with one JSON object and nothing else.',
     {maxOutputTokens:600,temperature:.2})
     .then(function(d){
@@ -2175,6 +2179,17 @@ function nodeFor(m){
       (m.worked?'<div class="worked"><span class="ring"></span>Worked for '+m.worked+' second'+(m.worked===1?'':'s')+'</div>':'');
   }
   return d;
+}
+/* Last few turns as plain text. Tags out, entities back, length capped so a
+   long build log cannot crowd out the actual request. */
+function transcript(n){
+  return (S.msgs||[]).slice(-(n||10)).map(function(m){
+    var t=String(m.html||'').replace(/<br\s*\/?>/gi,' ').replace(/<[^>]+>/g,' ')
+           .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+           .replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\s+/g,' ').trim();
+    if(!t)return '';
+    return (m.who==='agent'?'Agent: ':'Client: ')+t.slice(0,300);
+  }).filter(Boolean);
 }
 function pushMsg(m,animate){
   S.msgs.push(m);
@@ -2658,7 +2673,7 @@ function handleReviewText(text){
        menu, while the post-build path handed the same sentence to the model.
        There is no reason review should understand less than editing does. */
     var t0=Date.now();thinking();
-    X.readEdit(text,S.brief).then(function(o){
+    X.readEdit(text,S.brief,transcript()).then(function(o){
       clearThinking();setAiPill();
       var changed=o?applyPatch(o):[];
       if(changed.length){
@@ -2917,7 +2932,7 @@ function applyEdit(text){
     if(!res&&X.usable()){
       // the pattern reader could not place it — hand the sentence to the gateway
       thinking();
-      X.readEdit(text,S.brief).then(function(o){
+      X.readEdit(text,S.brief,transcript()).then(function(o){
         clearThinking();setAiPill();
         if(!o)return editHelp(t0);
         var changed=applyPatch(o);

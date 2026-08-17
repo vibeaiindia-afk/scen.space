@@ -2567,6 +2567,9 @@ const _siteSlug=(location.pathname.match(/^\/s\/([a-z0-9-]{3,48})\/?$/i)||[])[1]
 const _wanted=routeFromPath(location.pathname);
 if(_siteSlug){showPublishedSite(_siteSlug).then(ok=>{if(!ok)navigate('marketing')})}
 else if(_preset){showPreset(_preset)}else restoreSession().then(ok=>{
+  // The session can land before the later scripts have even run, so the URL
+  // layer may not exist yet. It reads this to know the boot already settled.
+  window.__scenBooted=true;
   if(_isAgent){
     // the studio lives at a real path so it can be opened in its own tab
     history.replaceState({},'','/');
@@ -2580,7 +2583,19 @@ else if(_preset){showPreset(_preset)}else restoreSession().then(ok=>{
   // remembers it in pendingRoute, so /publish signed out lands on /publish
   // once they are in.
   if(_wanted==='auth'&&ok){navigate('dashboard');return}   // /login with a session is a dead end
-  if(_wanted){navigate(_wanted);return}
+  if(_wanted){
+    navigate(_wanted);
+    // navigate() redirects synchronously when a route is gated — private
+    // routes to the sign-in screen, staff-only ones to the dashboard — and the
+    // address bar has to say where you actually ended up. Done here rather
+    // than in the URL layer because that layer may not have loaded yet.
+    // 'marketing' is excluded: the preloader defers that one, so state.route
+    // is deliberately not final when this line runs.
+    if(_wanted!=='marketing'&&state.route!==_wanted){
+      try{history.replaceState({},'',pathForRoute(state.route)+location.search)}catch(e){}
+    }
+    return;
+  }
   if(ok&&state.route&&state.route!=='marketing'&&state.route!=='auth')navigate(state.route);
   else if(ok)navigate(resumeRoute());
   else navigate('marketing');

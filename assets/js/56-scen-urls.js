@@ -18,8 +18,13 @@ if(typeof toPath!=='function'||typeof toRoute!=='function')return;
 if(typeof state!=='object'||!state)return;
 
 /* True while the browser is already showing the right address: the first paint,
-   and any move through history. Then the URL is corrected, never appended to. */
-var replaying=true;
+   and any move through history. Then the URL is corrected, never appended to.
+
+   This script can load either side of the boot decision — the session request
+   sometimes answers before the later scripts have run. If the boot already
+   settled it corrected its own address, so the next route change is a real
+   move and earns a history entry. */
+var replaying=!window.__scenBooted;
 var current=state.route;
 
 function signedIn(){try{return !!state.auth}catch(e){return false}}

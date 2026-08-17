@@ -4262,6 +4262,7 @@ function resetState(){
   S.phase='interview';S.step=0;S.brief=C.freshBrief();S.msgs=[];S.pending=null;
   S.skip=[];S.seedLabel='';S.mode='design';S.tab='tools';S.tool='brief';S.file='';
   S.buildLog=[];S.files=[];S.built=false;S.atts=[];S.projectName='';
+  S.queued=[];                     /* §37's hold-list, or it fires on the next build */
   S.previewKind='site';S.device='desktop';
   body.innerHTML='';stream.innerHTML='';gen=null;
 }

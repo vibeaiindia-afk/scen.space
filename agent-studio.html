@@ -2633,6 +2633,17 @@ function absorbBrief(text){
 
 function handleText(text){
   var atts=S.atts.slice();
+
+  /* §37 — a message sent while the build runs used to go straight to the edit
+     path, mutating the brief the generator was still reading. Hold it instead;
+     it is applied the moment the build finishes, so nothing said is lost. */
+  if(S.phase==='building'){
+    userSay(text,atts);S.atts=[];renderAtts();
+    S.queued=(S.queued||[]).concat([text]);save();
+    agentSay('Noted — I will do that as soon as this build finishes.');
+    return;
+  }
+
   if(S.phase==='interview'){
     var st=step();
     if(!st)return;
@@ -2994,6 +3005,20 @@ function startBuild(){
     }
     setTimeout(function(){finish()},st.ms);
   }
+  function drainQueued(){
+    var q=(S.queued||[]);if(!q.length)return;
+    S.queued=[];save();
+    /* One line, in the order they were said, so a person who typed three
+       changes while waiting gets all three. */
+    var next=function(){
+      if(!q.length)return;
+      applyEdit(q.shift());
+      if(q.length)setTimeout(next,1200);
+    };
+    agentSay(q.length>1?'Now the '+q.length+' things you asked for while that ran.'
+                       :'Now the change you asked for while that ran.');
+    setTimeout(next,600);
+  }
   function done(){
     S.phase='built';S.built=true;S.files=gen.files.map(function(f){return f.path});
     if(!S.file)S.file=gen.files[0].path;
@@ -3019,8 +3044,9 @@ function startBuild(){
           '<li>Not signed in, so saving and publishing are off — the build itself is finished either way</li>')+
         '</ul><br/>Tell me what to change and I rebuild it: <code>make it deep teal</code>, '+
         '<code>add a pricing page</code>, <code>drop the blog</code>, <code>rename it to Ember &amp; Oak</code>, '+
-        '<code>more sections</code>.',Math.round((Date.now()-t0)/1000));
+        '<code>more sections</code>.');
       $('#prevBadge').classList.remove('hidden');
+      drainQueued();              /* §37 — whatever was said while this ran */
     },420);
   }
   run();

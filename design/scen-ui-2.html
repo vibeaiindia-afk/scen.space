@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Scen UI 2 — direction</title>
+<style>
+/* ── Tokens ────────────────────────────────────────────────────────────────
+   Pulled from the three references. Scen's existing acid (#dfff45) already
+   sits between the Salesforce lime and the AeuxGlobal green, so the accent
+   does not change — what changes is how little of it gets used. ── */
+:root{
+  --bg:#07070a; --bg2:#0b0b10;
+  --card:#101015; --card2:#141419;
+  --line:rgba(255,255,255,.07);
+  --line2:rgba(255,255,255,.12);
+  --fg:#f5f5f7; --mut:#8a8a95; --dim:#5f5f6b;
+  --acid:#dfff45; --acid-dim:rgba(223,255,69,.12);
+  --paper:#f2f2ee; --ink:#0a0a0c;
+  --r:22px; --r-sm:14px; --r-pill:999px;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-smoothing:antialiased;
+  font-feature-settings:'ss01','cv01';overflow-x:hidden}
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px}
+.caps{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:600}
+.mut{color:var(--mut)}
+.num{font-size:clamp(28px,3.4vw,42px);letter-spacing:-.04em;font-weight:600;line-height:1}
+.num s{text-decoration:none;font-size:.52em;color:var(--mut);font-weight:500;margin-right:2px;vertical-align:.28em}
+.delta{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;
+  padding:3px 8px;border-radius:var(--r-pill);background:var(--acid-dim);color:var(--acid)}
+.delta.down{background:rgba(255,110,110,.1);color:#ff9b9b}
+
+/* ── 1. Landing (Imagica reference) ───────────────────────────────────────
+   One statement, one object, one action. The glow is the only bright thing
+   on the screen, so the eye has nowhere else to go. ── */
+.hero{position:relative;min-height:100vh;display:grid;place-items:center;text-align:center;overflow:hidden;
+  padding:120px 24px 80px}
+.hero:before{content:"";position:absolute;inset:-40% -20% auto;height:120%;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 38%,rgba(223,255,69,.10),transparent 70%),
+             radial-gradient(50% 40% at 50% 55%,rgba(120,90,255,.16),transparent 72%)}
+.topnav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;
+  justify-content:space-between;padding:18px 28px;backdrop-filter:blur(14px);
+  background:linear-gradient(180deg,rgba(7,7,10,.86),transparent)}
+.logo{display:flex;align-items:center;gap:9px;font-weight:650;font-size:15px;letter-spacing:-.02em}
+.logo i{width:20px;height:20px;border-radius:6px;background:var(--acid);display:block}
+.navlinks{display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:var(--r-pill);
+  background:rgba(255,255,255,.03)}
+.navlinks a{padding:7px 14px;border-radius:var(--r-pill);font-size:13px;color:var(--mut);
+  text-decoration:none;font-weight:500;transition:.16s}
+.navlinks a:hover{color:var(--fg)}
+.navlinks a.on{background:var(--fg);color:var(--ink)}
+.navact{display:flex;gap:8px;align-items:center}
+.btn{border:1px solid var(--line2);background:transparent;color:var(--fg);font-family:inherit;
+  padding:9px 16px;border-radius:var(--r-pill);font-size:13px;font-weight:550;cursor:pointer;transition:.16s}
+.btn:hover{border-color:rgba(255,255,255,.28)}
+.btn.pri{background:var(--acid);border-color:var(--acid);color:var(--ink);font-weight:650}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.paper{background:var(--paper);border-color:var(--paper);color:var(--ink);font-weight:600}
+.hero-in{position:relative;z-index:2;max-width:860px}
+.eyebrow{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);margin-bottom:22px;font-weight:600}
+.hero h1{font-size:clamp(42px,6.6vw,86px);line-height:.98;letter-spacing:-.045em;font-weight:600}
+.hero h1 span{color:var(--mut)}
+.hero p{margin:24px auto 0;max-width:520px;font-size:16px;line-height:1.6;color:var(--mut)}
+.slab{position:relative;width:min(560px,80vw);height:120px;margin:52px auto 0;border-radius:10px;
+  background:linear-gradient(96deg,#ff8a5c,#ffd166 22%,#eaffb0 45%,#9ee7ff 68%,#8f7bff);
+  transform:perspective(760px) rotateX(63deg);
+  box-shadow:0 0 90px 20px rgba(223,255,69,.22),0 0 200px 60px rgba(120,90,255,.20)}
+.slab:after{content:"";position:absolute;inset:0;border-radius:10px;
+  background:linear-gradient(180deg,rgba(255,255,255,.5),transparent 55%)}
+.hero-cta{margin-top:46px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.hero-note{margin-top:26px;font-size:12px;color:var(--dim)}
+
+/* ── 2. App shell (Salesforce + AeuxGlobal reference) ─────────────────── */
+.app{background:var(--bg2);border-top:1px solid var(--line);padding:80px 0 100px}
+.sec-head{margin-bottom:28px}
+.sec-head h2{font-size:13px;font-weight:600;letter-spacing:-.01em}
+.frame{display:grid;grid-template-columns:236px 1fr;gap:0;border:1px solid var(--line);
+  border-radius:26px;overflow:hidden;background:var(--bg);box-shadow:0 40px 120px -40px rgba(0,0,0,.9)}
+/* sidebar */
+.side{background:#0a0a0e;border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:22px}
+.ws{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:var(--r-sm);
+  background:rgba(255,255,255,.02)}
+.ws b{font-size:12.5px;font-weight:600;display:block}
+.ws span{font-size:10.5px;color:var(--dim)}
+.ws i{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,var(--acid),#9ee7ff);flex:0 0 28px}
+.navsec{display:flex;flex-direction:column;gap:2px}
+.navsec .caps{padding:0 10px 8px}
+.nav{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:11px;font-size:13px;
+  color:var(--mut);cursor:pointer;transition:.14s;font-weight:500}
+.nav:hover{background:rgba(255,255,255,.04);color:var(--fg)}
+.nav.on{background:rgba(255,255,255,.07);color:var(--fg);font-weight:600}
+.nav .ico{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;opacity:.85}
+.nav.on .ico{stroke:var(--acid);opacity:1}
+.nav .tag{margin-left:auto;font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:var(--r-pill);
+  background:var(--acid);color:var(--ink)}
+.side-foot{margin-top:auto;padding-top:16px;border-top:1px solid var(--line)}
+/* main */
+.main{padding:22px 24px 30px;min-width:0}
+.mtop{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.mtop h1{font-size:26px;letter-spacing:-.035em;font-weight:600}
+.seg{display:flex;gap:3px;padding:3px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+  border-radius:var(--r-pill)}
+.seg button{border:0;background:transparent;color:var(--mut);font-family:inherit;font-size:12.5px;
+  font-weight:550;padding:7px 14px;border-radius:var(--r-pill);cursor:pointer;transition:.14s}
+.seg button.on{background:var(--acid);color:var(--ink);font-weight:650}
+.grid{display:grid;gap:12px}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:1.5fr 1fr}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.card.tall{padding:20px}
+.card h3{font-size:12.5px;font-weight:600;margin-bottom:14px}
+.stat .caps{display:block;margin-bottom:12px}
+.stat .row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.spark{display:flex;align-items:flex-end;gap:2.5px;height:32px}
+.spark i{width:4px;border-radius:2px;background:rgba(255,255,255,.14);display:block}
+.spark i.hi{background:var(--acid)}
+/* the one light panel — the Salesforce contrast move */
+.paper-card{background:var(--paper);color:var(--ink);border-radius:var(--r);padding:20px;border:1px solid var(--paper)}
+.paper-card .caps{color:#6c6c66}
+.paper-card .num{color:var(--ink)}
+.plist{margin-top:16px;display:flex;flex-direction:column;gap:2px}
+.prow{display:flex;align-items:center;gap:12px;padding:10px;border-radius:12px;transition:.14s;cursor:pointer}
+.prow:hover{background:rgba(0,0,0,.05)}
+.prow.on{background:var(--ink);color:var(--paper)}
+.prow .av{width:30px;height:30px;border-radius:50%;flex:0 0 30px;
+  background:linear-gradient(135deg,#c9c9c2,#8f8f88)}
+.prow b{font-size:12.5px;font-weight:600;display:block}
+.prow small{font-size:10.5px;opacity:.6}
+.prow .st{margin-left:auto;font-size:10px;font-weight:650;padding:3px 9px;border-radius:var(--r-pill);
+  background:rgba(0,0,0,.07)}
+.prow.on .st{background:rgba(255,255,255,.16)}
+.prow .amt{font-size:13px;font-weight:600;letter-spacing:-.02em;min-width:64px;text-align:right}
+.avrow{display:flex;margin-top:14px}
+.avrow i{width:26px;height:26px;border-radius:50%;border:2px solid var(--card);margin-left:-8px;
+  background:linear-gradient(135deg,#5b5b66,#2a2a33);display:block}
+.avrow i:first-child{margin-left:0}
+.bars{display:flex;align-items:flex-end;gap:4px;height:96px;margin-top:6px}
+.bars i{flex:1;border-radius:3px 3px 0 0;background:rgba(255,255,255,.10);display:block;position:relative}
+.bars i.on{background:var(--acid)}
+.tbl{margin-top:4px}
+.tr{display:grid;grid-template-columns:1.4fr .8fr .8fr 1fr;gap:10px;padding:11px 4px;
+  border-bottom:1px solid var(--line);align-items:center;font-size:12.5px}
+.tr:last-child{border-bottom:0}
+.tr.head{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:600}
+.chip{display:inline-block;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:var(--r-pill);
+  border:1px solid var(--line2);color:var(--mut)}
+.chip.ok{border-color:rgba(223,255,69,.3);color:var(--acid);background:var(--acid-dim)}
+.note{margin-top:34px;padding:18px 20px;border:1px dashed var(--line2);border-radius:var(--r);
+  font-size:12.5px;line-height:1.65;color:var(--mut)}
+.note b{color:var(--fg);font-weight:600}
+@media(max-width:940px){
+  .frame{grid-template-columns:1fr}
+  .side{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);gap:12px;align-items:center}
+  .navsec{flex-direction:row;gap:4px}.navsec .caps,.side-foot,.ws span{display:none}
+  .g3,.g2{grid-template-columns:1fr}
+  .navlinks{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="logo"><i></i>scen</div>
+  <div class="navlinks">
+    <a href="#" class="on">Product</a><a href="#">Templates</a><a href="#">Showcase</a>
+    <a href="#">Pricing</a><a href="#">Resources</a>
+  </div>
+  <div class="navact"><button class="btn">Log in</button><button class="btn paper">Start building</button></div>
+</nav>
+
+<!-- 1 ─ Landing -->
+<header class="hero">
+  <div class="hero-in">
+    <div class="eyebrow">One brief · A world that moves</div>
+    <h1>Describe it once.<br><span>Watch it get built.</span></h1>
+    <p>Scen plans the pages, writes the copy, designs the motion and connects whatever it needs — then puts it on the internet.</p>
+    <div class="slab"></div>
+    <div class="hero-cta">
+      <button class="btn pri">Start building</button>
+      <button class="btn">Explore showcase</button>
+    </div>
+    <div class="hero-note">No credit card. Your first site is free.</div>
+  </div>
+</header>
+
+<!-- 2 ─ App -->
+<section class="app">
+  <div class="wrap">
+    <div class="sec-head"><span class="caps">Inside the product</span>
+      <h2 style="margin-top:8px">The workspace, rebuilt around what you are doing next.</h2></div>
+
+    <div class="frame">
+      <!-- sidebar -->
+      <aside class="side">
+        <div class="ws"><i></i><div><b>Studio Workspace</b><span>Pro · 24,180 credits</span></div></div>
+
+        <div class="navsec">
+          <span class="caps">Main</span>
+          <div class="nav on"><svg class="ico" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5M5.5 9.5V20h13V9.5"/></svg>Home</div>
+          <div class="nav"><svg class="ico" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>Projects</div>
+        </div>
+
+        <div class="navsec">
+          <span class="caps">Current project</span>
+          <div class="nav"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3v6M12 15v6M3 12h6M15 12h6M6.4 6.4l3 3M14.6 14.6l3 3M17.6 6.4l-3 3M9.4 14.6l-3 3"/></svg>AI Builder</div>
+          <div class="nav"><svg class="ico" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v4h4"/></svg>Pages</div>
+          <div class="nav"><svg class="ico" viewBox="0 0 24 24"><path d="M3 6h18v13H3zM3 15l5-4 4 3 3-3 6 5"/></svg>Media</div>
+          <div class="nav"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Business</div>
+          <div class="nav"><svg class="ico" viewBox="0 0 24 24"><path d="M9 3v6M15 3v6M6 9h12v3a6 6 0 0 1-12 0zM12 18v3"/></svg>Connections<span class="tag">2</span></div>
+          <div class="nav"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3c3.5 2 5.5 5.5 5.5 9.5L12 17l-5.5-4.5C6.5 8.5 8.5 5 12 3zM8 17l-2 4 4-2M16 17l2 4-4-2"/></svg>Publish</div>
+        </div>
+
+        <div class="side-foot navsec">
+          <div class="nav"><svg class="ico" viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4"/><circle cx="12" cy="12" r="9"/></svg>Settings</div>
+          <div class="nav"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4M12 16.8h.01"/></svg>Advanced tools</div>
+        </div>
+      </aside>
+
+      <!-- main -->
+      <main class="main">
+        <div class="mtop">
+          <h1>Good afternoon, Sumit</h1>
+          <div class="seg"><button class="on">Overview</button><button>Activity</button><button>Health</button></div>
+        </div>
+
+        <!-- stat row -->
+        <div class="grid g3" style="margin-bottom:12px">
+          <div class="card stat">
+            <span class="caps">Visitors · 30 days</span>
+            <div class="row"><div class="num">18,402</div><span class="delta">↗ 12.4%</span></div>
+            <div class="spark" style="margin-top:14px">
+              <i style="height:38%"></i><i style="height:52%"></i><i style="height:44%"></i><i style="height:66%"></i>
+              <i style="height:58%"></i><i style="height:74%"></i><i style="height:62%"></i><i class="hi" style="height:92%"></i>
+              <i style="height:70%"></i><i style="height:80%"></i><i style="height:66%"></i><i style="height:86%"></i>
+            </div>
+          </div>
+          <div class="card stat">
+            <span class="caps">Leads captured</span>
+            <div class="row"><div class="num">246</div><span class="delta">↗ 8.1%</span></div>
+            <div class="avrow"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+          <div class="card stat">
+            <span class="caps">Avg. time to publish</span>
+            <div class="row"><div class="num">9<s> </s>min</div><span class="delta down">↘ 3.2%</span></div>
+            <div class="spark" style="margin-top:14px">
+              <i style="height:80%"></i><i style="height:72%"></i><i style="height:64%"></i><i style="height:70%"></i>
+              <i style="height:52%"></i><i style="height:58%"></i><i class="hi" style="height:40%"></i><i style="height:46%"></i>
+              <i style="height:38%"></i><i style="height:44%"></i><i style="height:36%"></i><i style="height:30%"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- chart + light panel -->
+        <div class="grid g2">
+          <div class="card tall">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <h3 style="margin:0">Traffic across published sites</h3>
+              <span class="chip">Last 12 weeks</span>
+            </div>
+            <div class="bars">
+              <i style="height:34%"></i><i style="height:48%"></i><i style="height:40%"></i><i style="height:58%"></i>
+              <i style="height:52%"></i><i style="height:68%"></i><i style="height:60%"></i><i style="height:78%"></i>
+              <i class="on" style="height:96%"></i><i style="height:74%"></i><i style="height:84%"></i><i style="height:70%"></i>
+            </div>
+            <div class="tbl" style="margin-top:18px">
+              <div class="tr head"><span>Site</span><span>Status</span><span>Visitors</span><span>Domain</span></div>
+              <div class="tr"><b>Aurora Residences</b><span class="chip ok">Published</span><span>9,204</span><span class="mut">aurora.com</span></div>
+              <div class="tr"><b>Halo Fitness</b><span class="chip">Building</span><span>—</span><span class="mut">scen.space/s/halo</span></div>
+              <div class="tr"><b>Kite Studio</b><span class="chip">Draft</span><span>—</span><span class="mut">Not connected</span></div>
+            </div>
+          </div>
+
+          <div class="paper-card">
+            <span class="caps">Needs you</span>
+            <div class="num" style="margin-top:10px">3</div>
+            <div style="font-size:12.5px;color:#6c6c66;margin-top:6px">things before Aurora can go live</div>
+            <div class="plist">
+              <div class="prow on"><span class="av"></span><div><b>Connect payments</b><small>Checkout is built but not live</small></div><span class="st">Blocking</span></div>
+              <div class="prow"><span class="av"></span><div><b>Verify domain DNS</b><small>Waiting on your registrar</small></div><span class="st">Pending</span></div>
+              <div class="prow"><span class="av"></span><div><b>Add a site description</b><small>Improves how you appear in search</small></div><span class="st">Minor</span></div>
+            </div>
+            <button class="btn" style="width:100%;margin-top:16px;background:var(--ink);border-color:var(--ink);color:var(--paper);font-weight:600">Fix the blocking one →</button>
+          </div>
+        </div>
+
+        <div class="note">
+          <b>What changed.</b> The accent now marks exactly one thing per screen — the bar you are meant to read,
+          the tab you are on, the action that matters. Everything else is grey, so the green means something again.
+          The single light panel is the same trick from the invoice reference: one surface flips to paper, and
+          your eye goes straight to the work that is waiting.
+        </div>
+      </main>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

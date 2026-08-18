@@ -2,7 +2,7 @@
 /* ──────────────────────────────────────────────────────────────────────────
    Scroll-film templates.
 
-   The twelve entries below are complete standalone pages under /templates/,
+   The thirteen entries below are complete standalone pages under /templates/,
    not preset data. Every other TEMPLATES entry is a description that the
    preset renderers draw; these are hand-built pages with their own markup,
    so there is nothing for the renderer to draw from. The first five are
@@ -19,28 +19,15 @@
 if(typeof TEMPLATES==='undefined')return;
 
 var FILMS=[
-  /* Two product-launch presets, added 2026-08-18: one light, one dark. Both
-     are standalone pages like the films above, so Customize hands the whole
-     page to the studio and the client edits it by talking. */
+  /* One product-launch preset, added 2026-08-18. Halo and Aura sat beside it
+     until 2026-08-19 and were dropped from the gallery. Like the films below
+     it is a standalone page, so Customize hands the whole page to the studio
+     and the client edits it by talking. */
   {name:'Nova',file:'/templates/nova.html',category:'Product',
    tag:'Cinematic product launch — sticky scroll scenes, colour picker, 17 sections',
    palette:{accent:'#0071e3',accent2:'#f5f5f7'},
    heroTitle:'Hello, future.',
    heroSubtitle:'Powerful. Beautiful. A cinematic product launch page with sticky scroll scenes, a live colour picker and a camera, chip and battery story.',
-   components:['Home','Design','Camera','Performance','Buy']},
-
-  {name:'Halo',file:'/templates/halo.html',category:'Product',
-   tag:'Product launch page — light, type-led, one long scroll',
-   palette:{accent:'#0071e3',accent2:'#f5f5f7'},
-   heroTitle:'Hello, future.',
-   heroSubtitle:'A premium product experience, built around simplicity. Bold type, cinematic spacing and a product-first layout.',
-   components:['Home','Design','Camera','Performance','Buy']},
-
-  {name:'Aura',file:'/templates/aura.html',category:'Product',
-   tag:'Product launch page — dark, one long scroll',
-   palette:{accent:'#7FD8FF',accent2:'#0B0B0D'},
-   heroTitle:'AURA',
-   heroSubtitle:'A phone built around one idea: get out of the way. Titanium body, a camera that reads light, and a battery that outlasts the day.',
    components:['Home','Design','Camera','Performance','Buy']},
 
   {name:'SynapseX',file:'/templates/synapsex.html',category:'Technology',

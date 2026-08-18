@@ -4024,6 +4024,20 @@ function bestIndustry(text){
 }
 function matchMany(map,text){var o=[];for(var k in map)if(map[k].test(text))o.push(k);return o}
 
+/* Where a business is, or what it sells — never what it is called. */
+var PLACE_WORDS=/^(dubai|abu dhabi|sharjah|doha|riyadh|jeddah|london|paris|milan|rome|berlin|madrid|lisbon|new york|nyc|los angeles|la|miami|chicago|toronto|vancouver|sydney|melbourne|singapore|tokyo|seoul|shanghai|beijing|hong kong|bangkok|bali|jakarta|kuala lumpur|mumbai|bombay|delhi|new delhi|noida|gurgaon|gurugram|bangalore|bengaluru|hyderabad|chennai|kolkata|pune|jaipur|ahmedabad|surat|indore|lucknow|goa|kerala|punjab|india|uae|usa|uk)$/i;
+var TRADE_WORDS=/^(luxury|premium|car|cars|rental|rentals|school|academy|clinic|hospital|gym|fitness|salon|spa|cafe|restaurant|hotel|resort|travel|tours|studio|agency|shop|store|boutique|bakery|photography|real ?estate|property|properties|fashion|clothing|tech|software|app|website|business|company|services?)$/i;
+function placeOrTrade(v){
+  var t=String(v||'').trim();
+  if(!t)return true;
+  if(PLACE_WORDS.test(t)||TRADE_WORDS.test(t))return true;
+  /* two words that are both generic — "Luxury Cars", "Dubai Rentals" */
+  var w=t.split(/\s+/);
+  if(w.length===2&&(PLACE_WORDS.test(w[0])||TRADE_WORDS.test(w[0]))&&
+     (PLACE_WORDS.test(w[1])||TRADE_WORDS.test(w[1])))return true;
+  return false;
+}
+
 /* Long, or written like a spec rather than an answer. */
 var BUILD_VERB=/\b(bna|bana|banao|bnao|banani|banana|banado|chahiye|chaiye|make|build|create|design|develop|need|want)\b/i;
 function isBriefLike(text){
@@ -4211,7 +4225,9 @@ function groundTurn(text){
          ||text.match(/\b(?:called|named|naam)\s+((?:[A-Z][\w&']*)(?:[ -](?:[A-Z][\w&']*|of|and|&)){0,2})/)
          ||text.match(/\b(?:called|named)\s+([A-Za-z0-9][\w&']*(?:\.[A-Za-z]{2,6})+)/)
          ||text.match(/\b(?:website|site|app|brand|project)\s+name\s*[:\u2014-]?\s*([^\n.,]{2,40})/i);
-    if(nm){var v=nm[1].trim().replace(/[.,]+$/,'').replace(/\s+(?:The|A|An)$/,'');if(v)b.name=v.slice(0,48)}
+    if(nm){var v=nm[1].trim().replace(/[.,]+$/,'').replace(/\s+(?:The|A|An)$/,'');
+      /* an explicit "called X" is taken at its word; anything else is checked */
+      if(v&&(/\b(?:called|named|naam|name)\b/i.test(text)||!placeOrTrade(v)))b.name=v.slice(0,48)}
   }
   /* Dark or light is never a guess when the brief says it outright. */
   var wantsDark=/\b(dark|near-?black|charcoal|midnight|black (?:ui|interface|background))\b/i.test(text),
@@ -4343,7 +4359,14 @@ function absorbBrief(text){
            no "called" anywhere — "RamsFitness gym ki website bnao". */
         ||nameText.match(/\b([A-Z][a-z0-9]+[A-Z][\w]*)\b/)
         ||nameText.match(/^\s*([A-Z][\w&']{2,20})\b(?=\s)/);
-  if(nm&&!b.name){b.name=nm[1].trim();got.push('name <b>'+C.esc(b.name)+'</b>')}
+  if(nm&&!b.name){
+    var cand=nm[1].trim();
+    /* "Dubai luxury car rental website banao" put DUBAI on the logo, the tab
+       and the hero. A city, a country or a trade word is where the business
+       is or what it does — it is not what it is called, and a placeholder the
+       client can rename beats a place name they never chose. */
+    if(!placeOrTrade(cand)){b.name=cand;got.push('name <b>'+C.esc(b.name)+'</b>')}
+  }
 
   /* Step 0 carries the agent's introduction, so leaving kind unset made the
      agent introduce itself again after the customer had already written a

@@ -1225,7 +1225,19 @@ function makeCss(b){
 '  .burger{display:flex}.nav-cta{display:none}',
 '  .stage{order:-1;max-width:420px;margin-inline:auto}',
 '}',
-'@media (max-width:560px){.grid3,.grid4,.stats,.slots{grid-template-columns:1fr}.stats{gap:26px}}'
+'@media (max-width:560px){.grid3,.grid4,.stats,.slots{grid-template-columns:1fr}.stats{gap:26px}}',
+/* one long page */
+'.onepage{scroll-behavior:smooth}',
+'.ch{padding:clamp(70px,11vh,130px) 0;border-top:1px solid var(--line)}',
+'.ch-in{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,72px);align-items:center}',
+'.ch.flip .ch-in>.ch-copy{order:2}',
+'.ch h2{font-size:clamp(30px,4.6vw,58px);letter-spacing:-.04em;line-height:1.02;margin:14px 0 16px}',
+'.ch p{color:var(--sub);font-size:16px;line-height:1.75;max-width:52ch;margin:0 0 22px}',
+'.ch-art{position:relative;border-radius:var(--rad);min-height:min(58vh,460px);border:1px solid var(--line);',
+'  display:grid;place-items:center;overflow:hidden}',
+'.ch-art span{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.5)}',
+'.onepage .nav-links a{font-size:13px}',
+'@media (max-width:900px){.ch-in{grid-template-columns:1fr}.ch.flip .ch-in>.ch-copy{order:0}.ch-art{min-height:240px}}'
 ].join('\n')+(b.industry==='games'?'\n\n'+gameCss(t):'');
 }
 
@@ -2015,9 +2027,72 @@ b.pages.map(function(p){
 '</body>','</html>'].join('\n');
 }
 
+/* One long page, in the client's own chapter order. Each chapter is a full
+   band with its own title, a line of copy and a piece of art, alternating
+   sides — the shape of a product page, not a stack of cards. */
+var CH_SKIP=/^(hero|header|nav(igation)?|footer|top ?bar|menu)$/i;
+function chapterBlock(b,t,name,i){
+  var P=pack(b),pair=(P.services||[])[i%Math.max(1,(P.services||[]).length)]||['',''];
+  var title=name,copy=pair[1]||P.pitch;
+  var flip=i%2===1;
+  return ['  <section class="ch'+(flip?' flip':'')+'" id="'+slug(name)+'" data-reveal>',
+'    <div class="wrap ch-in">',
+'      <div class="ch-copy">',
+'        <span class="kicker">'+esc(String(i+1).padStart(2,'0'))+' · '+esc(P.kicker.split(' · ')[i%3]||name)+'</span>',
+'        <h2>'+esc(title)+'</h2>',
+'        <p>'+esc(copy)+'</p>',
+'        <a class="btn ghost" href="#'+slug(lastPage(b))+'">'+esc(P.cta[2])+'</a>',
+'      </div>',
+'      <div class="ch-art" '+ph(t,i+2)+'><span>'+esc(title)+'</span></div>',
+'    </div>',
+'  </section>'].join('\n');
+}
+function makeOnePage(b,pro,t){
+  var P=pack(b),list=(b.__onepage||[]).filter(function(n){return !CH_SKIP.test(n)});
+  var links=list.map(function(n){return '      <a href="#'+slug(n)+'">'+esc(n)+'</a>'}).join('\n');
+  var body=[],i=0;
+  list.forEach(function(name){
+    var n=name.toLowerCase();
+    if(/buy|price|pricing|purchase|order/.test(n))body.push(SEC.pricing(b,t,'Home'));
+    else if(/faq|question/.test(n))body.push(SEC.faq(b,t,'Home'));
+    else if(/gallery|showcase|photos|look/.test(n))body.push(SEC.showcase(b,t,'Home'));
+    else if(/contact|reach|support/.test(n))body.push(SEC.contact(b,t,'Home'));
+    else if(/review|testimonial|voices/.test(n))body.push(SEC.testimonial(b,t,'Home'));
+    else if(/spec|stat|numbers|compare/.test(n))body.push(SEC.stats(b,t,'Home'));
+    else{body.push(chapterBlock(b,t,name,i));i++}
+  });
+  var title=b.name+' — '+P.kicker.replace(/ · /g,', ');
+  return ['<!doctype html>','<html lang="'+((b.languages[0]||'English').slice(0,2).toLowerCase())+'">','<head>',
+'<meta charset="utf-8"/>',
+'<meta name="viewport" content="width=device-width,initial-scale=1"/>',
+'<title>'+esc(title)+'</title>',
+'<meta name="description" content="'+esc(b.pitch)+'"/>',
+'<link rel="stylesheet" href="styles.css"/>',
+'</head>','<body class="onepage">',
+'  <header class="nav">',
+'    <div class="wrap nav-in">',
+'      <a class="brand" href="#top"><i></i>'+esc(b.name)+'</a>',
+'      <button class="burger" aria-label="Menu">☰</button>',
+'      <nav class="nav-links">',links,'      </nav>',
+'      <a class="btn nav-cta" href="#'+slug(list[list.length-1]||'contact')+'">'+esc(P.cta[2])+'</a>',
+'    </div>',
+'  </header>',
+'  <span id="top"></span>',
+SEC.hero(b,t,'Home'),
+body.join('\n\n'),
+SEC.cta(b,t,'Home'),
+footer(b),
+'<scr'+'ipt src="app.js"></scr'+'ipt>',
+'</body>','</html>'].join('\n');
+}
+
 function buildSite(b,depth){
   b.__depth=depth;
   var t=tokens(b),pro=depth==='pro',games=b.industry==='games';
+  if(b.__onepage&&!games){
+    return{pages:[{page:'Home',file:'site/index.html',html:makeOnePage(b,pro,t)}],
+      css:makeCss(b),js:makeJs(b)};
+  }
   var pages=b.pages.map(function(p){
     return{page:p,file:'site/'+pageFile(p),html:games?makeGamePage(b,p,pro,t):makePage(b,p,pro,t)}});
   if(games)pages.push({page:'Game player',file:'site/game.html',html:makePlayerPage(b,t)});
@@ -3150,6 +3225,29 @@ function applyTurn(o){
   renderMain();
 }
 
+/* Some briefs describe one long page, not a site: a list of sections under a
+   "Sections:" or "Structure:" heading, or bullets that start at a hero and end
+   at a footer. Those are chapters of a single page — turning them into pages
+   would put a "Hero" and a "Footer" in the navigation. */
+function sectionListFrom(text){
+  var t=String(text);
+  var m=t.match(/\b(?:sections?|structure|page structure|layout|blocks?)\s*[:\-\u2014]?\s*\n([\s\S]{0,900})/i);
+  var body=m?m[1]:t;
+  var lines=body.split(/\n/).map(function(l){return l.trim()})
+    .filter(function(l){return /^[*\-\u2022\d.#]+\s*\S/.test(l)})
+    .map(function(l){return l.replace(/^[*\-\u2022\d.#\s]+/,'').replace(/[*_`]/g,'').trim()})
+    .map(function(l){return l.split(/[\u2014\-:(]/)[0].trim()})
+    .filter(function(l){return l&&l.length<=28&&/[a-z]/i.test(l)});
+  if(lines.length<4)return null;
+  var seen={},out=[];
+  lines.forEach(function(l){
+    var name=C.titleCase(l.replace(/\bsection\b/i,'').replace(/\s+/g,' ').trim());
+    var k=name.toLowerCase();
+    if(!name||seen[k])return;seen[k]=1;out.push(name);
+  });
+  return out.length>=4?out.slice(0,10):null;
+}
+
 /* The pages a brief spells out in its navigation. Shared, because both the
    gateway path and the local reader need the same answer — two copies of this
    drifted apart the moment one of them was fixed. */
@@ -3355,6 +3453,14 @@ function refineBrief(text){
     chose.push('the pages from your navigation — '+b.pages.join(', '));
   }
 
+  /* "Premium, minimal, futuristic, dark" picked Minimal light, because the
+     style words were read before the word dark. Dark wins when both appear —
+     nobody writes "dark" about a white page. */
+  if(/\b(dark|near-?black|charcoal|midnight|black background|night mode)\b/i.test(text)&&
+     STYLES[b.style]&&!STYLES[b.style].dark){
+    b.style='cinematic';chose.push('the dark palette the brief asks for');
+  }
+
   /* A background the brief actually names settles the palette. "Premium" put
      a gaming platform on Luxury warm — a brown page — while the same brief
      said its background was #0E0F12: near-black and neutral, which is the
@@ -3367,6 +3473,23 @@ function refineBrief(text){
     if(nearBlack&&neutral&&b.style!=='cinematic'&&b.style!=='editorial'){
       b.style='cinematic';chose.push('the near-black palette your background asks for');
     }
+  }
+
+  /* One page or a site. A brief that lists chapters, or says so outright,
+     gets a single scrolling page — which is what an "Apple keynote" brief is
+     describing, and what a multi-page build gets wrong. */
+  if(!b.__onepage){
+    var chapters=sectionListFrom(text);
+    var saysOne=/\b(one[- ]pager?|single page|one page|landing page|scroll(?:ing|y)? page|long page)\b/i.test(text);
+    if(chapters&&(saysOne||/\b(hero|footer)\b/i.test(chapters.join(' ')))){
+      b.__onepage=chapters;
+      chose.push('one long page with your sections — '+chapters.slice(0,6).join(', ')+
+        (chapters.length>6?'…':''));
+    }else if(saysOne){
+      b.__onepage=['Hero','About','Features','Gallery','Contact'];
+      chose.push('one long scrolling page');
+    }
+    if(b.__onepage)b.pages=['Home'];
   }
 
   /* How much it moves. */

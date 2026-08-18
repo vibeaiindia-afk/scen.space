@@ -2812,7 +2812,11 @@ function handleText(text){
        button to …" scored as an answer and its URL was filed as a reference
        site. Only a local, checked edit is accepted on this route; anything it
        cannot place carries on as an answer. */
-    if(isEdit||(presetHome()&&looksLikePresetEdit(text))){
+    /* classify() already calls a long paste a brief, so isEdit is false for
+       one — but the preset sniff reads words, and a specification mentions
+       menus, logos and buttons all the way down it. */
+    var oneLine=text.length<=320&&text.split(/\n/).length<=4&&intent.kind!=='brief';
+    if(isEdit||(oneLine&&presetHome()&&looksLikePresetEdit(text))){
       var was=presetHome()?presetPage():'';
       var did=parseEdit(text);
       if(did){
@@ -3326,6 +3330,14 @@ function menuItemsFrom(text){
 }
 function parseEdit(text){
   var b=S.brief,t=text.toLowerCase().trim(),done=[];
+
+  /* A pasted brief is not an instruction. Read word by word, a long spec
+     scores against a dozen rules at once — a page that mentions "title",
+     "compact", "bold", "serif" and a background hex came back as eleven
+     changes, one of them painting the accent the colour of the background,
+     and the brief itself was never read. Anything this long belongs to the
+     brief reader, or to the gateway. */
+  if(text.length>320||text.split(/\n/).length>4)return null;
 
   var m=t.match(/(?:rename(?: it)?(?: to)?|call it|name it)\s+(.+)/i);
   if(m){var nm=text.slice(text.toLowerCase().indexOf(m[1])).trim().replace(/["'.]+$/,'');

@@ -2814,7 +2814,9 @@ function post(feature,input,system,opts){
      sits just past it so the server's error usually wins, and a hang still
      ends in a fallback rather than a stall. */
   var ctl=(typeof AbortController!=='undefined')?new AbortController():null;
-  var died=setTimeout(function(){try{ctl&&ctl.abort()}catch(e){}},58000);
+  /* The server now has a longer ceiling and answers inside its own budget;
+     this only has to outlast that, so a hang still ends in a fallback. */
+  var died=setTimeout(function(){try{ctl&&ctl.abort()}catch(e){}},110000);
   return fetch('/api/ai/generate',{
     method:'POST',credentials:'same-origin',
     signal:ctl?ctl.signal:undefined,

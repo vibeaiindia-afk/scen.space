@@ -8,7 +8,10 @@ export const dynamic='force-dynamic';
 /* The gateway gives a provider 45 seconds; a function that Vercel stops at its
    default cuts that off long before, and the studio reports a timeout it could
    not have avoided. The two limits have to agree. */
-export const maxDuration=60;
+/* Sixty seconds is two providers' worth of waiting and grok alone can want
+   more than half of it. If the plan allows the longer ceiling this takes it;
+   where it does not, Vercel caps it and nothing else changes. */
+export const maxDuration=120;
 const features:AIFeature[]=['chat','code','planning','analysis'];
 /* The caller may ask for one; the router decides whether it can be honoured. */
 const providers:AIProviderId[]=['openai','anthropic','gemini','grok'];

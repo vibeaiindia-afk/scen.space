@@ -52,7 +52,9 @@ export async function generateWithRouting(input:GenerateInput,preferred?:AIProvi
      the log to say which provider had done it. Each attempt now gets what is
      actually left, and the last one always leaves room to reply. */
   const started=Date.now();
-  const BUDGET=50_000;
+  /* Kept a little under whatever the function is allowed, so the server's own
+     answer always beats the platform killing the request. */
+  const BUDGET=Number(process.env.SCEN_AI_BUDGET_MS||100_000);
   for(let i=0;i<order.length;i++){
     const left=BUDGET-(Date.now()-started);
     if(left<6000){

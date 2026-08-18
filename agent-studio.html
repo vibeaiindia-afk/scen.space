@@ -407,6 +407,7 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
             <button class="mini" id="depthBtn" title="How much the agent builds">⛁ Lite <i>⌄</i></button>
             <button class="mini on" id="planBtn" title="Show the plan before building">Plan</button>
             <button class="mini on" id="aiBtn" title="Use the Scen AI gateway when it is reachable">✦ AI</button>
+            <button class="mini" id="modelBtn" title="Which model writes this build">◇ Auto <i>⌄</i></button>
             <span class="grow"></span>
             <button class="ico" id="micBtn" title="Voice input">🎙</button>
             <button class="send" id="sendBtn" disabled title="Send (Enter)">↑</button>
@@ -2363,6 +2364,9 @@ var INDUSTRIES=C.INDUSTRIES,STYLES=C.STYLES,FEATURES=C.FEATURES,GOALS=C.GOALS;
 
 var AI={
   enabled:true,
+  /* '' means let the gateway route it. Anything else is the client's pick,
+     honoured when that provider is configured and answering. */
+  pick:'', available:[],
   state:'unknown',        // unknown | ready | live | signedout | offline | error
   provider:'',model:'',requests:0,inTok:0,outTok:0,cost:0,lastMs:0,lastError:'',
   usedForBuild:''         // '' | 'live' | 'local'
@@ -2370,10 +2374,12 @@ var AI={
 
 function post(feature,input,system,opts){
   opts=opts||{};
+  var pick=AI.pick;
   return fetch('/api/ai/generate',{
     method:'POST',credentials:'same-origin',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({feature:feature,input:input,system:system,
+      provider:pick||undefined,
       maxOutputTokens:opts.maxOutputTokens||1400,
       temperature:opts.temperature==null?0.7:opts.temperature})
   }).then(function(r){
@@ -2404,9 +2410,22 @@ function failed(e){
   else{AI.state='error';AI.lastError=(e&&e.message)||('Gateway error ('+s+')')}
   return null;
 }
+/* Which models this workspace actually has. /api/capabilities answers with
+   configured provider ids and nothing else — no keys, no endpoints — so the
+   picker only ever offers what the gateway can really reach. */
+function readModels(){
+  return fetch('/api/capabilities',{credentials:'same-origin'}).then(function(r){
+    return r.ok?r.json():null;
+  }).then(function(d){
+    var list=(d&&(d.ai||(d.capabilities&&d.capabilities.ai)))||[];
+    AI.available=Array.isArray(list)?list:[];
+    if(AI.pick&&AI.available.indexOf(AI.pick)<0)AI.pick='';
+    return AI.available;
+  }).catch(function(){AI.available=[];return []});
+}
 function probe(){
   return fetch('/api/auth/me',{credentials:'same-origin'}).then(function(r){
-    if(r.ok){if(AI.state!=='live')AI.state='ready';AI.lastError='';return AI.state}
+    if(r.ok){if(AI.state!=='live')AI.state='ready';AI.lastError='';readModels();return AI.state}
     if(r.status===401){AI.state='signedout';AI.lastError='Not signed in on this domain.';return AI.state}
     AI.state='offline';AI.lastError='The /api routes are not reachable from this page.';return AI.state;
   }).catch(function(){
@@ -2656,7 +2675,7 @@ function test(){
     .catch(function(e){failed(e);return{ok:false,error:AI.lastError}});
 }
 
-window.__SCEN_AI={AI:AI,probe:probe,usable:usable,label:label,
+window.__SCEN_AI={AI:AI,probe:probe,usable:usable,label:label,readModels:readModels,
   writeCopy:writeCopy,writePlan:writePlan,readEdit:readEdit,readTurn:readTurn,test:test,SECTION_IDS:SECTION_IDS};
 })();
 </script>
@@ -5920,6 +5939,41 @@ $('#depthBtn').addEventListener('click',function(){
   toast(S.depth==='pro'?'Pro — more sections per page':'Lite — core sections only');
   if(S.tool==='plan'||S.tab==='preview')renderMain();
 });
+/* Which model writes the build. Auto is the gateway's own route; the rest are
+   whatever this workspace has keys for. A pick is a preference — if that model
+   is down the gateway still answers with another and says which. */
+var MODEL_LABEL={openai:'ChatGPT',anthropic:'Claude',gemini:'Gemini',grok:'Grok'};
+function setModelLabel(){
+  var el=$('#modelBtn');if(!el)return;
+  el.innerHTML='◇ '+(AI.pick?esc(MODEL_LABEL[AI.pick]||AI.pick):'Auto')+' <i>⌄</i>';
+  el.classList.toggle('on',!!AI.pick);
+}
+$('#modelBtn').addEventListener('click',function(){
+  var have=(AI.available||[]).slice();
+  if(!have.length){
+    toast(L('Sign in first — the gateway lists its models once there is a session.',
+            'Pehle sign in karo — session ke baad hi models dikhte hain.'));
+    return X.readModels().then(setModelLabel);
+  }
+  var rows=[['',L('Auto — let the gateway choose','Auto — gateway khud chune')]]
+    .concat(have.map(function(id){return [id,MODEL_LABEL[id]||id]}));
+  modal('<div class="modal-head"><b>'+L('Which model writes this build','Ye build kaunsa model likhe')+'</b></div>'+
+    '<div class="modal-body">'+rows.map(function(r){
+      return '<button class="btn" style="display:block;width:100%;text-align:left;margin-bottom:8px" data-pick="'+esc(r[0])+'">'+
+        (AI.pick===r[0]?'✓ ':'')+esc(r[1])+'</button>'}).join('')+
+    '<p class="tiny" style="color:#8b8b96;margin:6px 0 0">'+
+    L('A pick is honoured when that model is configured and answering. Otherwise the gateway falls back and tells you which one wrote it.',
+      'Jo choose karoge wahi chalega, agar wo configured aur chal raha ho. Warna gateway doosre se likhwa ke bata dega kisne likha.')+
+    '</p></div>');
+  $('#modalHost').addEventListener('click',function(e){
+    var t=e.target.closest('button[data-pick]');if(!t)return;
+    AI.pick=t.dataset.pick;setModelLabel();closeModal();
+    toast(AI.pick?(MODEL_LABEL[AI.pick]||AI.pick)+L(' will write the next build',' agli build likhega')
+                 :L('Auto — the gateway routes it','Auto — gateway khud bhejega'));
+    if(S.tool==='aigateway'&&S.tab==='tools')renderMain();
+  },{once:true});
+});
+
 $('#aiBtn').addEventListener('click',function(){
   AI.enabled=!AI.enabled;setAiPill();
   if(S.tool==='aigateway'&&S.tab==='tools')renderMain();
@@ -6094,8 +6148,12 @@ function openPreset(){
   return true;
 }
 function boot(){
-  setDepthLabel();setAiPill();setAcctPill();
-  X.probe().then(function(){setAiPill();if(S.tool==='aigateway'&&S.tab==='tools')renderMain()});
+  setDepthLabel();setAiPill();setAcctPill();setModelLabel();
+  X.probe().then(function(){
+    setAiPill();setModelLabel();
+    X.readModels().then(setModelLabel);
+    if(S.tool==='aigateway'&&S.tab==='tools')renderMain();
+  });
   N.ensureAll();
   var seed=C.seedFromUrl();
   var had=C.load();

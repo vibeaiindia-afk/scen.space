@@ -1235,6 +1235,46 @@ function makeCss(b){
 '@media (max-width:560px){.grid3,.grid4,.stats,.slots{grid-template-columns:1fr}.stats{gap:26px}}',
 /* one long page */
 '.onepage{scroll-behavior:smooth}',
+/* the launch-page hero: type first, the product beside it, light behind both */
+'.lp-hero{position:relative;min-height:min(94vh,900px);display:grid;align-items:center;overflow:hidden;padding-block:clamp(70px,12vh,140px)}',
+'.lp-aurora{position:absolute;inset:-25% -10%;z-index:0;filter:blur(70px);opacity:.5;pointer-events:none;',
+'  background:radial-gradient(32% 40% at 24% 30%,var(--a),transparent 62%),radial-gradient(30% 38% at 76% 62%,'+t.line2+',transparent 60%);',
+'  animation:lpdrift 22s ease-in-out infinite alternate}',
+'@keyframes lpdrift{from{transform:translate3d(-2%,-1%,0) scale(1)}to{transform:translate3d(3%,2%,0) scale(1.1)}}',
+'.lp-hero-in{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(30px,5vw,70px);align-items:center}',
+'.lp-hero h1{font-size:clamp(54px,9.4vw,132px);line-height:.9;letter-spacing:-.062em;margin:18px 0 20px}',
+'.lp-hero .lead{font-size:clamp(16px,1.6vw,21px);line-height:1.6;max-width:34ch;color:var(--sub);margin:0 0 30px}',
+'.lp-meta{display:flex;gap:26px;flex-wrap:wrap;margin-top:34px;color:var(--sub);font-size:12.5px}',
+'.lp-meta b{display:block;color:var(--ink);font-size:17px;letter-spacing:-.02em}',
+/* the device, drawn */
+'.lp-device{position:relative;justify-self:center;width:min(300px,72vw);aspect-ratio:9/19;border-radius:44px;padding:9px;',
+'  background:linear-gradient(160deg,'+t.bg3+','+st.bg+' 42%,'+t.bg2+');',
+'  box-shadow:0 60px 140px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.09);animation:lpfloat 9s ease-in-out infinite alternate}',
+'@keyframes lpfloat{from{transform:translateY(-8px) rotate(-.6deg)}to{transform:translateY(8px) rotate(.6deg)}}',
+'.lp-screen{height:100%;border-radius:36px;position:relative;overflow:hidden;',
+'  background:radial-gradient(70% 50% at 50% 12%,color-mix(in srgb,var(--a) 55%,transparent),transparent 70%),linear-gradient(180deg,'+t.bg2+','+st.bg+' 62%)}',
+'.lp-screen:after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.14),transparent 38%)}',
+'.lp-notch{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:96px;height:22px;border-radius:999px;background:'+st.bg+';z-index:2}',
+'.lp-lenses{position:absolute;top:22px;right:22px;display:grid;grid-template-columns:repeat(2,26px);gap:8px;z-index:3}',
+'.lp-lenses i{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,'+t.bg3+','+st.bg+' 65%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}',
+/* chapter art */
+'.lp-fig{position:relative;margin:0;display:grid;place-items:center;gap:14px;text-align:center;padding:24px}',
+'.lp-fig figcaption{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--sub)}',
+'.lp-ring{width:min(240px,58%);aspect-ratio:1;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;',
+'  box-shadow:0 0 90px color-mix(in srgb,var(--a) 24%,transparent) inset}',
+'.lp-ring i{width:56%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 34% 28%,'+t.bg3+','+st.bg+' 68%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}',
+'.lp-bars{display:grid;gap:10px;width:min(300px,72%)}',
+'.lp-bars b{display:block;height:8px;border-radius:999px;background:linear-gradient(90deg,var(--a),'+t.soft+');opacity:.9}',
+'.lp-bars b:nth-child(2){width:78%;opacity:.7}.lp-bars b:nth-child(3){width:56%;opacity:.5}',
+'.lp-cell{width:min(280px,70%);height:96px;border-radius:16px;border:1px solid var(--line);position:relative;overflow:hidden}',
+'.lp-cell:after{content:"";position:absolute;inset:6px;width:72%;border-radius:10px;background:linear-gradient(90deg,var(--a),'+t.soft+')}',
+'.lp-slab{width:min(260px,64%);aspect-ratio:3/4;border-radius:26px;background:linear-gradient(155deg,'+t.bg3+','+st.bg+');box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),0 30px 80px rgba(0,0,0,.5)}',
+'.lp-plate{position:relative;border-radius:clamp(20px,2.4vw,30px);min-height:min(62vh,520px);border:1px solid var(--line);',
+'  background-size:cover;background-position:center;display:grid;place-items:end start;padding:26px;',
+'  box-shadow:0 46px 120px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06)}',
+'.lp-plate span{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--sub)}',
+'@media (max-width:900px){.lp-hero-in{grid-template-columns:1fr}.lp-device{margin-top:22px}.lp-plate{min-height:280px}}',
+'@media (prefers-reduced-motion:reduce){.lp-aurora,.lp-device{animation:none}}',
 '.onepage .hero{min-height:min(92vh,880px);display:grid;align-items:center;padding-block:clamp(80px,14vh,150px)}',
 '.onepage .hero h1{font-size:clamp(52px,9vw,132px);letter-spacing:-.06em;line-height:.92}',
 '.onepage .hero .lead{font-size:clamp(16px,1.7vw,22px);max-width:34ch}',
@@ -2089,6 +2129,39 @@ b.pages.map(function(p){
    band with its own title, a line of copy and a piece of art, alternating
    sides — the shape of a product page, not a stack of cards. */
 var CH_SKIP=/^(hero|header|nav(igation)?|footer|top ?bar|menu)$/i;
+/* Art for a chapter, drawn from the chapter's own name. A launch page shows
+   the thing; the generator has no photographs, so it draws: a lens ring for a
+   camera, bars for performance, a cell for battery, a slab for design. */
+function chapterArt(name,i){
+  var n=String(name).toLowerCase();
+  if(/camera|lens|photo|video/.test(n))
+    return '<figure class="lp-fig"><div class="lp-ring"><i></i></div><figcaption>'+esc(name)+'</figcaption></figure>';
+  if(/performance|speed|chip|power|engine/.test(n))
+    return '<figure class="lp-fig"><div class="lp-bars"><b></b><b></b><b></b></div><figcaption>'+esc(name)+'</figcaption></figure>';
+  if(/battery|charge|power|life/.test(n))
+    return '<figure class="lp-fig"><div class="lp-cell"></div><figcaption>'+esc(name)+'</figcaption></figure>';
+  if(/design|material|build|body|finish/.test(n))
+    return '<figure class="lp-fig"><div class="lp-slab"></div><figcaption>'+esc(name)+'</figcaption></figure>';
+  return '<figure class="lp-fig"><div class="lp-ring"><i></i></div><figcaption>'+esc(name)+'</figcaption></figure>';
+}
+/* The device the hero stands on. Rounded body, a screen lit from the top and a
+   camera cluster — generic hardware, drawn in CSS, no photograph needed. */
+/* A phone on a school's page is a stock image nobody asked for. The device is
+   drawn only when the brief is about a device; everything else gets a panel
+   that reads as the photograph it is waiting for. */
+function deviceLike(b){
+  var t=[b.pitch,b.name,(b.__onepage||[]).join(' ')].join(' ').toLowerCase();
+  return /\b(phone|handset|device|hardware|gadget|laptop|tablet|watch|camera|wearable)\b/.test(t);
+}
+function heroDevice(b,t){
+  if(deviceLike(b))
+    return ['      <div class="lp-device" aria-hidden="true">',
+'        <div class="lp-notch"></div>',
+'        <div class="lp-lenses"><i></i><i></i><i></i><i></i></div>',
+'        <div class="lp-screen"></div>',
+'      </div>'].join('\n');
+  return '      <div class="lp-plate" '+artFor(b,t,0)+'><span>'+esc(b.name)+'</span></div>';
+}
 function chapterBlock(b,t,name,i){
   var P=pack(b),pair=(P.services||[])[i%Math.max(1,(P.services||[]).length)]||['',''];
   var title=name,copy=pair[1]||P.pitch;
@@ -2101,7 +2174,8 @@ function chapterBlock(b,t,name,i){
 '        <p>'+esc(copy)+'</p>',
 '        <a class="btn ghost" href="#'+slug(lastPage(b))+'">'+esc(P.cta[2])+'</a>',
 '      </div>',
-'      <div class="ch-art" '+artFor(b,t,i+1)+'><span>'+esc(title)+'</span></div>',
+      ((b.__art&&b.__art.length)?'      <div class="ch-art" '+artFor(b,t,i+1)+'><span>'+esc(title)+'</span></div>'
+        :'      <div class="ch-art">'+chapterArt(title,i)+'</div>'),
 '    </div>',
 '  </section>'].join('\n');
 }
@@ -2136,7 +2210,23 @@ function makeOnePage(b,pro,t){
 '    </div>',
 '  </header>',
 '  <span id="top"></span>',
-SEC.hero(b,t,'Home'),
+'  <section class="lp-hero">',
+'    <div class="lp-aurora" aria-hidden="true"></div>',
+'    <div class="wrap lp-hero-in">',
+'      <div>',
+'        <span class="kicker">'+esc(P.kicker)+'</span>',
+'        <h1>'+esc(b.name)+'</h1>',
+'        <p class="lead">'+esc(b.pitch)+'</p>',
+'        <div class="hero-cta">',
+'          <a class="btn" href="#'+slug(list[list.length-1]||'contact')+'">'+esc(P.cta[0])+'</a>',
+'          <a class="btn ghost" href="#'+slug(list[0]||'design')+'">'+esc(P.cta[2])+'</a>',
+'        </div>',
+(hasProof(b)?'        <div class="lp-meta">'+[0,1,2].map(function(i){var st=proof(b,i);
+  return '<span><b>'+esc(st[0])+'</b>'+esc(st[1])+'</span>'}).join('')+'</div>':''),
+'      </div>',
+heroDevice(b,t),
+'    </div>',
+'  </section>',
 body.join('\n\n'),
 SEC.cta(b,t,'Home'),
 footer(b),
@@ -3625,6 +3715,18 @@ function absorbBrief(text){
   else if(!b.kind&&/\b(web ?site|site|landing page|hero section|home ?page|web app|page for|websit|vebsite)\b/i.test(text)){b.kind='website';got.push('a website')}
   else if(!b.kind&&/\bapp\b/i.test(text)){b.kind='app';got.push('an app')}
 
+  /* The client's own accent is read first. The trade pack fills the field a
+     few lines down, and "Accent: deep green" was arriving too late to win. */
+  if(!b.accent){
+    var aLines=text.split(/\n|(?<=[.!?])\s/);
+    for(var ai=0;ai<aLines.length;ai++){
+      if(!/\baccent\b/i.test(aLines[ai]))continue;
+      var ah=aLines[ai].match(/#([0-9a-f]{6}|[0-9a-f]{3})\b/i);
+      var ac2=ah?('#'+ah[1]):C.findColor(aLines[ai]);
+      if(ac2){b.accent=ac2;got.push('accent <b>'+C.esc(ac2)+'</b>');break}
+    }
+  }
+
   var ind=bestIndustry(text);
   if(ind&&!b.industry){
     b.industry=ind;
@@ -3719,8 +3821,8 @@ function refineBrief(text){
     var look=/\b(dark|near-?black|charcoal|midnight|neon|gaming interface|cinematic|immersive|dramatic)\b/.test(t)?'cinematic':
              /\b(editorial|magazine|type[- ]led|serif)\b/.test(t)?'editorial':
              /\b(luxur|high[- ]end|elegant|classy|boutique|gold)\b/.test(t)?'luxury':
-             /\b(playful|fun|bright|colou?rful|youth)\b/.test(t)?'playful':
-             /\b(minimal|clean|simple|white background|airy)\b/.test(t)?'minimal':'';
+             /\b(minimal|clean|simple|airy|calm|white background|light (?:and )?airy)\b/.test(t)?'minimal':
+             /\b(playful|fun|colou?rful|youth|kids)\b/.test(t)?'playful':'';
     if(look&&STYLES[look]){b.style=look;chose.push('a '+STYLES[look].l.toLowerCase()+' look')}
   }
 

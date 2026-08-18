@@ -2850,7 +2850,7 @@ function record(d,ms){
     AI.fell=d.attempts.map(function(a){
       /* which call, and how long it actually got — "grok failed" on its own
          cannot be acted on, and this line is the only place the answer shows */
-      return String(a.provider)+(a.feature?' on '+a.feature:'')+' failed'+
+      return String(a.provider)+(a.feature?' on '+a.feature:'')+' lost'+
         (a.ms?' after '+Math.round(a.ms/100)/10+'s':'')+
         ' ('+a.status+(a.code?', '+a.code:'')+'): '+scrubAI(a.message);
     }).join(' · ');

@@ -43,18 +43,60 @@ export async function generateWithRouting(input:GenerateInput,preferred?:AIProvi
   if(!order.includes(route.primary)) order.push(route.primary);
   if(route.fallback&&!order.includes(route.fallback)) order.push(route.fallback);
 
+  /* Kept a little under whatever the function is allowed, so the server's own
+     answer always beats the platform killing the request. */
+  const BUDGET=Number(process.env.SCEN_AI_BUDGET_MS||100_000);
+  const started=Date.now();
   let last:ProviderError|undefined;
   const attempts:Attempt[]=[];
+
+  /* Both at once, and the first good answer wins.
+
+     Waiting for a slow primary to fail before trying anyone else is what made
+     every build sit through twenty-five seconds of grok timing out. Asked to
+     use both providers, this asks both: they start together, the first valid
+     answer is returned, and the losers are recorded so the studio can still
+     say what happened. It costs the tokens of every provider asked, which is
+     the trade the client chose. SCEN_AI_RACE=off returns to trying them in
+     order; a provider the client picked by hand is never raced, because that
+     is an instruction, not a preference. */
+  const racing=process.env.SCEN_AI_RACE!=='off'&&!preferred&&order.length>1;
+  if(racing){
+    const raceStart=Date.now();
+    const allowedEach=Math.min(limits.timeoutMs,Math.max(12_000,BUDGET-2000));
+    let settled=false;
+    const runs=order.map(id=>{
+      const at=Date.now();
+      return runOne(id,input,allowedEach).then(r=>{
+        if(!settled){settled=true;note(`${input.feature} answered by ${r.provider} · ${r.model} (raced ${order.join(' vs ')}, ${Date.now()-at}ms)`)}
+        return r;
+      },err=>{
+        const e=err instanceof ProviderError?err:new ProviderError(id,String(err?.message||err),500,true);
+        const spent=Date.now()-at;
+        note(`${input.feature} · ${id} lost the race after ${spent}ms (${e.status}${e.code?', '+e.code:''}): ${redact(e.message).slice(0,140)}`);
+        attempts.push({provider:id,status:e.status,code:e.code,message:redact(e.message).slice(0,200),
+                       ms:spent,feature:String(input.feature)});
+        throw e;
+      });
+    });
+    try{
+      const winner=await Promise.any(runs);
+      /* the losers keep running to their own timeout; nothing waits on them */
+      return {...winner,requestId,fallbackUsed:winner.provider!==order[0],requested:preferred,attempts};
+    }catch(err:any){
+      const first=(err&&Array.isArray(err.errors)?err.errors[0]:err) as ProviderError;
+      const e=first instanceof ProviderError?first:new ProviderError(order[0],'No AI provider answered',502,false);
+      (e as any).attempts=attempts;
+      note(`${input.feature} · every provider failed after ${Date.now()-raceStart}ms`);
+      throw e;
+    }
+  }
   /* The function has sixty seconds. Two providers at forty-five each cannot
      both run inside that, so a primary that hung took the whole budget with it
      and Vercel killed the request before either answer came back — which the
      studio reported as "the gateway did not answer in time" with nothing in
      the log to say which provider had done it. Each attempt now gets what is
      actually left, and the last one always leaves room to reply. */
-  const started=Date.now();
-  /* Kept a little under whatever the function is allowed, so the server's own
-     answer always beats the platform killing the request. */
-  const BUDGET=Number(process.env.SCEN_AI_BUDGET_MS||100_000);
   for(let i=0;i<order.length;i++){
     const left=BUDGET-(Date.now()-started);
     if(left<6000){

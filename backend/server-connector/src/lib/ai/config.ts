@@ -19,6 +19,10 @@ export function routeFor(feature:AIFeature):{primary:AIProviderId;fallback?:AIPr
      gives it — and moves behind a faster provider everywhere else. Nothing is
      lost: it still answers whenever the first one fails, and any
      SCEN_AI_*_PRIMARY overrides all of it. */
+  /* With both providers racing, "primary" only decides who is named first in
+     the log and who counts as the fallback in the response — the client asked
+     for both to be tried at once, and the first good answer wins either way.
+     grok leads on `code`, which is the node its own diagram gives it. */
   const defaults:Record<AIFeature,[AIProviderId,AIProviderId|undefined]>={chat:['openai','grok'],code:['grok','openai'],planning:['openai','grok'],analysis:['openai','grok']};
   const [dp,df]=defaults[feature];
   const upper=feature.toUpperCase();

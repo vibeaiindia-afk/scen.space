@@ -59,8 +59,15 @@ export async function generateWithRouting(input:GenerateInput,preferred?:AIProvi
       note(`${input.feature} · out of time before ${order[i]}`);
       break;
     }
+    /* Split what is left between the providers still to try. Giving the first
+       one the whole budget is what happened next: grok took all forty-five
+       seconds writing the copy, timed out, and the fallback had three seconds
+       to work in — so the client got the local writer and a generic headline.
+       A primary that has to answer in twenty-five seconds is better than a
+       fallback that never gets to run. */
+    const share=Math.max(12_000,Math.floor((left-2000)/(order.length-i)));
     try{
-      const result=await runOne(order[i],input,Math.min(limits.timeoutMs,left-2000));
+      const result=await runOne(order[i],input,Math.min(limits.timeoutMs,share));
       note(`${input.feature} answered by ${result.provider} · ${result.model}`+(i>0?` (fallback, ${order[0]} failed)`:''));
       return {...result,requestId,fallbackUsed:i>0,requested:preferred,attempts};
     }catch(err:any){

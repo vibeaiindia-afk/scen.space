@@ -2892,7 +2892,25 @@ function probe(){
     AI.state='offline';AI.lastError='The /api routes are not reachable from this page.';return AI.state;
   });
 }
-function usable(){return AI.enabled&&(AI.state==='ready'||AI.state==='live')}
+/* One timeout used to switch the gateway off for the rest of the session.
+
+   failed() sets state to 'error', usable() answered false from then on, and
+   the next build skipped every live step — no direction, no plan, no copy, no
+   review — and came out in five seconds with the local writer's generic
+   headline, on an account that was signed in and had credits. A request that
+   timed out says the model was slow, not that the gateway is gone.
+
+   Two states really do mean stop, because retrying cannot help until something
+   changes outside this page: no session, and no key on the server. */
+function usable(){
+  if(!AI.enabled)return false;
+  if(AI.state==='signedout'||AI.state==='offline')return false;
+  if(AI.state==='error'){
+    /* a hard "no key" is not worth retrying; anything else is */
+    return !/no provider key/i.test(String(AI.lastError||''));
+  }
+  return true;
+}
 function label(){
   return AI.state==='live'?'Live AI':AI.state==='ready'?'AI ready':
     AI.state==='signedout'?'Sign in for AI':AI.state==='offline'?'Local only':
@@ -3004,7 +3022,9 @@ function coerceCopy(o,b){
 }
 function writeCopy(b,hist){
   var t0=Date.now();
-  return post('chat',copyPrompt(b,hist),VOICE,{maxOutputTokens:1400,temperature:.78})
+  /* Fourteen hundred tokens of copy is more than any of these fields need, and
+     on a slow model it is the difference between an answer and a timeout. */
+  return post('chat',copyPrompt(b,hist),VOICE,{maxOutputTokens:950,temperature:.78})
     .then(function(d){
       record(d,Date.now()-t0);
       var o=jsonFrom(d.text);

@@ -2796,6 +2796,52 @@ function handleText(text){
     var st=step();
     if(!st)return;
 
+    var intent=readIntent(text);
+
+    /* A change asked for during the interview is not the answer to whatever
+       question is on screen. This has to be read BEFORE the gateway extracts
+       a turn: the extractor's job is to fill the brief, so "make it deep
+       blue" came back as the project's name and the preview never moved. With
+       the preset sitting in the preview from the first second, asking for a
+       change before the questions are done is the normal thing to do, not the
+       exception. */
+    var isEdit=intent.kind==='edit'&&(S.brief.name||presetHome());
+    /* The preset's own furniture — top bar, links, film, photographs — named
+       in a sentence that asks for something to be done to it. INTENT.edit is
+       about the brief and does not know these words, so "link the Download
+       button to …" scored as an answer and its URL was filed as a reference
+       site. Only a local, checked edit is accepted on this route; anything it
+       cannot place carries on as an answer. */
+    if(isEdit||(presetHome()&&looksLikePresetEdit(text))){
+      var was=presetHome()?presetPage():'';
+      var did=parseEdit(text);
+      if(did){
+        userSay(text,atts);S.atts=[];renderAtts();
+        save();
+        var now=presetHome()?presetPage():'';
+        agentSay(did+(was&&now&&was!==now?'<br/><br/>It is in the preview.':
+          presetHome()?'<br/><br/>That one shows up when the site is built.':''));
+        return askCurrent(true);            /* back to the open question */
+      }
+      if(isEdit&&X.usable()){
+        userSay(text,atts);S.atts=[];renderAtts();
+        var te=Date.now();thinking();
+        X.readEdit(text,S.brief,transcript()).then(function(o){
+          clearThinking();setAiPill();
+          var changed=o?applyPatch(o):[];
+          if(changed.length){
+            agentSay(changed.join('<br/>'),Math.max(1,Math.round((Date.now()-te)/1000)));
+            save();return askCurrent(true);
+          }
+          agentSay(esc(String((o&&o.reply)||'').slice(0,240))||
+                   'I did not catch what to change \u2014 say it plainly and I will fix it.');
+          askCurrent(true);
+        }).catch(function(){clearThinking();askCurrent(true)});
+        return;
+      }
+      /* nothing local to apply and no gateway — let it be an answer */
+    }
+
     /* §47 — extraction first. Ask the model what this turn actually contained
        before deciding what to say; the predefined next question is what made
        the studio re-ask things the client had already told it. Everything
@@ -2830,13 +2876,10 @@ function handleText(text){
       return;
     }
 
-    var intent=readIntent(text);
-
-    /* A change request in the middle of the interview is not the answer to
-       whatever question happens to be on screen. "hero chota kro" used to be
-       filed as a business name. Only once there is something to change, and
-       only when the gateway can actually read it — otherwise carry on. */
-    if((intent.kind==='edit'||intent.kind==='question')&&S.brief.name&&X.usable()){
+    /* A question mid-interview goes the same way — asked about the site, not
+       answering the question on screen. Edits are handled further up, before
+       the extractor sees them. */
+    if(intent.kind==='question'&&S.brief.name&&X.usable()){
       userSay(text,atts);S.atts=[];renderAtts();
       var t0=Date.now();thinking();
       X.readEdit(text,S.brief,transcript()).then(function(o){
@@ -3224,6 +3267,28 @@ function emitFile(path){
 /* ============================================================
    Edits after the build
    ============================================================ */
+/* An address the customer typed: a full URL, a page of their own site, or an
+   anchor. URLONLY_RE is the same thing without the bare paths, since "/mnt" in
+   a sentence is not a video. */
+var HREF_RE=/(https?:\/\/[^\s"'<>]+|\/[a-z0-9][a-z0-9\-\/\.]{0,60}|#[a-z0-9\-]{1,40})/i;
+var URLONLY_RE=/https?:\/\/[^\s"'<>]+/i;
+/* "menu me Home, Menu aur Contact daal do" — the items are what is left once
+   the instruction words are taken out. */
+function looksLikePresetEdit(text){
+  return /\b(menu|nav(?:igation)?|top ?bar|upper ?bar|uu?p+er wali bar|header|link|href|video|film|clip|reel|image|photo|picture|logo|button)\b/i.test(text)&&
+    (HREF_RE.test(text)||
+     /\b(add|put|daal|dal|lga|lgao|lagao|change|replace|swap|badal|badlo|point|open|khol|kholo|connect|jodo|joro|rakho|karo|kro|kar do|kr do|chahiye|le ja)\b/i.test(text));
+}
+function menuItemsFrom(text){
+  return String(text)
+    .replace(/\b(menu|navigation|nav|top ?bar|upper ?bar|uu?p+er|upar|wali|header|bar)\b/gi,' ')
+    .replace(/\b(me|mein|m|par|pe|in|into|to|the|a|an|add|please|kar|kr|do|daal|dal|daalo|dalo|lga|lgao|lagao|put|karo|kro|banao|bna|chahiye|rakho|rakh|items?|links?|options?|pages?)\b/gi,' ')
+    .replace(/[:\-\u2013\u2014"'\u201c\u201d]/g,' ')
+    .split(/\s*(?:,|\/|\||\band\b|\baur\b)\s*/i)
+    .map(function(x){return C.titleCase(x.replace(/\s+/g,' ').trim())})
+    .filter(function(x){return x&&x.length<=22&&/[a-z]/i.test(x)})
+    .slice(0,6);
+}
 function parseEdit(text){
   var b=S.brief,t=text.toLowerCase().trim(),done=[];
 
@@ -3285,10 +3350,61 @@ function parseEdit(text){
     b.variant=(b.variant||0)+1;delete b.__copy;S.__recopy=true;
     done.push('rewrote the copy with a fresh angle')}
 
-  /* Words on the preset's own page — the header pill, the button, a line of
-     type the designer wrote. Read last, and only believed when the preset
-     really says the thing being replaced, so it can never steal a colour or a
-     page edit from the rules above. */
+  /* The preset's own page — its top bar, its links, its film, its words. All
+     read last and each one checked against what the page really has, so they
+     can never steal a colour or a page edit from the rules above, and the
+     studio never reports changing something that is not there. */
+  if(!done.length&&presetHome()){
+    /* menu items in the top bar: "menu me Home, Menu, Contact daal do" */
+    if(/\b(menu|nav(?:igation)?|top ?bar|upper ?bar|uu?p+er wali bar|header)\b/i.test(text)&&
+       /\b(add|put|daal|dal|lga|lgao|lagao|chahiye|banao|bna|karo|kro|kar do|kr do|rakho|rakh)\b/i.test(text)){
+      var items=menuItemsFrom(text);
+      if(items.length&&presetHas('header,[class*=nav],[class*=header]')){
+        b.__menu=items;
+        done.push('put <b>'+esc(items.join(' · '))+'</b> in the top bar');
+      }else if(items.length){
+        done.push('could not add the menu \u2014 the '+esc(presetName())+' page has no top bar to put it in');
+      }
+    }
+  }
+  if(!done.length&&presetHome()){
+    /* an address for something the page already says */
+    var href=(text.match(HREF_RE)||[])[0]||'';
+    if(href&&/\b(link|linked|point|open|khol|kholo|jao|jaye|le ja|href|connect|joro|jodo)\b/i.test(text)){
+      var lead=text.slice(0,text.indexOf(href))
+        .replace(/\b(please|link|linked|point|open|khol(?:o|na)?|connect|jodo|joro|make|kar|kr|do|the|to|par|pe|ko|se|of|us|is|isko|ise|button|pill|word|text|label)\b/gi,' ')
+        .replace(/["'\u2018\u201c\u2019\u201d]/g,' ');
+      var target=presetSays(lead);
+      if(target){
+        b.__links=(b.__links||[]).filter(function(pr){return pr[0]!==target});
+        b.__links.push([target,href]);
+        done.push('pointed <b>'+esc(target)+'</b> at <code>'+esc(href)+'</code>');
+      }else{
+        done.push('I could not find <b>'+esc(lead.replace(/\s+/g,' ').trim().slice(0,40))+
+          '</b> on the '+esc(presetName())+' page \u2014 tell me the exact words it says and I will link those');
+      }
+    }
+  }
+  if(!done.length&&presetHome()){
+    /* the film, or a photograph, swapped for one of yours */
+    var url=(text.match(URLONLY_RE)||[])[0]||'';
+    var wantsVideo=/\b(video|film|clip|reel|footage)\b/i.test(text);
+    var wantsImage=/\b(image|images|photo|photos|picture|pic|background|logo|object|graphic|art)\b/i.test(text);
+    if(url&&(wantsVideo||wantsImage)){
+      var kind=wantsVideo&&!/\.(png|jpe?g|webp|gif|avif|svg)(\?|$)/i.test(url)?'video':'image';
+      if(presetHas(kind==='video'?'video':'img')){
+        b.__media=(b.__media||[]).filter(function(m){return m.kind!==kind});
+        b.__media.push({kind:kind,url:url});
+        done.push('put your '+kind+' into the '+esc(presetName())+' page — if the preview goes blank, '+
+          'that address is not serving a'+(kind==='video'?' video':'n image')+' the browser can play');
+      }else{
+        done.push('the '+esc(presetName())+' page has no '+kind+' in it, so there is nothing to swap');
+      }
+    }else if(!url&&(wantsVideo||wantsImage)&&/\b(change|badal|badlo|replace|swap|daal|lga|lagao|apna|apni|meri|mera|new|naya|nayi)\b/i.test(text)){
+      done.push('send me the '+(wantsVideo?'video':'image')+' address \u2014 paste the link and I will put it in. '+
+        'Uploading a file from this machine is not wired up yet');
+    }
+  }
   if(!done.length&&presetHome()){
     var q=text.match(/(?:change|replace|swap|make)\s+(?:the\s+)?["'\u2018\u201c]([^"'\u2019\u201d]{2,60})["'\u2019\u201d]\s*(?:to|with|into|say|read)\s*["'\u2018\u201c]?([^"'\u2019\u201d]{1,80}?)["'\u2019\u201d]?\s*$/i)
          ||text.match(/(?:change|replace|swap)\s+(?:the\s+)?(.{2,44}?)\s+(?:to|with|into)\s+(.{1,80}?)\s*$/i);
@@ -3382,7 +3498,10 @@ function editHelp(t0){
     "<li><code>more sections</code> · <code>calm the motion down</code></li>"+
     "<li><code>rename it to Ember &amp; Oak</code> · <code>rewrite the copy</code></li>"+
     (presetHome()?"<li><code>change \"Download\" to \"Book a table\"</code> — any words the "+
-      esc(presetName())+" page says</li>":"")+
+      esc(presetName())+" page says</li>"+
+      "<li><code>menu me Home, Menu, Contact daal do</code> — items in its top bar</li>"+
+      "<li><code>link the Download button to /contact</code> — or any https address</li>"+
+      "<li><code>change the video to https://…mp4</code> · <code>change the image to https://…jpg</code></li>":"")+
     "</ul>",Math.max(1,Math.round((Date.now()-t0)/1000)));
 }
 
@@ -4075,6 +4194,89 @@ function replaceWords(doc,pairs){
   });
 }
 
+/* Does the preset have one of these at all? Asked before an instruction is
+   accepted, so the studio never reports changing a video a page does not have. */
+function presetHas(sel){
+  if(presetState!=='ready')return false;
+  var doc=null;
+  try{doc=new DOMParser().parseFromString(presetSrc,'text/html')}catch(e){}
+  return !!(doc&&doc.body&&doc.body.querySelector(sel));
+}
+/* the smallest element that says exactly this */
+function findPhrase(doc,phrase){
+  var want=flat(phrase).toLowerCase();
+  if(!want)return null;
+  var els=doc.body.querySelectorAll('*'),best=null,bestLen=1e9;
+  for(var i=0;i<els.length;i++){
+    var have=flat(els[i].innerHTML).toLowerCase();
+    if(have!==want||have.length>=bestLen)continue;
+    best=els[i];bestLen=have.length;
+  }
+  return best;
+}
+/* Point the preset's own words at an address. An anchor already around them is
+   re-pointed; anything else is wrapped, inheriting its colour and weight so the
+   design does not suddenly grow a blue underline. */
+function applyLinks(doc,list){
+  list.forEach(function(pair){
+    var el=findPhrase(doc,pair[0]);if(!el)return;
+    var a=el.closest?el.closest('a'):null;
+    if(!a){
+      a=doc.createElement('a');
+      a.style.cssText='color:inherit;text-decoration:none;font:inherit';
+      while(el.firstChild)a.appendChild(el.firstChild);
+      el.appendChild(a);
+    }
+    a.setAttribute('href',pair[1]);
+    if(/^https?:/i.test(pair[1])){a.setAttribute('target','_blank');a.setAttribute('rel','noopener')}
+    else{a.removeAttribute('target');a.removeAttribute('rel')}
+  });
+}
+/* The film and the photographs. Same element, new source — nothing about the
+   layout, the scrubbing or the filters changes. */
+function applyMedia(doc,list){
+  list.forEach(function(m){
+    if(m.kind==='video'){
+      var v=doc.querySelector('video');if(!v)return;
+      v.setAttribute('src',m.url);
+      var srcs=v.querySelectorAll('source');
+      for(var i=0;i<srcs.length;i++)srcs[i].setAttribute('src',i?'':m.url);
+      for(var j=srcs.length-1;j>0;j--)srcs[j].parentNode.removeChild(srcs[j]);
+    }else{
+      var img=doc.querySelector('img');if(!img)return;
+      img.setAttribute('src',m.url);
+      img.removeAttribute('srcset');
+    }
+  });
+}
+/* Menu items in the preset's own top bar. Appended to the header it already
+   has, inheriting its type — a row of links, not a second navigation. */
+function applyMenu(doc,items){
+  var host=doc.querySelector('header')||doc.querySelector('[class*=nav]')||doc.querySelector('[class*=header]');
+  if(!host||!items.length)return;
+  var old=host.querySelector('[data-scen-menu]');
+  if(old)old.parentNode.removeChild(old);
+  var nav=doc.createElement('nav');
+  nav.setAttribute('data-scen-menu','');
+  nav.style.cssText='display:flex;gap:16px;align-items:center;font:inherit;margin:0 14px;flex-wrap:wrap';
+  items.forEach(function(label){
+    var a=doc.createElement('a');
+    a.setAttribute('href',menuHref(label));
+    a.style.cssText='color:inherit;text-decoration:none;font:inherit;opacity:.82;white-space:nowrap';
+    a.textContent=label;
+    nav.appendChild(a);
+  });
+  /* after the first group, so a two-ended header keeps its shape */
+  if(host.children.length>1)host.insertBefore(nav,host.children[1]);
+  else host.appendChild(nav);
+}
+function menuHref(label){
+  var pages=S.brief.pages||[];
+  for(var i=0;i<pages.length;i++)
+    if(String(pages[i]).toLowerCase()===String(label).toLowerCase())return G.pageFile(pages[i]);
+  return '#';
+}
+
 function presetPage(){
   if(presetState!=='ready'||!S.preset)return '';
   var P=S.preset,b=S.brief,src=presetSrc;
@@ -4096,6 +4298,9 @@ function presetPage(){
   if(b.pitch&&P.subtitle&&flat(b.pitch)!==flat(P.subtitle))
     swapLine(doc,P.subtitle,b.pitch,'p,[class*=micro],[class*=sub],[class*=lead],[class*=copy]');
   if(b.__words&&b.__words.length)replaceWords(doc,b.__words);
+  if(b.__links&&b.__links.length)applyLinks(doc,b.__links);
+  if(b.__media&&b.__media.length)applyMedia(doc,b.__media);
+  if(b.__menu&&b.__menu.length)applyMenu(doc,b.__menu);
   return '<!doctype html>\n'+doc.documentElement.outerHTML;
 }
 
@@ -4117,7 +4322,14 @@ function presetHome(){return !!presetFile()&&presetState==='ready'}
 /* The preview follows the conversation: every answer that changes the name,
    the line or the colour is repainted into the preset straight away. */
 var previewSig='';
-function briefSig(){var b=S.brief;return [b.name,b.pitch,b.accent].join('\u0000')}
+function briefSig(){
+  var b=S.brief;
+  /* everything the preset page reads: what it is called, what it says, its
+     colour, and the edits made to its own words, links, film and top bar */
+  return [b.name,b.pitch,b.accent,
+    JSON.stringify(b.__words||''),JSON.stringify(b.__links||''),
+    JSON.stringify(b.__media||''),JSON.stringify(b.__menu||'')].join('\u0000');
+}
 function syncPreview(){
   if(gen||presetState!=='ready')return;
   var sig=briefSig();

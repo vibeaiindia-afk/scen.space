@@ -786,7 +786,7 @@ function load(){try{
    ============================================================ */
 var FLOW=[
 {id:'kind',type:'single',
-  q:function(){return "I'm the Scen agent. I'll ask a handful of questions, turn your answers into a plan, then write the code and build it in front of you.\n\nFirst — what are we making?"},
+  q:function(){return "I'm Scen. Tell me what you want built and I will build it \u2014 I only ask when something genuinely changes the result.\n\nWhat are we making?"},
   opts:function(){return[
     {v:'website',l:'A website'},{v:'app',l:'A mobile app'},{v:'both',l:'Website + app'}]},
   set:function(b,v){b.kind=v},
@@ -2109,6 +2109,10 @@ function msg(e){
 }
 
 var LOADERS={
+  /* The studio asserted "Publishing is not connected" as a fixed string and
+     never checked. It might have been connected the whole time; nobody could
+     tell from in here. Ask, and say what comes back. */
+  capabilities:function(){return req('/api/capabilities')},
   me:function(){return req('/api/auth/me')},
   credits:function(){return req('/api/billing/credits')},
   projects:function(){return req('/api/projects').then(function(d){return d.projects||[]})},
@@ -2767,7 +2771,13 @@ function handleText(text){
       thinking();
       X.readTurn(text,S.brief,transcript()).then(function(o){
         clearThinking();setAiPill();
-        if(!o)return resumeInterview(text);
+        if(!o){
+          /* Falling back silently is why a signed-in test looked identical to
+             a signed-out one. failed() already recorded why; say it once. */
+          if(AI.lastError)agentSay('The gateway did not answer that \u2014 '+
+            esc(String(AI.lastError).slice(0,120))+'. Carrying on without it.');
+          return resumeInterview(text);
+        }
         applyTurn(o);
         if(o.reply)agentSay(esc(String(o.reply).slice(0,300)));
         if(o.ready_to_build&&haveEnough(S.brief)){
@@ -4134,6 +4144,19 @@ API.onchange=function(){
 };
 
 /* ---------- live AI status ---------- */
+/* Three honest answers, never a guess: yes, no with the reason, or "I have
+   not been able to check". */
+function publishNote(){
+  var c=API.capabilities;
+  if(!c)return 'Checking whether publishing is connected\u2026';
+  var pub=c.publish||c.publishing||(c.capabilities&&(c.capabilities.publish||c.capabilities.publishing));
+  if(pub===undefined||pub===null)return 'I could not read whether publishing is connected.';
+  var ok=(pub===true)||(pub&&(pub.enabled===true||pub.available===true||pub.status==='ready'));
+  if(ok)return 'Publishing is connected \u2014 <b>Publish</b> puts it live.';
+  var why=(pub&&(pub.reason||pub.detail||pub.message))||'';
+  return 'Publishing is not connected'+(why?' \u2014 '+esc(String(why).slice(0,90)):'')+'.';
+}
+
 function setAiPill(){
   var p=$('#aiPill'),live=AI.state==='live'||AI.state==='ready';
   p.textContent=AI.enabled?X.label():'AI off';
@@ -4144,9 +4167,9 @@ function setAiPill(){
     note.textContent='Live AI is switched off — the local writers are producing the copy, the plan and the code.';
   else if(AI.state==='live')
     note.innerHTML='Live AI on '+esc(AI.provider)+' · '+esc(AI.model)+' — '+AI.requests+
-      ' request'+(AI.requests===1?'':'s')+', '+(AI.inTok+AI.outTok).toLocaleString()+' tokens. Publishing is still not connected.';
+      ' request'+(AI.requests===1?'':'s')+', '+(AI.inTok+AI.outTok).toLocaleString()+' tokens. '+publishNote();
   else if(AI.state==='ready')
-    note.textContent='Signed in — the Scen AI gateway writes the copy and the plan on the next build. Publishing is not connected.';
+    note.innerHTML='Signed in — the Scen AI gateway writes the copy and the plan on the next build. '+publishNote();
   else if(AI.state==='signedout')
     /* /login renders the sign-in form directly. "/" lands on the public page,
    which on a phone means opening the menu and hunting for Log in. */
@@ -4278,6 +4301,8 @@ $$('.rail button').forEach(function(b){
 });
 $('#resetBtn').addEventListener('click',confirmReset);
 $('#publishTop').addEventListener('click',function(){S.tool='publishing';setTab('tools');renderTools()});
+/* Ask once the session is known, then repaint the note with the real answer. */
+if(typeof N!=='undefined'&&N.ensure)N.ensure('capabilities');
 $('#inviteBtn').addEventListener('click',function(){
   if(!signedIn()){
     modal('<div class="modal-head"><span class="avatar"></span><b>Sign in to invite</b></div>'+

@@ -4159,6 +4159,12 @@ function loadPreset(then){
       return r.text();
     }).then(function(txt){
       if(!/<\/html>/i.test(txt))throw new Error('not a page');
+      /* A path with nothing behind it does not 404 here: the SPA rewrite hands
+         back index.html with a 200, so an address that was never a preset came
+         back as the whole workspace — and the preview then rendered the studio
+         inside itself, over and over. A preset is a standalone page and never
+         loads the app's bundles. */
+      if(/assets\/js\/\d\d-/.test(txt)||/__SCEN_CORE/.test(txt))throw new Error('the app, not a preset');
       presetSrc=txt;presetState='ready';S.preset.file=tries[i];save();
       if(then)then();
     },function(){next(i+1)});
@@ -5115,8 +5121,11 @@ function whenPreset(){
   renderMain();
 }
 function openPreset(){
-  /* a shared link still names the preset even when no seed was handed over */
-  if(!S.preset)S.preset=C.presetFromUrl();
+  /* A shared link still names the preset when no seed was handed over. But if
+     a seed *was* read and carried no file — the hero's brief goes to
+     "?template=brief", which is not a preset at all — that is the site saying
+     there is no page to show, and guessing an address only finds the rewrite. */
+  if(!S.preset&&!S.seedLabel)S.preset=C.presetFromUrl();
   if(!presetFile())return false;
   loadPreset(whenPreset);
   return true;

@@ -825,7 +825,7 @@ var S={
   v:1,phase:'interview',step:0,brief:freshBrief(),msgs:[],pending:null,skip:[],seedLabel:'',
   depth:'lite',planFirst:false,mode:'design',tab:'tools',tool:'brief',
   file:'',device:'desktop',previewKind:'site',buildLog:[],files:[],built:false,
-  atts:[],projectName:'',preset:null,pane:false,lang:'',picking:false,pick:''
+  atts:[],projectName:'',preset:null,pane:false,lang:'',picking:false,pick:'',autoImages:true
 };
 
 function save(){try{
@@ -1101,6 +1101,13 @@ function dirCss(b,t){
 ].filter(Boolean).join('\n');
 }
 
+function heroSize(name){
+  var n=String(name||'').trim().length;
+  if(n<=8)return 'clamp(56px,10vw,140px)';
+  if(n<=14)return 'clamp(46px,8.2vw,116px)';
+  if(n<=22)return 'clamp(36px,6.2vw,92px)';
+  return 'clamp(30px,4.8vw,68px)';
+}
 function makeCss(b){
   var t=tokens(b),st=t.st,pro=b.__depth==='pro';
   return [
@@ -1120,7 +1127,7 @@ function makeCss(b){
 '.wrap{width:var(--wrap);margin-inline:auto}',
 '.kicker{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--a);font-weight:600;display:block;margin-bottom:16px}',
 'h1,h2,h3{font-family:'+st.disp+';font-weight:'+st.w+';letter-spacing:'+st.track+';line-height:1.02;margin:0}',
-'h1{font-size:clamp(42px,6.2vw,82px)}',
+'h1{font-size:'+heroSize(b.name)+';overflow-wrap:break-word;max-width:100%}',
 'h2{font-size:clamp(30px,4vw,52px);line-height:1.06}',
 'h3{font-size:19px;line-height:1.3;letter-spacing:-.02em}',
 'p{margin:0;color:var(--sub)}',
@@ -1284,7 +1291,11 @@ function makeCss(b){
 '  animation:lpdrift 22s ease-in-out infinite alternate}',
 '@keyframes lpdrift{from{transform:translate3d(-2%,-1%,0) scale(1)}to{transform:translate3d(3%,2%,0) scale(1.1)}}',
 '.lp-hero-in{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(30px,5vw,70px);align-items:center}',
-'.lp-hero h1{font-size:clamp(54px,9.4vw,132px);line-height:.9;letter-spacing:-.062em;margin:18px 0 20px}',
+'.lp-hero h1{line-height:.9;letter-spacing:-.062em;margin:18px 0 20px;overflow-wrap:break-word;max-width:100%}',
+/* the size comes from the length of the name: "AURA" and "Brightfield Academy"
+   cannot share a clamp — the long one was running off the page and being cut
+   by the body's own overflow rule */
+'.lp-hero h1{font-size:'+heroSize(b.name)+'}',
 '.lp-hero .lead{font-size:clamp(16px,1.6vw,21px);line-height:1.6;max-width:34ch;color:var(--sub);margin:0 0 30px}',
 '.lp-meta{display:flex;gap:26px;flex-wrap:wrap;margin-top:34px;color:var(--sub);font-size:12.5px}',
 '.lp-meta b{display:block;color:var(--ink);font-size:17px;letter-spacing:-.02em}',
@@ -1318,7 +1329,7 @@ function makeCss(b){
 '@media (max-width:900px){.lp-hero-in{grid-template-columns:1fr}.lp-device{margin-top:22px}.lp-plate{min-height:280px}}',
 '@media (prefers-reduced-motion:reduce){.lp-aurora,.lp-device{animation:none}}',
 '.onepage .hero{min-height:min(92vh,880px);display:grid;align-items:center;padding-block:clamp(80px,14vh,150px)}',
-'.onepage .hero h1{font-size:clamp(52px,9vw,132px);letter-spacing:-.06em;line-height:.92}',
+'.onepage .hero h1{font-size:'+heroSize(b.name)+';letter-spacing:-.06em;line-height:.92;overflow-wrap:break-word}',
 '.onepage .hero .lead{font-size:clamp(16px,1.7vw,22px);max-width:34ch}',
 '.onepage .nav{backdrop-filter:blur(18px)}',
 '.ch{padding:clamp(96px,16vh,180px) 0;position:relative}',
@@ -1425,7 +1436,7 @@ function gameCss(t){
 '  animation:gmdrift 18s ease-in-out infinite alternate}',
 '@keyframes gmdrift{from{transform:translate3d(-3%,-2%,0) scale(1)}to{transform:translate3d(4%,3%,0) scale(1.12)}}',
 '.gm-kick{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--a)}',
-'.gm-hero h1{font-size:clamp(34px,5vw,64px);line-height:.98;letter-spacing:-.045em;margin:10px 0 12px}',
+'.gm-hero h1{font-size:'+heroSize(b.name)+';line-height:.98;letter-spacing:-.045em;margin:10px 0 12px;overflow-wrap:break-word}',
 '.gm-hero p{color:var(--sub);font-size:15px;line-height:1.65;max-width:46ch;margin:0}',
 '.gm-hero-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}',
 '.gm-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:999px;background:var(--a);color:var(--aink);',
@@ -4639,7 +4650,7 @@ function startBuild(){
         '<li>Every file is readable under <b>Code</b>, and downloadable</li>'+
         (signedIn()?'<li>Signed in as '+esc(accountName())+' — <b>Publishing</b> can save it to your workspace and put it live</li>':
           '<li>Not signed in, so saving and publishing are off — the build itself is finished either way</li>')+
-        '</ul>'+offerImages()+'<br/><br/>Tell me what to change and I rebuild it: <code>make it deep teal</code>, '+
+        '</ul>'+autoImages()+'<br/><br/>Tell me what to change and I rebuild it: <code>make it deep teal</code>, '+
         '<code>add a pricing page</code>, <code>drop the blog</code>, <code>rename it to Ember &amp; Oak</code>, '+
         '<code>more sections</code>.');
       $('#prevBadge').classList.remove('hidden');
@@ -4801,6 +4812,12 @@ function parseEdit(text){
 
   var tag=text.match(/(?:tagline|one[- ]liner|headline|strapline)\s*[:—-]\s*(.+)/i);
   if(tag){b.pitch=tag[1].trim().slice(0,180);done.push('rewrote the one-liner')}
+
+  if(/\b(no|off|band|mat|nahi|without|skip)\b/i.test(text)&&/\b(image|images|photo|photos|picture|tasveer)\b/i.test(text)){
+    S.autoImages=false;b.__noImages=true;save();
+    return L('No images — the drawn placeholders stay, and nothing is charged.',
+             'Theek hai — images nahi banaunga, placeholders hi rahenge aur kuch nahi katega.');
+  }
 
   /* "images bana do" — the only edit that spends credits, so it never runs
      from a guess: the words have to name images and ask for them. */
@@ -6338,14 +6355,17 @@ function imageFlow(n){
     });
   })(0);
 }
-/* the offer, once there is a build to put them in */
-function offerImages(){
-  if(!signedIn()||S.brief.__art)return '';
-  var n=4;
-  return '<br/><br/>'+L('The pictures are placeholders. I can generate real ones for the hero and the tiles — '+
-      n+' images, '+(n*IMG_COST)+' credits. Say <code>images</code> and I will.',
-    'Tasveerein abhi placeholder hain. Hero aur tiles ke liye asli bana sakta hoon — '+
-      n+' images, '+(n*IMG_COST)+' credits. <code>images</code> likh do, bana deta hoon.');
+/* Pictures are part of a build, not a question. A client cannot judge a site
+   made of grey rectangles, and asking them to type a command to see their own
+   website was the wrong shape. They run after the build, they say what they
+   cost while they run, and "no images" turns them off for good. */
+function autoImages(){
+  if(S.autoImages===false||!signedIn()||S.brief.__art||S.brief.__noImages)return '';
+  setTimeout(function(){imageFlow(4)},700);
+  return '<br/><br/>'+L('Making 4 real photographs for it now — '+(4*IMG_COST)+' credits. '+
+      'Say <code>no images</code> if you would rather keep the placeholders.',
+    'Iske liye 4 asli photo bana raha hoon — '+(4*IMG_COST)+' credits. '+
+      'Nahi chahiye to <code>no images</code> bol dena.');
 }
 
 function heroImageFlow(t){

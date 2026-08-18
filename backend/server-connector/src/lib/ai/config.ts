@@ -13,7 +13,13 @@ export function routeFor(feature:AIFeature):{primary:AIProviderId;fallback?:AIPr
      the words anyway. It stays primary for the short calls it is good at —
      the plan, the code patch, the review — and takes second place on `chat`,
      which is the long one. Any SCEN_AI_*_PRIMARY still overrides this. */
-  const defaults:Record<AIFeature,[AIProviderId,AIProviderId|undefined]>={chat:['openai','grok'],code:['grok','openai'],planning:['grok','anthropic'],analysis:['grok','gemini']};
+  /* Measured, not assumed: grok timed out on the copy at 25s and again on the
+     page plan with 45s to work in. It stays primary on `code` — the stylesheet
+     patch, the smallest call there is, and the one the client's own diagram
+     gives it — and moves behind a faster provider everywhere else. Nothing is
+     lost: it still answers whenever the first one fails, and any
+     SCEN_AI_*_PRIMARY overrides all of it. */
+  const defaults:Record<AIFeature,[AIProviderId,AIProviderId|undefined]>={chat:['openai','grok'],code:['grok','openai'],planning:['openai','grok'],analysis:['openai','grok']};
   const [dp,df]=defaults[feature];
   const upper=feature.toUpperCase();
   const primary=asProvider(process.env[`SCEN_AI_${upper}_PRIMARY`],dp);

@@ -31,7 +31,7 @@ async function runOne(id:AIProviderId,input:GenerateInput,budgetMs?:number):Prom
 /* A failed attempt, in a shape a client can show. The studio was told only
    that something answered; when the primary had quietly fallen over, the pane
    read "Provider: openai, Last error: none" and the reason lived nowhere. */
-export type Attempt={provider:AIProviderId;status:number;code?:string;message:string};
+export type Attempt={provider:AIProviderId;status:number;code?:string;message:string;ms:number;feature:string};
 
 export async function generateWithRouting(input:GenerateInput,preferred?:AIProviderId):Promise<ProviderResult & {requestId:string;fallbackUsed:boolean;requested?:AIProviderId;attempts:Attempt[]}>{
   const limits=gatewayLimits();
@@ -68,14 +68,18 @@ export async function generateWithRouting(input:GenerateInput,preferred?:AIProvi
        A primary that has to answer in twenty-five seconds is better than a
        fallback that never gets to run. */
     const share=Math.max(12_000,Math.floor((left-2000)/(order.length-i)));
+    const allowed=Math.min(limits.timeoutMs,share);
+    const at=Date.now();
     try{
-      const result=await runOne(order[i],input,Math.min(limits.timeoutMs,share));
+      const result=await runOne(order[i],input,allowed);
       note(`${input.feature} answered by ${result.provider} · ${result.model}`+(i>0?` (fallback, ${order[0]} failed)`:''));
       return {...result,requestId,fallbackUsed:i>0,requested:preferred,attempts};
     }catch(err:any){
       const e=err instanceof ProviderError?err:new ProviderError(order[i],String(err?.message||err),500,true);
-      note(`${input.feature} · ${order[i]} failed (${e.status}${e.code?', '+e.code:''}): ${redact(e.message).slice(0,160)}`);
-      attempts.push({provider:order[i],status:e.status,code:e.code,message:redact(e.message).slice(0,200)});
+      const spent=Date.now()-at;
+      note(`${input.feature} · ${order[i]} failed after ${spent}ms of ${allowed}ms (${e.status}${e.code?', '+e.code:''}): ${redact(e.message).slice(0,160)}`);
+      attempts.push({provider:order[i],status:e.status,code:e.code,message:redact(e.message).slice(0,200),
+                     ms:spent,feature:String(input.feature)});
       /* A bad key, a missing key or a model the account cannot run is fatal to
          that provider — it is not a reason to fail the request while another
          provider sits configured and idle. Only a complaint about the input

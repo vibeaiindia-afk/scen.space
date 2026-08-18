@@ -3465,12 +3465,19 @@ function panelAsk(text){
 function handleText(text){
   var atts=S.atts.slice();
 
+  /* A pasted brief is not a question about the studio. These two rules read
+     word by word, so a specification with a "BuySection" in its section list
+     came back as a credits balance — the client's whole brief answered with
+     "You have 4,277 credits". Anything this long is a brief, and goes to the
+     reader that knows what to do with one. */
+  var pasted=text.length>320||text.split(/\n/).length>4;
+
   /* Asking about the studio itself — credits, files, who am I — is answered
      here rather than treated as a design change. */
-  var about=answerAbout(text);
+  var about=pasted?null:answerAbout(text);
   if(about){userSay(text,atts);S.atts=[];renderAtts();agentSay(about);return}
 
-  var panel=panelAsk(text);
+  var panel=pasted?null:panelAsk(text);
   if(panel){
     userSay(text,atts);S.atts=[];renderAtts();
     if(uiMode()!=='advanced'&&['plan','files','log'].indexOf(panel[1])<0)setUiMode('advanced');

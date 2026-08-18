@@ -2375,14 +2375,23 @@ var AI={
 function post(feature,input,system,opts){
   opts=opts||{};
   var pick=AI.pick;
+  /* A request that never settles freezes the whole build: the step chain waits
+     on the promise, so the pill said "Building…" for as long as the tab was
+     open and nothing was written. The gateway's own timeout is 45s; this one
+     sits just past it so the server's error usually wins, and a hang still
+     ends in a fallback rather than a stall. */
+  var ctl=(typeof AbortController!=='undefined')?new AbortController():null;
+  var died=setTimeout(function(){try{ctl&&ctl.abort()}catch(e){}},58000);
   return fetch('/api/ai/generate',{
     method:'POST',credentials:'same-origin',
+    signal:ctl?ctl.signal:undefined,
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({feature:feature,input:input,system:system,
       provider:pick||undefined,
       maxOutputTokens:opts.maxOutputTokens||1400,
       temperature:opts.temperature==null?0.7:opts.temperature})
   }).then(function(r){
+    clearTimeout(died);
     return r.text().then(function(t){
       var d={};try{d=t?JSON.parse(t):{}}catch(e){d={error:t||('HTTP '+r.status)}}
       if(!r.ok){
@@ -2403,6 +2412,9 @@ function record(d,ms){
   AI.cost+=Number(u.estimatedCostUsd||0);
 }
 function failed(e){
+  if(e&&(e.name==='AbortError'||/aborted/i.test(String(e.message||'')))){
+    e=new Error('The gateway did not answer in time');e.status=504;e.code='timeout';
+  }
   var s=e&&e.status;
   if(s===401||s===403){AI.state='signedout';AI.lastError='Not signed in on this domain.'}
   else if(s===503||(e&&e.code==='missing_key')){AI.state='error';AI.lastError='No provider key configured on the server.'}
@@ -4089,6 +4101,15 @@ function startBuild(){
      frozen for a minute. One line, in the conversation, saying what is being
      written right now. */
   thinking(L('Writing the code…','Code likh raha hoon…'));
+  /* And draw the site straight away rather than after the gateway answers:
+     a client watching an empty preview while a model thinks has no way to
+     tell waiting from broken. */
+  try{
+    gen=buildFiles();
+    S.files=gen.files.map(function(f){return f.path});
+    if(!S.file)S.file=S.files[0];
+    if(S.tab==='preview')renderMain();
+  }catch(e){}
   var steps=buildPlanSteps();
   stream.innerHTML='<span class="caps">Build · '+esc(S.brief.name)+'</span><div id="stepList"></div>';
   var list=$('#stepList');
@@ -4134,8 +4155,18 @@ function startBuild(){
     }
 
     if(st.run){
-      // a real network step — it finishes when the gateway answers
-      st.run().then(function(sub){finish(sub)},function(){finish('fell back to the local writer')});
+      // a real network step — it finishes when the gateway answers, or when
+      // this gives up on it. Both paths call finish() exactly once.
+      var done=false;
+      var give=setTimeout(function(){
+        if(done)return;done=true;
+        finish(L('gateway took too long — used the local writer','gateway ne der ki — local writer se likha'));
+      },70000);
+      st.run().then(function(sub){
+        if(done)return;done=true;clearTimeout(give);finish(sub);
+      },function(){
+        if(done)return;done=true;clearTimeout(give);finish('fell back to the local writer');
+      });
       return;
     }
     setTimeout(function(){finish()},st.ms);

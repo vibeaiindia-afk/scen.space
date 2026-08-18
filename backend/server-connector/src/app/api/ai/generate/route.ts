@@ -22,6 +22,6 @@ export async function POST(req:NextRequest){
   }catch(e:any){
     /* A provider's own error can quote what it was sent — "Model not found:
        xai-…" put a live key in front of the client, in the studio's chat. */
-    return NextResponse.json({error:redact(e?.message||'AI gateway failed'),code:e?.code||'gateway_error',provider:e?.provider},{status:e?.status||500,headers:{'Cache-Control':'no-store'}});
+    return NextResponse.json({error:redact(e?.message||'AI gateway failed'),code:e?.code||'gateway_error',provider:e?.provider,attempts:Array.isArray(e?.attempts)?e.attempts:undefined},{status:e?.status||500,headers:{'Cache-Control':'no-store'}});
   }
 }

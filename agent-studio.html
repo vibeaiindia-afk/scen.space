@@ -2597,6 +2597,7 @@ var AI={
   pick:'', available:[],
   state:'unknown',        // unknown | ready | live | signedout | offline | error
   provider:'',model:'',requests:0,inTok:0,outTok:0,cost:0,lastMs:0,lastError:'',
+  fell:'',                // why the primary did not answer, when something else did
   usedForBuild:''         // '' | 'live' | 'local'
 };
 
@@ -2634,6 +2635,16 @@ function record(d,ms){
   AI.requests++;AI.lastMs=ms;AI.state='live';AI.lastError='';
   if(d.provider)AI.provider=d.provider;
   if(d.model)AI.model=d.model;
+  /* The gateway tries the primary first and moves on when it fails. That used
+     to leave the pane reading "openai · gpt-5.6, last error: none" while the
+     provider the client actually configured had not answered a single call —
+     the reason existed only in a server log nobody was watching. */
+  AI.fell='';
+  if(Array.isArray(d.attempts)&&d.attempts.length){
+    AI.fell=d.attempts.map(function(a){
+      return String(a.provider)+' failed ('+a.status+(a.code?', '+a.code:'')+'): '+scrubAI(a.message);
+    }).join(' · ');
+  }
   var u=d.usage||{};
   AI.inTok+=Number(u.inputTokens||0);
   AI.outTok+=Number(u.outputTokens||0);
@@ -4699,6 +4710,10 @@ function reviewEditHelp(){ return "I can change the name, the one-liner, the pag
    reads. Nothing new is invented here: the background goes through __bg, which
    derives ink, panels and hairlines from it exactly as a typed colour does, and
    a colour the client asked for by name is never overwritten. */
+/* Said on the build row itself, because that is where someone is looking while
+   it happens, not in a pane they have to go and open. */
+function fellNote(){return AI.fell?'  ·  '+AI.fell:''}
+
 function applyDesign(d){
   var b=S.brief;
   b.__ui={display:d.display,body:d.body,radius:d.radius,heroAlign:d.heroAlign,
@@ -4717,7 +4732,7 @@ function buildPlanSteps(){
       return X.writePlan(b,transcript()).then(function(r){
         if(!r){delete b.__plan;setAiPill();return 'gateway unavailable — used the local planner'}
         b.__plan=r.plan;setAiPill();
-        return r.provider+' · '+r.model+' — '+Object.keys(r.plan).length+' pages laid out';
+        return r.provider+' · '+r.model+' — '+Object.keys(r.plan).length+' pages laid out'+fellNote();
       });
     }});
   else{delete b.__plan;
@@ -4733,7 +4748,7 @@ function buildPlanSteps(){
       return X.designUI(b,transcript()).then(function(r){
         if(!r){delete b.__ui;setAiPill();return 'gateway unavailable — used the built-in direction'}
         applyDesign(r.design);setAiPill();
-        return r.design.idea?String(r.design.idea).slice(0,90):(r.provider+' · '+r.model);
+        return (r.design.idea?String(r.design.idea).slice(0,90):(r.provider+' · '+r.model))+fellNote();
       });
     }});
   else out.push({l:'Designing the interface',s:STYLES[b.style].l+' · '+b.accent,ms:520});
@@ -4743,7 +4758,7 @@ function buildPlanSteps(){
       return X.writeCopy(b,transcript()).then(function(r){
         if(!r){delete b.__copy;setAiPill();return 'gateway unavailable — used the local writer'}
         b.__copy=r.copy;setAiPill();
-        return r.provider+' · '+r.model+' — '+r.ms+'ms, written for this brief';
+        return r.provider+' · '+r.model+' — '+r.ms+'ms, written for this brief'+fellNote();
       });
     }});
   else{delete b.__copy;
@@ -5571,7 +5586,8 @@ PANE.aigateway=function(){
     ['Tokens in / out',AI.requests?AI.inTok.toLocaleString()+' / '+AI.outTok.toLocaleString():'—'],
     ['Estimated cost',AI.cost?'$'+AI.cost.toFixed(4):'—'],
     ['Last response',AI.lastMs?AI.lastMs+'ms':'—'],
-    ['Last error',AI.lastError?'<span style="color:#ffcf87">'+esc(AI.lastError)+'</span>':'none']
+    ['Last error',AI.lastError?'<span style="color:#ffcf87">'+esc(AI.lastError)+'</span>':'none'],
+    ['Fell back from',AI.fell?'<span style="color:#ffcf87">'+esc(AI.fell)+'</span>':'nothing — the primary answered']
   ];
   var uses=[
     ['Page layout','<code>planning</code> — picks the sections for every page',!!S.brief.__plan],

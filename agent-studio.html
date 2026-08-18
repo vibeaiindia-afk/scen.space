@@ -1189,6 +1189,15 @@ function heroLead(b,head){
   return line;
 }
 
+var HERO_KINDS=['editorial','split','statement','product','full'];
+function heroKindFor(b){
+  var seed=String(b.name||'')+'|'+String(b.industry||'')+'|'+String(b.variant||0);
+  var n=0;for(var i=0;i<seed.length;i++)n=(n*31+seed.charCodeAt(i))>>>0;
+  /* a page with no photograph should not open with one filling the screen */
+  var kinds=(b.__heroImage||(b.__art&&b.__art.length))?HERO_KINDS:HERO_KINDS.slice(0,4);
+  return kinds[n%kinds.length];
+}
+
 function heroSize(name){
   var n=String(name||'').trim().length;
   if(n<=8)return 'clamp(56px,10vw,140px)';
@@ -1875,7 +1884,12 @@ var SEC={
        business — a centred claim is right for a product and wrong for an
        architecture studio, and shipping one shape for everything is how every
        build ends up recognisably ours rather than theirs. */
-    var kind=(b.__ui&&b.__ui.hero)||((b.__ui&&b.__ui.heroAlign==='left')?'editorial':'statement');
+    /* When the art director names a shape it wins. When it does not — no
+       gateway, or a design that came back without the field — falling back to
+       one shape gave every build the same centred hero, which is the single
+       loudest way a site looks generated. The project picks its own from its
+       name instead, so two businesses do not open the same way. */
+    var kind=(b.__ui&&b.__ui.hero)||heroKindFor(b);
     var cta='      <div class="hero-cta" data-reveal>\n'+
 '        <a class="btn" href="'+pageFile(lastPage(b))+'">'+esc(P.cta[2])+'</a>\n'+
 '        <a class="tlink" href="'+pageFile(b.pages[1]||'Home')+'">'+esc(b.pages[1]||'Learn more')+' \u203a</a>\n'+
@@ -7079,6 +7093,7 @@ function maybeDraft(){
   var b=S.brief;
   var sig=[b.name,b.industry,b.style,b.accent,b.motion,S.depth,b.__bg,b.__dir,(b.pages||[]).join(),(b.features||[]).join(),(b.__onepage||[]).join(),
     b.__ui?[b.__ui.display,b.__ui.body,b.__ui.radius,b.__ui.heroAlign,b.__ui.density,b.__ui.caps,b.__ui.surface,b.__ui.hero].join('|'):'',
+    b.__heroImage?'img':'',
     b.__fixCss?String(b.__fixCss).length:''].join('\u0000');
   if(sig===draftSig)return;
   draftSig=sig;

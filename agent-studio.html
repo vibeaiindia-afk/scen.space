@@ -267,6 +267,11 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
 /* preview */
 .prev-shell{height:calc(100vh - var(--topbar));display:flex;flex-direction:column}
 .prev-bar{height:46px;flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid var(--line);background:#08080b}
+.pickchip{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:7px 10px;border-radius:10px;
+  background:#15150c;border:1px solid rgba(223,255,69,.32);color:#dfe6b8;font-size:12.5px}
+.pickchip span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pickchip button{background:0;border:0;color:#9a9a86;cursor:pointer;font-size:13px}
+.pickchip button:hover{color:#fff}
 .thinkline{margin-left:10px;font-size:12.5px;color:#7d7d88;vertical-align:2px;animation:thinkfade .35s ease}
 @keyframes thinkfade{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:none}}
 .quote.slot q{opacity:.66}.quote.slot cite{opacity:.5}
@@ -820,7 +825,7 @@ var S={
   v:1,phase:'interview',step:0,brief:freshBrief(),msgs:[],pending:null,skip:[],seedLabel:'',
   depth:'lite',planFirst:false,mode:'design',tab:'tools',tool:'brief',
   file:'',device:'desktop',previewKind:'site',buildLog:[],files:[],built:false,
-  atts:[],projectName:'',preset:null,pane:false,lang:''
+  atts:[],projectName:'',preset:null,pane:false,lang:'',picking:false,pick:''
 };
 
 function save(){try{
@@ -2348,10 +2353,27 @@ pages.map(function(p){return '  '+p.file.replace('site/','')+(p.page==='Home'?' 
 }
 
 /* preview documents */
-var PREVIEW_BRIDGE='<scr'+'ipt>document.addEventListener("click",function(e){'+
-'var a=e.target.closest&&e.target.closest("a[href$=\\".html\\"]");'+
-'if(a){e.preventDefault();parent.postMessage({scenNav:a.getAttribute("href")},"*")}'+
-'},true);</scr'+'ipt>';
+/* Two jobs inside the preview: follow the site's own links, and — when the
+   client turns Select on — hand back whatever they click instead. Pointing at
+   the thing you want changed is the shortest sentence there is. */
+var PREVIEW_BRIDGE='<scr'+'ipt>(function(){'+
+'var pick=false;'+
+'addEventListener("message",function(e){if(e.data&&e.data.scenPick!==undefined)pick=!!e.data.scenPick;'+
+'  document.documentElement.style.cursor=pick?"crosshair":"";});'+
+'function label(el){var t=(el.innerText||el.textContent||"").replace(/\\s+/g," ").trim();return t.slice(0,80)}'+
+'document.addEventListener("click",function(e){'+
+'  if(pick){'+
+'    var el=e.target;'+
+'    while(el&&el!==document.body&&!label(el))el=el.parentNode;'+
+'    if(!el||el===document.body)return;'+
+'    e.preventDefault();e.stopPropagation();'+
+'    parent.postMessage({scenPicked:{text:label(el),tag:(el.tagName||"").toLowerCase()}},"*");'+
+'    return;'+
+'  }'+
+'  var a=e.target.closest&&e.target.closest("a[href$=\\".html\\"]");'+
+'  if(a){e.preventDefault();parent.postMessage({scenNav:a.getAttribute("href")},"*")}'+
+'},true);'+
+'})();</scr'+'ipt>';
 
 function previewDoc(gen,file){
   var f=gen.files.filter(function(x){return x.path===file})[0]||gen.files[0];
@@ -2361,6 +2383,7 @@ function previewDoc(gen,file){
 }
 
 window.__SCEN_GEN={generate:generate,previewDoc:previewDoc,appPreviewDoc:appPreviewDoc,
+  bridge:function(){return PREVIEW_BRIDGE},
   tokens:tokens,pageFile:pageFile,sectionsFor:sectionsFor,pack:pack,has:has,appTabs:appTabs};
 })();
 </script>
@@ -2978,6 +3001,38 @@ function clearThinking(){clearInterval(thinkTimer);var t=$('#thinkNode');if(t)t.
 
 function clearAnswerBox(){var a=$('#answerBox');if(a)a.remove()}
 
+/* What the client pointed at, kept in front of them until it is used or
+   dropped — a selection you cannot see is a selection you forget you made. */
+function showPick(){
+  var host=$('#pickChip');
+  if(!S.pick){if(host)host.remove();return}
+  if(!host){
+    host=document.createElement('div');
+    host.id='pickChip';host.className='pickchip';
+    var comp=$('#composer')||input.parentNode;
+    comp.parentNode.insertBefore(host,comp);
+  }
+  host.innerHTML='<span>'+L('Editing','Badal rahe ho')+': “'+esc(S.pick.slice(0,60))+'”</span>'+
+    '<button type="button" title="'+L('Clear','Hatao')+'">✕</button>';
+  host.querySelector('button').onclick=function(){S.pick='';save();showPick()};
+}
+/* A message while something is selected is about that thing. Plain new words
+   replace it; anything else is read as an instruction about it. */
+function applyPick(text){
+  var b=S.brief,was=S.pick,now=String(text||'').trim();
+  if(!was||!now)return null;
+  var m=now.match(/^(?:change (?:it|this) to|make (?:it|this)|say|likho|kar do|kr do|isko)\s+(.+)$/i);
+  if(m)now=m[1].trim();
+  now=now.replace(/^["'\u201c]|["'\u201d]$/g,'').trim();
+  if(!now||now===was)return null;
+  /* nothing longer than a line replaces a line — that is an instruction */
+  if(now.length>120)return null;
+  b.__text=(b.__text||[]).filter(function(pr){return pr[0]!==was});
+  b.__text.push([was,now]);
+  S.pick='';save();showPick();
+  return L('“'+esc(was)+'” is now “<b>'+esc(now)+'</b>”.','“'+esc(was)+'” ab “<b>'+esc(now)+'</b>” hai.');
+}
+
 /* ============================================================
    Question / answer
    ============================================================ */
@@ -3464,6 +3519,25 @@ function groundTurn(text){
    the client's line twice — it is already on screen. */
 function resumeInterview(text){
   var st=step();if(!st)return;
+  /* The gateway failing must not cost the client their brief. This is the path
+     a timeout lands on, and it was answering the question on screen with the
+     whole paste — "A website. Good." — and moving on, so a two-page
+     specification left the brief pane reading "not answered yet" all the way
+     down. A brief goes to the reader that knows how to take one apart. */
+  if(isBriefLike(text)&&(text.length>200||/\n/.test(text))){
+    var got=absorbBrief(text);
+    if(haveEnough(S.brief)){
+      var chose=fillDefaults(S.brief);
+      agentSay((got.length?L('Read that as the brief. I took ','Ise brief maan liya. Maine liya — ')+got.join(' · ')+'.<br/><br/>':'')+
+               L('That is enough to start.','Itna shuru karne ke liye kaafi hai.')+saidDefaults(chose));
+      S.skip=(S.skip||[]).concat(FLOW.map(function(f){return f.id}));
+      S.step=0;save();
+      return askCurrent(true);
+    }
+    if(got.length)agentSay(L('Read that as the brief. I took ','Ise brief maan liya. Maine liya — ')+got.join(' · ')+'.');
+    save();
+    return askCurrent(true);
+  }
   if(st.type==='multi'){
     var cur=(st.val?st.val(S.brief):[]).slice();
     text.split(/[,\n]/).map(function(x){return x.trim()}).filter(Boolean).forEach(function(x){
@@ -3727,6 +3801,17 @@ function panelAsk(text){
 
 function handleText(text){
   var atts=S.atts.slice();
+
+  /* Something is selected in the preview: this message is about that. */
+  if(S.pick){
+    var swapped=applyPick(text);
+    if(swapped){
+      userSay(text,atts);S.atts=[];renderAtts();
+      if(S.built)rebuild(swapped);
+      else{save();agentSay(swapped);}
+      return;
+    }
+  }
 
   /* A pasted brief is not a question about the studio. These two rules read
      word by word, so a specification with a "BuySection" in its section list
@@ -4247,15 +4332,18 @@ function startBuild(){
     if(st.run){
       // a real network step — it finishes when the gateway answers, or when
       // this gives up on it. Both paths call finish() exactly once.
-      var done=false;
+      /* Not `done` — that is the name of the function that ends the build, and
+         a var here shadows it for the whole of run(), so every build threw
+         "done is not a function" at the last step and sat on "Building…". */
+      var settled=false;
       var give=setTimeout(function(){
-        if(done)return;done=true;
+        if(settled)return;settled=true;
         finish(L('gateway took too long — used the local writer','gateway ne der ki — local writer se likha'));
       },70000);
       st.run().then(function(sub){
-        if(done)return;done=true;clearTimeout(give);finish(sub);
+        if(settled)return;settled=true;clearTimeout(give);finish(sub);
       },function(){
-        if(done)return;done=true;clearTimeout(give);finish('fell back to the local writer');
+        if(settled)return;settled=true;clearTimeout(give);finish('fell back to the local writer');
       });
       return;
     }
@@ -5546,6 +5634,7 @@ function applyObject(doc,obj){
 
 function presetPage(){
   if(presetState!=='ready'||!S.preset)return '';
+  /* marked so the preview can inject its bridge into this page too */
   var P=S.preset,b=S.brief,src=presetSrc;
   if(P.accent&&b.accent&&!sameHex(P.accent,b.accent)&&tintable(P.accent))
     src=recolour(src,P.accent,b.accent);
@@ -5585,6 +5674,26 @@ function presetPage(){
 /* The build. When a preset was the starting point it stays the home page,
    carrying the brief, and the agent's own pages are built around it. */
 var builtHome='';        /* the preset page as the current build has it */
+/* Words the client changed by pointing at them, applied to every page after
+   it is generated — the generator writes from the copy pack, so this is the
+   only place a one-off correction can live. */
+function applyTextEdits(g){
+  var pairs=(S.brief.__text||[]);
+  if(!pairs.length)return;
+  g.files.forEach(function(f){
+    if(f.lang!=='html')return;
+    pairs.forEach(function(pr){
+      f.body=f.body.split('>'+pr[0]+'<').join('>'+pr[1]+'<');
+      f.body=f.body.split('>'+pr[0]).join('>'+pr[1]);
+    });
+  });
+  ((g.site&&g.site.pages)||[]).forEach(function(p){
+    pairs.forEach(function(pr){
+      p.html=p.html.split('>'+pr[0]+'<').join('>'+pr[1]+'<');
+      p.html=p.html.split('>'+pr[0]).join('>'+pr[1]);
+    });
+  });
+}
 function buildFiles(){
   var g=G.generate(S.brief,S.depth),home=presetPage();
   builtHome=home;
@@ -5592,6 +5701,7 @@ function buildFiles(){
     g.files.forEach(function(f){if(f.path==='site/index.html')f.body=home});
     ((g.site&&g.site.pages)||[]).forEach(function(p){if(p.file==='site/index.html')p.html=home});
   }
+  applyTextEdits(g);
   return g;
 }
 
@@ -5665,6 +5775,8 @@ function panesPreview(){
       '<div class="seg">'+['desktop','tablet','mobile'].map(function(d){
         return '<button class="'+(S.device===d?'on':'')+'" data-dev="'+d+'">'+d.charAt(0).toUpperCase()+d.slice(1)+'</button>'
       }).join('')+'</div>')+
+    '<button class="btn sm'+(S.picking?' on':'')+'" data-act="pick" title="Click something in the page and tell me what to change">'+
+      (S.picking?L('Selecting…','Chuno…'):L('Select','Select'))+'</button>'+
     '<button class="btn sm" data-act="reload">Reload</button>'+
     '<button class="btn sm" data-act="newtab">Open in a tab</button>'+
     '</div><div class="prev-stage">'+
@@ -5672,8 +5784,15 @@ function panesPreview(){
       '<div class="frame '+S.device+'"><iframe id="prevFrame" title="Website preview"></iframe></div>')+
     '</div></div>';
 }
+/* Everything shown in the preview carries the bridge, including a preset page,
+   which has no app.js line for previewDoc() to hang it on. */
+function withBridge(html){
+  if(!html)return html;
+  if(html.indexOf('scenPicked')>=0)return html;
+  return html.replace(/<\/body>/i,G.bridge()+'</body>');
+}
 function currentDoc(){
-  if(!gen)return presetPage();
+  if(!gen)return withBridge(presetPage());
   if(S.previewKind==='app')return G.appPreviewDoc(S.brief);
   var file=S.file&&/^site\/.*\.html$/.test(S.file)?S.file:'site/index.html';
   return G.previewDoc(gen,file);
@@ -5681,10 +5800,23 @@ function currentDoc(){
 function bindPreview(){
   var f=$('#prevFrame');if(!f)return;
   f.srcdoc=currentDoc();
+  f.addEventListener('load',function(){
+    try{f.contentWindow.postMessage({scenPick:!!S.picking},'*')}catch(e){}
+  });
   var sel=$('#pageSel');
   if(sel)sel.addEventListener('change',function(){S.file=sel.value;save();$('#prevFrame').srcdoc=currentDoc()});
 }
 window.addEventListener('message',function(e){
+  if(e.data&&e.data.scenPicked){
+    var p=e.data.scenPicked;
+    if(!p.text)return;
+    S.pick=p.text;save();
+    showPick();
+    agentSay(L('Selected — “<b>'+esc(p.text)+'</b>”. Tell me what it should say, or what to change about it.',
+               '“<b>'+esc(p.text)+'</b>” chun liya. Bolo isme kya likhna hai ya kya badalna hai.'));
+    input.focus();
+    return;
+  }
   if(!e.data||!e.data.scenNav||!gen)return;
   var path='site/'+e.data.scenNav;
   if(S.files.indexOf(path)<0)return;
@@ -5740,6 +5872,14 @@ $('#mainPane').addEventListener('click',function(e){
   if(t.dataset.pk){S.previewKind=t.dataset.pk;save();return renderMain()}
   if(t.dataset.dev){S.device=t.dataset.dev;save();return renderMain()}
   if(t.dataset.page){S.previewKind='site';S.file='site/'+G.pageFile(t.dataset.page);return setTab('preview')}
+  if(a==='pick'){
+    S.picking=!S.picking;save();
+    var fr=$('#prevFrame');
+    if(fr&&fr.contentWindow)fr.contentWindow.postMessage({scenPick:S.picking},'*');
+    renderMain();
+    return toast(S.picking?L('Click anything in the page','Page mein kuch bhi click karo')
+                          :L('Selecting off','Select band'));
+  }
   if(a==='reload'){$('#prevFrame').srcdoc=currentDoc();return toast('Preview reloaded')}
   if(a==='newtab'){
     var blob=new Blob([currentDoc()],{type:'text/html'});
@@ -6315,7 +6455,7 @@ function resetState(){
   S.skip=[];S.seedLabel='';S.mode='design';S.tab='tools';S.tool='brief';S.file='';
   S.buildLog=[];S.files=[];S.built=false;S.atts=[];S.projectName='';
   S.queued=[];                     /* §37's hold-list, or it fires on the next build */
-  S.previewKind='site';S.device='desktop';S.preset=null;S.pane=false;
+  S.previewKind='site';S.device='desktop';S.preset=null;S.pane=false;S.picking=false;S.pick='';
   presetSrc='';presetState='';previewSig='';
   body.innerHTML='';stream.innerHTML='';gen=null;
 }

@@ -40,12 +40,15 @@ if(/^\/agent\/?$/i.test(location.pathname))location.replace('/agent-studio.html'
     <div class="mactions"><a class="btn agent-cta" href="/agent-studio.html"><span class="dot"></span>4D Website Builder</a><button class="btn ghost" data-nav="auth">Log in</button><button class="btn light" data-nav="auth">Start building <span>↗</span></button></div>
   </nav></div>
   <header class="hero">
+    <!-- The hero plays behind the words: one silent loop, and the only thing
+         the pointer does to it is push it further away or bring it closer. -->
+    <div class="hero-film" id="heroFilm" aria-hidden="true"><video id="heroFilmVideo" src="https://pub-429d8fb4f8ff4b7d9c2624c0d7e4b4b5.r2.dev/geminiwatermark-clean%20(6).mp4" autoplay muted loop playsinline preload="auto" disablepictureinpicture></video><span class="hero-film-scrim"></span></div>
     <div class="cinematic-field" aria-hidden="true"><div class="depth-grid"></div><div class="cinematic-halo halo-a"></div><div class="cinematic-halo halo-b"></div><div class="cinematic-cursor"></div><div class="scan-line"></div></div>
     <div class="hero-scroll-meter" aria-hidden="true"><i id="heroScrollMeter"></i></div>
     <div class="hero-grid">
       <div class="hero-copy">
         <div class="hero-kicker">AI + spatial web creation</div>
-        <h1>One brief.<br><em>A world that moves.</em></h1>
+        <h1>3D AI<br><em>Website Engine</em></h1>
         <p>Generate cinematic 3D websites from one brief. Direct the concept, edit visually, add spatial motion, and publish from the same workspace.</p>
         <div class="proofs"><span>Prompt → Website</span><span>3D Scroll Scenes</span><span>Visual Editor</span><span>Responsive</span><span>No-code motion</span><button class="proof-scene-cta" data-action="openSceneLibraryMarketing">Explore scene library ↗</button></div>
       </div>
@@ -658,6 +661,8 @@ if(/^\/agent\/?$/i.test(location.pathname))location.replace('/agent-studio.html'
 
 
 <script id="scen-mobile-studio" src="/assets/js/58-scen-mobile-studio.js"></script>
+
+<script id="scen-hero-film" src="/assets/js/59-scen-hero-film.js"></script>
 
 </body>
 </html>

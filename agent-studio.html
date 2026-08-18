@@ -161,6 +161,14 @@ button.pill:hover{border-color:rgba(255,255,255,.28);color:#fff}
 .send:hover{transform:translateY(-1px)}
 .note{font-size:11px;color:#5b5b66;text-align:center;padding:9px 6px 0;line-height:1.5}
 
+/* the build, inside the conversation */
+.workcard{padding:0;background:none;border:0}
+.work{border:1px solid #1e1e26;border-radius:14px;background:#0c0c11;padding:13px 15px 6px}
+.work-h{display:block;font-size:12.5px;font-weight:600;color:#e9e9ef;margin-bottom:6px}
+.work .steps{max-height:236px;overflow-y:auto;scrollbar-width:thin}
+.work .step{font-size:12.4px}
+.work .step:before{left:8.5px}
+
 /* build stream in the chat column */
 .stream{padding:16px}
 .stream .caps{margin-bottom:12px;display:block}
@@ -362,8 +370,8 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
       <a class="logo" href="#" title="Scen Agent Studio"><span class="logo-mark"></span><b>scen</b></a>
       <button class="proj" id="projBtn"><span id="projName">Untitled project</span><i>⌄</i></button>
       <div class="seg" role="tablist" aria-label="Agent mode">
-        <button role="tab" class="on" data-mode="design">Design</button>
-        <button role="tab" data-mode="build">Build</button>
+        <button role="tab" class="on hidden" data-mode="design">Design</button>
+        <button role="tab" class="hidden" data-mode="build">Build</button>
       </div>
     </div>
 
@@ -409,8 +417,8 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
           <textarea id="input" rows="1" placeholder="Message the agent…" autocomplete="off"></textarea>
           <div class="comp-bar">
             <button class="ico" id="attachBtn" title="Attach reference images">＋</button>
-            <button class="mini" id="depthBtn" title="How much the agent builds">⛁ Lite <i>⌄</i></button>
-            <button class="mini on" id="planBtn" title="Show the plan before building">Plan</button>
+            <button class="mini hidden" id="depthBtn" title="How much the agent builds">⛁ Lite <i>⌄</i></button>
+            <button class="mini on hidden" id="planBtn" title="Show the plan before building">Plan</button>
             <button class="mini on" id="aiBtn" title="Use the Scen AI gateway when it is reachable">✦ AI</button>
             <button class="mini" id="modelBtn" title="Which model writes this build">◇ Auto <i>⌄</i></button>
             <span class="grow"></span>
@@ -3209,6 +3217,17 @@ function noteLang(text){
 function L(en,hi){return (S.lang==='hi'&&hi)?hi:en}
 
 function scrollChat(){requestAnimationFrame(function(){body.scrollTop=body.scrollHeight})}
+/* The chat scrolls smoothly, which is right for a message and wrong for a
+   build: seventeen rows land in a few seconds, each one restarting an
+   animation aimed at where the bottom used to be, and the view never catches
+   up — the card was being written off screen while the client looked at an
+   empty column. Rows jump. */
+function jumpChat(){
+  var was=body.style.scrollBehavior;
+  body.style.scrollBehavior='auto';
+  body.scrollTop=body.scrollHeight;
+  body.style.scrollBehavior=was;
+}
 
 function nodeFor(m){
   var d=document.createElement('div');
@@ -4783,7 +4802,12 @@ function buildPlanSteps(){
 
 function startBuild(){
   S.phase='building';S.built=false;S.files=[];S.buildLog=[];save();
-  setPhasePill();setMode('build');
+  setPhasePill();
+  /* The build used to hide the conversation and put a log in its place, so the
+     moment someone asked for a site the thing they were talking to disappeared.
+     The work belongs in the conversation — one card, filling in as it goes,
+     with the preview beside it. */
+  setMode('design');
   setTab('preview',true);
   /* The build stream is a different pane, so from the chat the studio looked
      frozen for a minute. One line, in the conversation, saying what is being
@@ -4799,8 +4823,14 @@ function startBuild(){
     if(S.tab==='preview')renderMain();
   }catch(e){}
   var steps=buildPlanSteps();
+  var card=document.createElement('div');
+  card.className='msg agent workcard';
+  card.innerHTML='<div class="work"><b class="work-h">'+L('Building ','Bana raha hoon ')+esc(S.brief.name)+'</b>'+
+                 '<div class="steps"></div></div>';
+  body.appendChild(card);jumpChat();
+  var list=card.querySelector('.steps');
+  /* the Build pane is still there for anyone who opens it */
   stream.innerHTML='<span class="caps">Build · '+esc(S.brief.name)+'</span><div id="stepList"></div>';
-  var list=$('#stepList');
   gen=null;                       // composed once the copy and plan are settled
 
   var i=0,t0=Date.now();
@@ -4809,7 +4839,7 @@ function startBuild(){
     var st=steps[i],row=document.createElement('div');
     row.className='step run';
     row.innerHTML='<span class="mark"></span><span>'+esc(st.l)+'<span class="sub">'+esc(st.s)+'</span></span><span class="ms"></span>';
-    list.appendChild(row);stream.scrollTop=stream.scrollHeight;
+    list.appendChild(row);list.scrollTop=list.scrollHeight;jumpChat();
     var a=Date.now();
 
     function finish(sub){
@@ -4884,12 +4914,11 @@ function startBuild(){
     var secs=((Date.now()-t0)/1000).toFixed(1);
     var row=document.createElement('div');
     row.className='step done';
-    row.innerHTML='<span class="mark">✓</span><span><b style="color:#e9e9ef">Build complete</b>'+
+    row.innerHTML='<span class="mark">✓</span><span><b style="color:#e9e9ef">'+L('Build complete','Build poori')+'</b>'+
       '<span class="sub">'+gen.files.length+' files · '+secs+'s</span></span>';
     list.appendChild(row);
-    refreshTools();renderMain();clearThinking();
+    refreshTools();renderMain();clearThinking();jumpChat();
     setTimeout(function(){
-      setMode('design');
       /* What was built, in the words someone would use to describe it — the
          list of files, modules, credits and instructions that used to be here
          is all in the panes on the right, and reading a manifest back to
@@ -6768,11 +6797,12 @@ function setAiPill(){
   var note=$('#composerNote');
   if(!AI.enabled)
     note.textContent='Live AI is switched off — the local writers are producing the copy, the plan and the code.';
+  /* A running total of requests and tokens under the box someone types into is
+     the studio talking about itself. When it is working, it says nothing. */
   else if(AI.state==='live')
-    note.innerHTML='Live AI on '+esc(AI.provider)+' · '+esc(AI.model)+' — '+AI.requests+
-      ' request'+(AI.requests===1?'':'s')+', '+(AI.inTok+AI.outTok).toLocaleString()+' tokens. '+publishNote();
+    note.innerHTML=AI.fell?'<span style="color:#ffcf87">'+esc(AI.fell)+'</span>':'';
   else if(AI.state==='ready')
-    note.innerHTML='Signed in — the Scen AI gateway writes the copy and the plan on the next build. '+publishNote();
+    note.innerHTML='';
   else if(AI.state==='signedout')
     /* /login renders the sign-in form directly. "/" lands on the public page,
    which on a phone means opening the menu and hunting for Log in. */
@@ -6781,7 +6811,7 @@ function setAiPill(){
     note.textContent='The /api routes are not reachable from this page, so everything is being generated locally in your browser.';
   else if(AI.state==='error')
     note.textContent='Gateway error: '+AI.lastError+' — falling back to the local writers.';
-  else note.textContent='Checking the Scen AI gateway…';
+  else note.textContent='';
   if(S.tool==='aigateway'&&S.tab==='tools')renderMain();
 }
 

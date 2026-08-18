@@ -2,6 +2,17 @@ import crypto from 'node:crypto';
 import { gatewayLimits, routeFor } from './config';
 import { provider } from './registry';
 import { ProviderError, type GenerateInput, type ProviderResult, type AIProviderId } from './types';
+import { redact } from './safe';
+
+/* Which provider actually answered, in the function's own log.
+
+   The loop below falls through to the next provider without saying so, so a
+   primary that is misconfigured — a model id its API does not know — looks
+   from the outside exactly like a primary that works: 200, an answer, nobody
+   the wiser. One line per attempt makes that visible. Provider ids, model
+   names and status codes only; the message is redacted on the way in, because
+   a provider's own error can quote what it was sent. */
+function note(line:string){try{console.log('[ai] '+line)}catch{}}
 
 function timeoutSignal(ms:number):{signal:AbortSignal;clear:()=>void}{const controller=new AbortController();const id=setTimeout(()=>controller.abort(new Error('AI provider timeout')),ms);return {signal:controller.signal,clear:()=>clearTimeout(id)}}
 
@@ -31,9 +42,11 @@ export async function generateWithRouting(input:GenerateInput,preferred?:AIProvi
   for(let i=0;i<order.length;i++){
     try{
       const result=await runOne(order[i],input);
+      note(`${input.feature} answered by ${result.provider} · ${result.model}`+(i>0?` (fallback, ${order[0]} failed)`:''));
       return {...result,requestId,fallbackUsed:i>0,requested:preferred};
     }catch(err:any){
       const e=err instanceof ProviderError?err:new ProviderError(order[i],String(err?.message||err),500,true);
+      note(`${input.feature} · ${order[i]} failed (${e.status}${e.code?', '+e.code:''}): ${redact(e.message).slice(0,160)}`);
       if(!e.retriable) throw e;
       last=e;
     }

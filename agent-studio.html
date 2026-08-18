@@ -3510,7 +3510,15 @@ function isBriefLike(text){
 
 /* The bar for starting: a name, what it is, what trade, and pages to put it
    on. Everything else has a defensible default. */
+/* The bar used to be a form: a name, a trade and a page set before anything
+   could be built. A client who wrote two paragraphs about their business had
+   given more than enough — the missing fields are decisions, and the agent is
+   supposed to make those. */
+function briefGiven(b){
+  return !!(b.pitch&&String(b.pitch).trim().length>40)||!!(b.__onepage&&b.__onepage.length);
+}
 function haveEnough(b){
+  if(briefGiven(b)&&b.name)return true;      /* they described it — that is the brief */
   return !!(b.name && b.kind && b.industry && (b.pages||[]).length);
 }
 /* Assumptions a designer would make without stopping to ask. All editable. */
@@ -5224,21 +5232,25 @@ PANE.brief=function(){
     ['Languages',(b.languages||[]).join(', ')],
     ['Domain',b.domain||(b.name?slug(b.name)+'.scen.space':'')]
   ];
+  /* Twelve boxes reading "not answered yet" is a form, and it made the studio
+     feel like one — the client's own words for it. Only what is known is
+     shown; the rest is one quiet line saying the agent will decide it. */
+  var known=rows.filter(function(r){return r[1]}),blank=rows.filter(function(r){return !r[1]});
   return '<div class="pane">'+head('Brief',
-    'Everything the agent has been told. It fills in as the conversation goes and it is what the build reads from.')+
+    'What the agent has been told, and what it worked out. It fills in as you talk — nothing here is a form to complete.')+
     /* §16 — "3 of 10 essentials · 30%" read like a form you had to finish
        before anything could happen. Nothing here ever gated the build, but the
        bar said otherwise. It now reports readiness, and the brief keeps
        growing during and after the build. */
-    '<div style="max-width:420px;margin-bottom:24px;font-size:12px;color:#8c8c98">'+
-    (haveEnough(b)?'<span style="color:#7ee787">Enough to start</span> — everything else is optional, and you can change any of it later.'
-                  :'Still gathering the basics. Tell me what you want and I will fill this in.')+
+    '<div style="max-width:460px;margin-bottom:24px;font-size:12px;color:#8c8c98">'+
+    (known.length?'<span style="color:#7ee787">Building from this</span> — say the word and I change any of it.'
+                 :'Nothing yet. Describe the place in a line and I will work the rest out.')+
     '</div>'+
-    '<div class="brief-grid">'+rows.map(function(r){
-      var filled=r[1]&&String(r[1]).length;
-      return '<div class="bcard'+(filled?' filled':'')+'"><div class="k"><span class="dot'+(filled?'':' idle')+'"></span>'+
-        '<span class="caps">'+esc(r[0])+'</span></div><div class="v'+(filled?'':' none')+'">'+
-        (filled?r[1]:'not answered yet')+'</div></div>'}).join('')+'</div>'+
+    (known.length?'<div class="brief-grid">'+known.map(function(r){
+      return '<div class="bcard filled"><div class="k"><span class="dot"></span>'+
+        '<span class="caps">'+esc(r[0])+'</span></div><div class="v">'+r[1]+'</div></div>'}).join('')+'</div>':'')+
+    (known.length&&blank.length?'<p style="margin-top:18px;font-size:12.5px;color:#6f6f7a;line-height:1.7">'+
+      'Everything else I decide myself.</p>':'')+
     (b.refs&&b.refs.length?'<h2>References you attached</h2><div style="display:flex;gap:9px;flex-wrap:wrap">'+
       b.refs.map(function(r){return '<img class="att" style="width:96px;height:96px" src="'+r.url+'" alt=""/>'}).join('')+'</div>':'')+
     '</div>';

@@ -5244,16 +5244,6 @@ function buildPlanSteps(){
     }});
   else out.push({l:L('Creating the visual direction','Visual direction bana raha hoon'),s:STYLES[b.style].l+' · '+b.accent,ms:520});
 
-  /* §42 — the pictures are made before the page is written, not after it.
-     They used to run once the build had finished and then trigger a second
-     build, so the client watched a site of grey rectangles appear, then watched
-     it rebuild. The plan is made from the direction the step above just chose,
-     which is the order the client's workflow asks for. */
-  if(live&&signedIn()&&!b.__art&&!b.__noImages&&S.autoImages!==false){
-    out.push({l:L('Making the pictures','Photos bana raha hoon'),s:'4 images · '+(4*IMG_COST)+' credits',ms:600,
-      run:function(){return buildImages(4)}});
-  }
-
   if(live)out.push({l:L('Writing the words','Words likh raha hoon'),s:'',ms:640,compose:true,
     run:function(){
       return X.writeCopy(b,transcript()).then(function(r){
@@ -5265,6 +5255,18 @@ function buildPlanSteps(){
   else{delete b.__copy;
     out.push({l:L('Writing the words','Words likh raha hoon'),compose:true,
       s:(b.content==='own'?'draft copy, marked for replacement':'headlines, sections, FAQs and buttons'),ms:640})}
+
+  /* §42 — the pictures are made before the page is written, and after the words.
+     They used to run once the build had finished and trigger a second build, so
+     the client watched a site of grey rectangles appear and then rebuild. Moving
+     them to just after the direction was too far the other way: the plan asks
+     the copy pack what the subjects are, and with no copy yet it was shooting
+     "Project one" and "Project two". Direction, then words, then the pictures
+     those words describe. */
+  if(live&&signedIn()&&!b.__art&&!b.__noImages&&S.autoImages!==false){
+    out.push({l:L('Making the pictures','Photos bana raha hoon'),s:'4 images · '+(4*IMG_COST)+' credits',ms:600,
+      compose:true,run:function(){return buildImages(4)}});
+  }
   P.pages.forEach(function(p){
     out.push({l:L('Building the ','Bana raha hoon — ')+p.name+' page',ms:300,file:'site/'+p.file,
       s:p.secs.map(function(x){return SECLABEL[x]||x}).join(' · '),
@@ -5441,6 +5443,7 @@ function startBuild(){
       var give=setTimeout(function(){if(!settled){settled=true;resolve('')}},9000);
       img.onload=function(){
         if(settled)return;settled=true;clearTimeout(give);
+        /* a frame that has not painted yet serialises to almost nothing */
         try{
           var cv=document.createElement('canvas');
           cv.width=Math.round(w*0.62);cv.height=Math.round(h*0.62);
@@ -5533,7 +5536,10 @@ function startBuild(){
       save();
       try{gen=buildFiles()}catch(e){}
       if(S.tab==='preview')renderMain();
-      qaPass(after);
+      /* the preview has just been replaced; screenshotting it in the same tick
+         photographs an empty frame — the second pass came back a 4KB picture of
+         nothing and marked the page on it */
+      setTimeout(function(){qaPass(after)},900);
     }
 
     shotOfPreview().then(function(shot){
@@ -7438,7 +7444,13 @@ var IMG_DIRS={cinematic:'cinematic photography, anamorphic feel, deep shadows',
 
 function imagePlan(b,n){
   n=n||4;
-  var P=pack(b),trade=(INDUSTRIES[b.industry]||INDUSTRIES.other).l;
+  var P=pack(b);
+  /* INDUSTRIES.other is labelled "Something else", which is fine in a menu and
+     absurd in a prompt: "a photograph for a Something else website". When the
+     trade is not one we know, the business describes itself. */
+  var trade=(b.industry==='other')
+    ? (b.industryOther||String(P.kicker||'').split('·')[0].trim()||b.name||'business')
+    : (INDUSTRIES[b.industry]||INDUSTRIES.other).l;
   var look=IMG_LOOK[b.industry]||IMG_LOOK.other;
   var ui=b.__ui||{};
   var dir=(ui.images&&IMG_DIRS[ui.images])||look.dir;

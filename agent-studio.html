@@ -1059,6 +1059,48 @@ function has(b,f){return b.features.indexOf(f)>=0}
 function pageFile(p){return p.toLowerCase()==='home'?'index.html':slug(p)+'.html'}
 
 /* ---------- stylesheet ---------- */
+/* Five art directions. The palette was the only thing that ever changed
+   between builds, so every site came out the same page in a different colour.
+   A direction changes the shape of it: the type, the rhythm, the radius, how a
+   card is made, where the hero sits, how a section ends. */
+var DIRS={
+  editorial:{l:'Editorial',rad:'2px',disp:'Georgia,"Times New Roman",serif',track:'-.02em',w:700,
+    card:'border:1px solid var(--line);background:transparent;border-radius:2px',
+    rule:'border-top:2px solid var(--ink)',hero:'left',lead:'1.75',up:'.14em'},
+  swiss:{l:'Swiss grid',rad:'0px',disp:'"Geist",Inter,system-ui,sans-serif',track:'-.045em',w:700,
+    card:'border:1px solid var(--line);background:transparent;border-radius:0',
+    rule:'border-top:1px solid var(--line)',hero:'left',lead:'1.6',up:'.2em'},
+  soft:{l:'Soft & rounded',rad:'26px',disp:'"General Sans","Geist",system-ui,sans-serif',track:'-.03em',w:600,
+    card:'border:1px solid var(--line);background:var(--bg2);border-radius:26px;box-shadow:0 18px 50px rgba(0,0,0,.16)',
+    rule:'border-top:1px solid var(--line)',hero:'center',lead:'1.8',up:'.1em'},
+  bold:{l:'Bold blocks',rad:'6px',disp:'"Geist",Inter,system-ui,sans-serif',track:'-.06em',w:800,
+    card:'border:2px solid var(--ink);background:var(--bg2);border-radius:6px',
+    rule:'border-top:3px solid var(--a)',hero:'left',lead:'1.55',up:'.16em'},
+  cinematic:{l:'Cinematic',rad:'20px',disp:'"General Sans","Geist",system-ui,sans-serif',track:'-.055em',w:800,
+    card:'border:1px solid var(--line);background:var(--bg2);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.4)',
+    rule:'border-top:1px solid var(--line)',hero:'left',lead:'1.7',up:'.24em'}
+};
+var DIR_KEYS=['cinematic','editorial','swiss','soft','bold'];
+function dirOf(b){
+  var d=b.__dir;
+  return DIRS[d]?d:'cinematic';
+}
+function dirCss(b,t){
+  var d=DIRS[dirOf(b)],st=t.st;
+  return ['','/* direction — '+d.l+' */',
+'body{--rad:'+d.rad+'}',
+'h1,h2,h3,.brand,.ch h2,.lp-hero h1{font-family:'+d.disp+';letter-spacing:'+d.track+';font-weight:'+d.w+'}',
+'p,.lead,.ch p{line-height:'+d.lead+'}',
+'.kicker,.caps,.gm-cap,.sec-head span{letter-spacing:'+d.up+'}',
+'.box,.card,.tile,.buy-card,.panel,.mini{'+d.card+'}',
+'section+section,.ch+.ch{'+d.rule+'}',
+(d.hero==='center'?'.hero-grid,.lp-hero-in{grid-template-columns:1fr;text-align:center;justify-items:center}.lead{margin-inline:auto}':''),
+(dirOf(b)==='swiss'?'.wrap{--wrap:min(1240px,100% - 40px)}.hero{padding-block:clamp(56px,9vh,110px)}':''),
+(dirOf(b)==='bold'?'.btn{border-radius:4px;border:2px solid var(--ink)}.btn.ghost{border-color:var(--ink)}':''),
+(dirOf(b)==='editorial'?'.sec-head h2{max-width:18ch}.hero h1{font-style:italic}':'')
+].filter(Boolean).join('\n');
+}
+
 function makeCss(b){
   var t=tokens(b),st=t.st,pro=b.__depth==='pro';
   return [
@@ -1299,7 +1341,7 @@ function makeCss(b){
 '  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--a) 55%,transparent),transparent);opacity:.5}',
 '.onepage .nav-links a{font-size:13px}',
 '@media (max-width:900px){.ch-in{grid-template-columns:1fr}.ch.flip .ch-in>.ch-copy{order:0}.ch-art{min-height:240px}}'
-].join('\n')+(b.industry==='games'?'\n\n'+gameCss(t):'');
+].join('\n')+dirCss(b,t)+(b.industry==='games'?'\n\n'+gameCss(t):'');
 }
 
 /* ---------- the games platform ----------
@@ -2495,7 +2537,7 @@ function previewDoc(gen,file){
 }
 
 window.__SCEN_GEN={generate:generate,previewDoc:previewDoc,appPreviewDoc:appPreviewDoc,
-  bridge:function(){return PREVIEW_BRIDGE},
+  bridge:function(){return PREVIEW_BRIDGE},DIRS:DIRS,DIR_KEYS:DIR_KEYS,
   tokens:tokens,pageFile:pageFile,sectionsFor:sectionsFor,pack:pack,has:has,appTabs:appTabs};
 })();
 </script>
@@ -3887,6 +3929,26 @@ function refineBrief(text){
     if(b.__onepage)b.pages=['Home'];
   }
 
+  /* Which art direction. The brief decides when it says something about the
+     look; otherwise it rotates, so two clients in the same trade do not get
+     the same page in a different colour. */
+  if(!b.__dir){
+    var dir=/\b(editorial|magazine|serif|type[- ]led|newspaper)\b/.test(t)?'editorial':
+            /\b(grid|swiss|precise|technical|minimal|clean|architect)\b/.test(t)?'swiss':
+            /\b(soft|rounded|friendly|warm|calm|gentle|kids|family)\b/.test(t)?'soft':
+            /\b(bold|loud|brutal|strong|heavy|impact|street)\b/.test(t)?'bold':
+            /\b(cinematic|premium|luxur|dark|immersive|dramatic)\b/.test(t)?'cinematic':'';
+    if(!dir){
+      /* nothing said — rotate on the project's own name so it is stable for
+         this build and different for the next client */
+      var seed=0,nm=String(b.name||'x');
+      for(var si=0;si<nm.length;si++)seed=(seed*31+nm.charCodeAt(si))>>>0;
+      dir=G.DIR_KEYS[(seed+(b.variant||0))%G.DIR_KEYS.length];
+    }
+    b.__dir=dir;
+    chose.push('a '+(G.DIRS[dir]?G.DIRS[dir].l.toLowerCase():dir)+' direction');
+  }
+
   /* How much it moves. */
   if(!b.motion){
     b.motion=/\b(3d|parallax|immersive|hover zoom|animated|motion|cinematic)\b/.test(t)?'full':
@@ -4672,6 +4734,19 @@ function parseEdit(text){
     b.name=nm.slice(0,48);S.projectName=b.name;$('#projName').textContent=b.name;
     done.push('renamed it to <b>'+esc(b.name)+'</b>')}
 
+  /* "koi aur design dikhao" — the whole art direction, not a colour. */
+  /* "koi aur design dikhao" carries the ask in "aur … dikhao", not in a verb
+     the English list knew about. The noun is the anchor; almost anything asking
+     for change beside it counts. */
+  if(/\b(design|look|layout|theme|style|direction|shakal|dizain)\b/i.test(text)&&
+     /\b(different|another|new|change|switch|try|badal|badlo|dusr\w*|doosr\w*|alag|aur|naya|nayi|dikhao|dikha)\b/i.test(text)&&
+     !findColor(text)){
+    var cur=G.DIR_KEYS.indexOf(b.__dir||'cinematic');
+    b.__dir=G.DIR_KEYS[(cur+1)%G.DIR_KEYS.length];
+    done.push(L('switched the design direction to <b>'+esc(G.DIRS[b.__dir].l)+'</b>',
+                'design direction <b>'+esc(G.DIRS[b.__dir].l)+'</b> kar diya'));
+  }
+
   /* The look of a named part — its size, where it sits, its case, its type.
      Read before the colour rule, or "title ko blue kr do" repaints the whole
      site's accent instead of the title. Everything lands as an override on the
@@ -5093,7 +5168,7 @@ PANE.brief=function(){
     ['Audience',b.audience],
     ['Pages',b.pages.map(function(p){return '<span class="tk">'+esc(p)+'</span>'}).join('')],
     ['Features',b.features.map(function(x){return '<span class="tk">'+esc(FEATURES[x].l)+'</span>'}).join('')],
-    ['Style',b.style?STYLES[b.style].l:''],
+    ['Style',b.style?(STYLES[b.style].l+(b.__dir&&G.DIRS[b.__dir]?' · '+G.DIRS[b.__dir].l:'')):''],
     ['Accent',b.accent?'<span class="swatch" style="background:'+esc(b.accent)+'"></span>'+esc(b.accent):''],
     ['Motion',b.motion],
     ['Content',b.content?({agent:'Agent writes everything',mix:'Agent writes, client edits later',own:'Client supplies copy'})[b.content]:''],
@@ -5900,7 +5975,7 @@ function maybeDraft(){
   if(S.built||S.phase==='building')return;
   if(!haveEnough(S.brief))return;
   var b=S.brief;
-  var sig=[b.name,b.industry,b.style,b.accent,b.motion,S.depth,b.__bg,(b.pages||[]).join(),(b.features||[]).join(),(b.__onepage||[]).join()].join('\u0000');
+  var sig=[b.name,b.industry,b.style,b.accent,b.motion,S.depth,b.__bg,b.__dir,(b.pages||[]).join(),(b.features||[]).join(),(b.__onepage||[]).join()].join('\u0000');
   if(sig===draftSig)return;
   draftSig=sig;
   try{

@@ -3208,6 +3208,36 @@ var GOAL_WORDS={sell:/sell|purchase|buy|revenue|checkout/i,
   show:/showcase|portfolio|display our work/i};
 
 function matchOne(map,text){for(var k in map)if(map[k].test(text))return k;return ''}
+/* The trade, by weight of evidence rather than by whichever word came first.
+   A brief for an iPhone concept site says "gaming" once, in a line about
+   performance, and first-match-wins turned the whole build into a games
+   platform — sidebar, categories, catalogue and all. What counts is how many
+   *different* words of a trade appear, and whether the opening sentence — the
+   one that says what the thing is — is one of them. */
+function bestIndustry(text){
+  var t=String(text||''),subject=t.split(/[.\n]/)[0]||'',best='',bestN=0,bestD=0;
+  Object.keys(IND_WORDS).forEach(function(k){
+    var terms=IND_WORDS[k].source.split('|'),distinct=0,inSubject=false;
+    terms.forEach(function(term){
+      var rx;try{rx=new RegExp(term,'i')}catch(e){return}
+      if(rx.test(t)){distinct++;if(rx.test(subject))inSubject=true}
+    });
+    var score=distinct+(inSubject?2:0);
+    if(score>bestN){bestN=score;best=k;bestD=distinct}
+  });
+  if(!best)return '';
+  /* The opening line is the client saying what the thing is, so one word there
+     settles it. Anywhere else, one word is a mention: "console-quality gaming"
+     in a phone brief, "coffee" in a bookshop's. Past a line of text it takes
+     two different words of a trade to name it. */
+  var terms=IND_WORDS[best].source.split('|'),inSubject=false;
+  terms.forEach(function(term){
+    var rx;try{rx=new RegExp(term,'i')}catch(e){return}
+    if(rx.test(subject))inSubject=true;
+  });
+  if(inSubject)return best;
+  return (t.length<=120||bestD>=2)?best:'';
+}
 function matchMany(map,text){var o=[];for(var k in map)if(map[k].test(text))o.push(k);return o}
 
 /* Long, or written like a spec rather than an answer. */
@@ -3372,7 +3402,7 @@ function groundTurn(text){
   var navLine=navPagesFrom(text);
   if(navLine)b.pages=navLine;
 
-  var ind=matchOne(IND_WORDS,text);
+  var ind=bestIndustry(text);
   if(!ind||ind===b.industry)return refineBrief(text),undefined;
   var cur=IND_WORDS[b.industry];
   if(cur&&cur.test(text))return;          /* the model's trade is in the words too */
@@ -3432,7 +3462,7 @@ function absorbBrief(text){
   else if(!b.kind&&/\b(web ?site|site|landing page|hero section|home ?page|web app|page for|websit|vebsite)\b/i.test(text)){b.kind='website';got.push('a website')}
   else if(!b.kind&&/\bapp\b/i.test(text)){b.kind='app';got.push('an app')}
 
-  var ind=matchOne(IND_WORDS,text);
+  var ind=bestIndustry(text);
   if(ind&&!b.industry){
     b.industry=ind;
     got.push(INDUSTRIES[ind]?INDUSTRIES[ind].l:ind);

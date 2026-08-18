@@ -269,6 +269,7 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
 .prev-bar{height:46px;flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid var(--line);background:#08080b}
 .thinkline{margin-left:10px;font-size:12.5px;color:#7d7d88;vertical-align:2px;animation:thinkfade .35s ease}
 @keyframes thinkfade{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:none}}
+.quote.slot q{opacity:.66}.quote.slot cite{opacity:.5}
 .prev-note{font-size:11.5px;color:#7d7d88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .prev-stage{flex:1;min-height:0;display:grid;place-items:center;padding:22px;overflow:auto;
   background:radial-gradient(circle at 20% 0%,rgba(125,108,255,.09),transparent 42%),radial-gradient(circle at 85% 90%,rgba(123,238,255,.06),transparent 40%)}
@@ -1539,6 +1540,13 @@ function makeJs(b){
 
 /* ---------- section renderers ---------- */
 function tint(t,i,ratio){return mix(t.a,t.st.bg,ratio==null?(.72+((i||0)%4)*.06):ratio)}
+/* Figures a business has not given are placeholders that read as placeholders,
+   never numbers a visitor could believe. */
+function proof(b,i){
+  var P=pack(b),real=b.__stats&&b.__stats.length?b.__stats:null;
+  if(real)return real[i%real.length];
+  return [['—','your number here'],['—','years, clients, or work'],['—','one figure you can stand behind']][i%3];
+}
 function ph(t,i,extra){ /* placeholder art block */
   return 'style="background:linear-gradient('+(120+i*26)+'deg,'+tint(t,i,.68)+','+t.bg3+' 62%,'+t.st.bg+')'+(extra||'')+'"';
 }
@@ -1574,8 +1582,8 @@ var SEC={
       art='      <div class="stage" data-reveal>\n'+
 '        <div class="ring r1"></div><div class="ring r2"></div>\n'+
 '        <div class="orb"></div>\n'+
-'        <div class="card3d c1"><b>'+esc(P.stats[0][0])+'</b>'+esc(P.stats[0][1])+'</div>\n'+
-'        <div class="card3d c2"><b>'+esc(P.stats[2][0])+'</b>'+esc(P.stats[2][1])+'</div>\n'+
+'        <div class="card3d c1"><b>'+esc(proof(b,0)[0])+'</b>'+esc(proof(b,0)[1])+'</div>\n'+
+'        <div class="card3d c2"><b>'+esc(proof(b,2)[0])+'</b>'+esc(proof(b,2)[1])+'</div>\n'+
 '      </div>';
     }else{
       art='      <div class="stage" data-reveal style="display:grid;grid-template-columns:1fr 1fr;gap:14px;aspect-ratio:auto">\n'+
@@ -1590,8 +1598,8 @@ var SEC={
 '          <a class="btn" href="'+pageFile(lastPage(b))+'">'+esc(P.cta[2])+'</a>',
 '          <a class="btn ghost" href="'+pageFile(b.pages[1]||'Home')+'">'+esc(b.pages[1]||'Learn more')+'</a>',
 '        </div>',
-'        <div class="proof" data-reveal>'+P.stats.map(function(s){
-          return '<span>'+esc(s[0]+' '+s[1])+'</span>'}).join('')+'</div>',
+'        <div class="proof" data-reveal>'+[0,1,2].map(function(i){
+          var st=proof(b,i);return '<span>'+esc(st[0]+' '+st[1])+'</span>'}).join('')+'</div>',
 '      </div>',art,'    </div>','  </section>'].join('\n');
   },
   phero:function(b,t,page){
@@ -1637,7 +1645,7 @@ var SEC={
   stats:function(b){
     var P=pack(b);
     return ['  <section style="padding-block:clamp(40px,5vw,64px)">','    <div class="wrap">',
-'      <div class="stats" data-reveal>'+P.stats.map(function(s){
+'      <div class="stats" data-reveal>'+[0,1,2].map(function(i){var s=proof(b,i);
         return '\n        <div><b>'+esc(s[0])+'</b><span>'+esc(s[1])+'</span></div>'}).join('')+'\n      </div>',
 '    </div>','  </section>'].join('\n');
   },
@@ -1683,8 +1691,14 @@ var SEC={
   },
   testimonial:function(b){
     var P=pack(b);
+    /* A named person saying a nice thing, invented by a generator, is the one
+       piece of a draft a client can publish without noticing and cannot
+       defend. It ships as a marked slot unless the brief carried a real one. */
+    var real=b.__quote&&b.__quote[0];
     return ['  <section>','    <div class="wrap">',
-'      <div class="quote" data-reveal><q>“'+esc(P.quote[0])+'”</q><cite>— '+esc(P.quote[1])+'</cite></div>',
+      real?'      <div class="quote" data-reveal><q>“'+esc(b.__quote[0])+'”</q><cite>— '+esc(b.__quote[1]||'')+'</cite></div>'
+          :'      <div class="quote slot" data-reveal><q>“A line from a real customer goes here.”</q>'+
+           '<cite>— their name, once you have one</cite></div>',
 '    </div>','  </section>'].join('\n');
   },
   faq:function(b){
@@ -1915,7 +1929,7 @@ function makeGamePage(b,page,pro,t){
 '          <a class="gm-btn" href="game.html?g='+esc(slug(lead[0]))+'">▶ Play '+esc(lead[0])+'</a>\n'+
 '          <a class="gm-btn ghost" href="'+pageFile(b.pages[1]||'Home')+'">Browse all</a>\n'+
 '        </div>\n'+
-'        <div class="gm-hero-stats">'+(P.stats||[]).slice(0,3).map(function(st){
+'        <div class="gm-hero-stats">'+[0,1,2].map(function(i){var st=proof(b,i);
         return '<span><b>'+esc(st[0])+'</b>'+esc(st[1])+'</span>'}).join('')+'</div>\n'+
 '      </div>\n'+
 '      <div class="gm-hero-art" style="background:'+gmShot(lead[1],0)+'"><span class="gm-chip">'+esc(lead[1])+'</span></div>\n'+
@@ -2146,7 +2160,7 @@ function makeApp(b){
 P.services.map(function(s){return '  { title: '+JSON.stringify(s[0])+', body: '+JSON.stringify(s[1])+' },'}).join('\n'),
 '];',
 '',
-'const STATS = '+JSON.stringify(P.stats)+';',
+'const STATS = '+JSON.stringify([proof(b,0),proof(b,1),proof(b,2)])+';',
 '',
 'export default function App() {',
 '  const [tab, setTab] = useState(0);',
@@ -2258,7 +2272,7 @@ function appPreviewDoc(b){
 '<p class="l">'+esc(b.pitch)+'</p>',
 '<div class="hero-img"></div>',
 '<a class="cta">'+esc(P.cta[2])+'</a>',
-'<div class="row">'+P.stats.map(function(s){
+'<div class="row">'+[0,1,2].map(function(i){var s=proof(b,i);
   return '<div class="st"><b>'+esc(s[0])+'</b><span>'+esc(s[1])+'</span></div>'}).join('')+'</div>',
 P.services.map(function(s){
   return '<div class="c"><b>'+esc(s[0])+'</b><p>'+esc(s[1])+'</p></div>'}).join(''),
@@ -2459,8 +2473,13 @@ var VOICE=
  'You are a website copywriter. Reply with one JSON object and nothing else — no prose, '+
  'no markdown fence. Plain, specific, human sentences that sound like the business wrote them. '+
  'Never use: seamless, unlock, elevate, journey, solutions, empower, cutting-edge, game-changing, '+
- 'transform, revolutionise. No exclamation marks. Write about the business itself — never mention '+
- 'websites, design, templates or the tool that built it.';
+ 'transform, revolutionise, revolutionize, next-generation. No exclamation marks. Write about the '+
+ 'business itself — never mention websites, design, templates or the tool that built it. '+
+ /* The client's standard, in the words that matter to a writer: nothing is
+    invented that a visitor could take as fact. See docs/BUILD-SKILL.md. */
+ 'Never invent proof: no customer counts, review quotes, names, ratings, awards, partnerships, '+
+ 'certifications or press mentions. If a number or a quote is not in the brief, leave the field '+
+ 'empty rather than making one up.';
 
 function copyPrompt(b,hist){
   return 'Write the copy for this business.\n\nBRIEF:\n'+briefSummary(b)+
@@ -3656,6 +3675,16 @@ function handleText(text){
     if(!st)return;
 
     var intent=readIntent(text);
+
+    /* "hi" is not the answer to whatever question is on screen — it used to
+       become the project's name. Small talk gets a reply and the question is
+       asked again. */
+    if(intent.kind==='greeting'){
+      userSay(text,atts);S.atts=[];renderAtts();
+      agentSay(L('Hello. Tell me what you want built — a line about the business is enough to start.',
+                 'Namaste. Bataiye kya banwana hai — business ke baare mein ek line kaafi hai.'));
+      return askCurrent(true);
+    }
 
     /* A change asked for during the interview is not the answer to whatever
        question is on screen. This has to be read BEFORE the gateway extracts

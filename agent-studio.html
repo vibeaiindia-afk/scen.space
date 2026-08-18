@@ -1232,6 +1232,31 @@ function makeCss(b){
 '.hero-visual .stage{aspect-ratio:auto;width:100%;height:100%;padding:clamp(16px,2vw,30px)}',
 '.hero-visual img{width:100%;height:100%;object-fit:cover}',
 '.tlink{color:var(--a);font-weight:600;font-size:15.5px;display:inline-flex;align-items:center;gap:6px;padding:14px 8px}',
+/* split — copy one side, the picture the other, both full height */
+'.hero.k-split{text-align:left;padding-bottom:clamp(56px,8vw,120px)}',
+'.hero-split{display:grid;grid-template-columns:1.02fr .98fr;gap:clamp(30px,5vw,84px);align-items:center}',
+'.hero.k-split .hero-cta,.hero.k-split .proof{justify-content:flex-start}',
+'.hero.k-split p.lead{margin-inline:0}',
+'.hero-visual.tall{margin-top:0;aspect-ratio:4/5}',
+/* full — one image the width of the screen with the words over it */
+'.hero.k-full{padding-top:0;position:relative;text-align:left}',
+'.hero-bleed{position:relative;height:min(86vh,860px);overflow:hidden}',
+'.hero-bleed .stage{width:100%;height:100%;aspect-ratio:auto}',
+'.hero-bleed img{width:100%;height:100%;object-fit:cover}',
+'.hero-bleed:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,.15) 40%,rgba(0,0,0,.65))}',
+'.hero-over{position:absolute;left:50%;transform:translateX(-50%);bottom:clamp(34px,6vw,86px);z-index:3;color:#fff}',
+'.hero.k-full .over,.hero.k-full p.lead{color:rgba(255,255,255,.82)}',
+'.hero.k-full h1{color:#fff}',
+'.hero.k-full .hero-cta{justify-content:flex-start}',
+'.hero.k-full p.lead{margin-inline:0}',
+/* editorial — the claim on one side, everything else answering it on the other */
+'.hero.k-editorial{text-align:left}',
+'.hero-ed{display:grid;grid-template-columns:1.35fr .65fr;gap:clamp(24px,4vw,64px);align-items:end}',
+'.hero.k-editorial h1{font-size:clamp(40px,7.6vw,118px)}',
+'.hero.k-editorial .hero-cta,.hero.k-editorial .proof{justify-content:flex-start}',
+'.hero.k-editorial p.lead{margin:0 0 22px}',
+'.hero-visual.wide{aspect-ratio:21/9}',
+'.hero-visual.tight{margin-top:clamp(20px,3vw,40px)}',
 '.tlink:hover{opacity:.75}',
 '.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}',
 '.hero p.lead{font-size:clamp(17px,1.5vw,21px);max-width:62ch;margin:22px auto 30px}',
@@ -1373,7 +1398,10 @@ function makeCss(b){
 '  *{animation:none!important;transition:none!important}[data-reveal]{opacity:1;transform:none}}',
 /* responsive */
 '@media (max-width:900px){',
-'  .hero-grid,.bk,.grid2,.featrow{grid-template-columns:1fr}',
+'  .hero-grid,.bk,.grid2,.featrow,.hero-split,.hero-ed{grid-template-columns:1fr}',
+'  .hero-visual.tall,.hero-visual.wide{aspect-ratio:4/3;margin-top:26px}',
+'  .hero-bleed{height:min(76vh,620px)}',
+'  .hero-over{bottom:26px}',
 '  .featrow.flip .featart{order:0}',
 '  .hero-visual{aspect-ratio:4/3}',
 '  .statement{padding:clamp(64px,16vw,110px) 0}',
@@ -1823,18 +1851,45 @@ var SEC={
        for. Without a live writer the claim is built from the brief rather
        than borrowed from the name. */
     var head=P.headline||heroClaim(b),lead=P.headline?saneLine(b):heroLead(b,head);
-    return ['  <section class="hero">','    <div class="wrap hero-stack">',
-'      <span class="over" data-reveal>'+esc(b.name)+'</span>',
-'      <h1 data-reveal>'+esc(head)+'</h1>',
-'      <p class="lead" data-reveal>'+esc(lead)+'</p>',
-'      <div class="hero-cta" data-reveal>',
-'        <a class="btn" href="'+pageFile(lastPage(b))+'">'+esc(P.cta[2])+'</a>',
-'        <a class="tlink" href="'+pageFile(b.pages[1]||'Home')+'">'+esc(b.pages[1]||'Learn more')+' \u203a</a>',
-'      </div>',
-(hasProof(b)?'      <div class="proof" data-reveal>'+[0,1,2].map(function(i){
-          var st=proof(b,i);return '<span>'+esc(st[0]+' '+st[1])+'</span>'}).join('')+'</div>':''),
+    /* Five openings, not one. The art director picks the shape for this
+       business — a centred claim is right for a product and wrong for an
+       architecture studio, and shipping one shape for everything is how every
+       build ends up recognisably ours rather than theirs. */
+    var kind=(b.__ui&&b.__ui.hero)||((b.__ui&&b.__ui.heroAlign==='left')?'editorial':'statement');
+    var cta='      <div class="hero-cta" data-reveal>\n'+
+'        <a class="btn" href="'+pageFile(lastPage(b))+'">'+esc(P.cta[2])+'</a>\n'+
+'        <a class="tlink" href="'+pageFile(b.pages[1]||'Home')+'">'+esc(b.pages[1]||'Learn more')+' \u203a</a>\n'+
+'      </div>';
+    var proofRow=hasProof(b)?'      <div class="proof" data-reveal>'+[0,1,2].map(function(i){
+      var st=proof(b,i);return '<span>'+esc(st[0]+' '+st[1])+'</span>'}).join('')+'</div>':'';
+    var over='      <span class="over" data-reveal>'+esc(b.name)+'</span>';
+    var h1='      <h1 data-reveal>'+esc(head)+'</h1>';
+    var leadP='      <p class="lead" data-reveal>'+esc(lead)+'</p>';
+
+    if(kind==='split'){
+      return ['  <section class="hero k-split">','    <div class="wrap hero-split">',
+'      <div class="hero-copy">',over,h1,leadP,cta,proofRow,'      </div>',
+'      <div class="hero-visual tall" data-reveal>',art,'      </div>',
+'    </div>','  </section>'].join('\n');
+    }
+    if(kind==='full'){
+      return ['  <section class="hero k-full">',
+'    <div class="hero-bleed" data-reveal>',art,'    </div>',
+'    <div class="wrap hero-over">',over,h1,leadP,cta,'    </div>','  </section>'].join('\n');
+    }
+    if(kind==='editorial'){
+      return ['  <section class="hero k-editorial">','    <div class="wrap hero-ed">',
+'      <div class="ed-l">',over,h1,'      </div>',
+'      <div class="ed-r">',leadP,cta,proofRow,'      </div>',
 '    </div>',
-'    <div class="wrap hero-visual" data-reveal>',art,'    </div>',
+'    <div class="wrap hero-visual wide" data-reveal>',art,'    </div>',
+'  </section>'].join('\n');
+    }
+    /* statement and product both centre the claim; product puts the thing
+       itself directly under it, tight, with nothing in between. */
+    return ['  <section class="hero k-'+esc(kind)+'">','    <div class="wrap hero-stack">',
+over,h1,leadP,cta,proofRow,'    </div>',
+'    <div class="wrap hero-visual'+(kind==='product'?' tight':'')+'" data-reveal>',art,'    </div>',
 '  </section>'].join('\n');
   },
   /* One sentence, alone, at the size of a headline. The cheapest way a page
@@ -3017,6 +3072,66 @@ function designUI(b,hist){
     .catch(function(e){failed(e);return null});
 }
 
+/* ---------- visual review ---------- */
+/* §16–§18. A working page with weak design is not finished, so the build
+   marks its own work and then acts on it.
+
+   It reads the page it just wrote rather than a screenshot: the markup says
+   how many sections share one layout, how often the accent appears, whether
+   anything but the hero is display-sized — which is what §17 actually asks —
+   and a text call is cheaper and steadier than shipping a picture. What comes
+   back has to be an instruction the studio can carry out, so the fixes are a
+   closed list of levers that exist. Anything else is advice nobody acts on. */
+var QA_FIXES=['hero:editorial','hero:split','hero:full','hero:statement','hero:product',
+  'density:airy','density:balanced','density:tight','align:left','align:center',
+  'caps:on','caps:off','radius:sharp','radius:soft','sections:more','sections:fewer',
+  'images:regenerate','nothing'];
+function reviewPrompt(b,html){
+  var ui=b.__ui||{};
+  return 'Mark this page as a design director would, then name what to change.\n\n'+
+  'BRIEF:\n'+briefSummary(b)+'\n\n'+
+  'The design in use: hero '+(ui.hero||'statement')+', '+(ui.heroAlign||'center')+'-aligned, '+
+  (ui.density||'balanced')+' density, radius '+(ui.radius==null?'default':ui.radius+'px')+
+  ', accent '+(b.accent||'')+'.\n\n'+
+  'THE PAGE (markup, truncated):\n'+String(html||'').slice(0,9000)+'\n\n'+
+  'Score 0-10, honestly, and low where it deserves it:\n'+
+  '{"scores":{"hierarchy":0,"typography":0,"composition":0,"originality":0,"brandFit":0,'+
+  '"spacing":0,"premium":0},"worst":"one key from scores",'+
+  '"fixes":["at most two, from this list exactly: '+QA_FIXES.join(', ')+'"],'+
+  '"verdict":"one sentence, plain, about this page"}\n\n'+
+  'Ask yourself: could this design belong to ten unrelated businesses? Is every section the '+
+  'same layout? Is the accent overused? Is there anything memorable about the first screen? '+
+  'Does the type have real hierarchy or is everything a similar size?\n'+
+  'If it is genuinely good, return "nothing" as the only fix. Do not invent work.\n'+
+  'JSON only.';
+}
+function readReview(o){
+  if(!o||typeof o!=='object')return null;
+  var sc=o.scores&&typeof o.scores==='object'?o.scores:{};
+  var out={scores:{},worst:str(o.worst,''),verdict:str(o.verdict,''),fixes:[]};
+  ['hierarchy','typography','composition','originality','brandFit','spacing','premium'].forEach(function(k){
+    var v=Number(sc[k]);out.scores[k]=(isFinite(v)&&v>=0&&v<=10)?v:null;
+  });
+  (Array.isArray(o.fixes)?o.fixes:[]).forEach(function(f){
+    f=String(f||'').trim().toLowerCase();
+    if(QA_FIXES.indexOf(f)>=0&&f!=='nothing'&&out.fixes.length<2)out.fixes.push(f);
+  });
+  return out;
+}
+function reviewBuild(b,html){
+  var t0=Date.now();
+  return post('analysis',reviewPrompt(b,html),
+    'You are a design director reviewing one page. Reply with one JSON object and nothing else.',
+    {maxOutputTokens:400,temperature:.4})
+    .then(function(d){
+      record(d,Date.now()-t0);
+      var o=jsonFrom(d.text);if(!o)throw Object.assign(new Error('The review was not JSON'),{status:502});
+      var r=readReview(o);if(!r)throw Object.assign(new Error('The review came back unusable'),{status:502});
+      return{review:r,provider:d.provider,model:d.model,ms:Date.now()-t0};
+    })
+    .catch(function(e){failed(e);return null});
+}
+
 /* ---------- page plan ---------- */
 var SECTION_IDS=['logos','statement','services','servicelist','showcase','stats','products','booking',
   'pricing','testimonial','faq','posts','team','contact','map','steps','prose'];
@@ -3161,6 +3276,7 @@ function test(){
 }
 
 window.__SCEN_AI={AI:AI,probe:probe,usable:usable,label:label,readModels:readModels,designUI:designUI,
+  reviewBuild:reviewBuild,
   writeCopy:writeCopy,writePlan:writePlan,readEdit:readEdit,readTurn:readTurn,test:test,SECTION_IDS:SECTION_IDS};
 })();
 </script>
@@ -5036,7 +5152,7 @@ function buildPlanSteps(){
 }
 
 function startBuild(){
-  S.phase='building';S.built=false;S.files=[];S.buildLog=[];save();
+  S.phase='building';S.built=false;S.files=[];S.buildLog=[];S.qaRuns=0;S.qaVerdict='';save();
   setPhasePill();
   /* The build used to hide the conversation and put a log in its place, so the
      moment someone asked for a site the thing they were talking to disappeared.
@@ -5070,7 +5186,7 @@ function startBuild(){
 
   var i=0,t0=Date.now();
   function run(){
-    if(i>=steps.length)return done();
+    if(i>=steps.length)return qaPass(done);
     var st=steps[i],row=document.createElement('div');
     row.className='step run';
     row.innerHTML='<span class="mark"></span><span>'+esc(st.l)+'<span class="sub">'+esc(st.s)+'</span></span><span class="ms"></span>';
@@ -5141,6 +5257,70 @@ function startBuild(){
                        :'Now the change you asked for while that ran.');
     setTimeout(next,600);
   }
+  /* §16–§18 — mark the page, fix the worst of it, stop. Two passes at most,
+     and the second only if the first actually changed something: a loop that
+     keeps regenerating is a build that never ends. */
+  function applyQaFix(f){
+    var b=S.brief,u=b.__ui||(b.__ui={});
+    var m=String(f).split(':'),k=m[0],v=m[1];
+    if(k==='hero'){u.hero=v;return L('reshaped the first screen','pehli screen ka shape badla')}
+    if(k==='density'){u.density=v;return L('opened up the spacing','spacing khol di')}
+    if(k==='align'){u.heroAlign=v;return L('moved the hero '+v,'hero '+v+' kar diya')}
+    if(k==='caps'){u.caps=(v==='on');return L('changed the heading case','heading ka case badla')}
+    if(k==='radius'){u.radius=(v==='sharp')?2:20;return L('changed the corners','corners badle')}
+    if(k==='sections'){
+      S.depth=(v==='more')?'pro':'lite';setDepthLabel();
+      return L('built '+(v==='more'?'more':'fewer')+' sections',(v==='more'?'aur':'kam')+' sections banaye');
+    }
+    if(k==='images'){delete b.__art;delete b.__heroImage;return L('reshot the pictures','photos dobara')}
+    return '';
+  }
+  function qaPass(after){
+    var b=S.brief;
+    if(!X.usable()||(S.qaRuns||0)>=2)return after();
+    S.qaRuns=(S.qaRuns||0)+1;
+    var home=(gen&&gen.files.filter(function(f){return /index\.html$/.test(f.path)})[0])||null;
+    if(!home)return after();
+    var row=document.createElement('div');
+    row.className='step run';
+    row.innerHTML='<span class="mark"></span><span>'+esc(L('Reviewing the design','Design ko parakh raha hoon'))+
+      '<span class="sub"></span></span><span class="ms"></span>';
+    list.appendChild(row);list.scrollTop=list.scrollHeight;jumpChat();
+    var a=Date.now(),settled=false;
+    function close(sub){
+      row.className='step done';row.querySelector('.mark').textContent='✓';
+      row.querySelector('.sub').textContent=sub||'';
+      row.querySelector('.ms').textContent=(Date.now()-a)+'ms';
+      jumpChat();
+    }
+    /* the review is one more network call at the end of a build; it may not
+       hold it up for longer than a step would */
+    var give=setTimeout(function(){
+      if(settled)return;settled=true;
+      close(L('review took too long','review mein der lagi'));after();
+    },30000);
+    X.reviewBuild(b,home.body).then(function(r){
+      if(settled)return;settled=true;clearTimeout(give);
+      setAiPill();
+      if(!r){close(L('review unavailable','review nahi ho paaya'));return after()}
+      var sc=r.review.scores,vals=[];
+      Object.keys(sc).forEach(function(k){if(sc[k]!=null)vals.push(sc[k])});
+      var low=vals.length?Math.min.apply(null,vals):null;
+      S.qaVerdict=r.review.verdict||'';
+      var did=[];
+      if(low!=null&&low<8)r.review.fixes.forEach(function(f){var t=applyQaFix(f);if(t)did.push(t)});
+      close((low!=null?low+'/10 '+L('at its weakest','sabse kamzor'):'')+(did.length?' · '+did.join(', '):''));
+      if(!did.length)return after();
+      save();
+      try{gen=buildFiles()}catch(e){}
+      if(S.tab==='preview')renderMain();
+      qaPass(after);
+    },function(){
+      if(settled)return;settled=true;clearTimeout(give);
+      close(L('review unavailable','review nahi ho paaya'));after();
+    });
+  }
+
   function done(){
     S.phase='built';S.built=true;S.files=gen.files.map(function(f){return f.path});
     if(!S.file)S.file=gen.files[0].path;
@@ -5170,6 +5350,7 @@ function startBuild(){
             (b.__ui&&b.__ui.idea?esc(String(b.__ui.idea).replace(/\.$/,''))+'. ':'')+
             secs+'s mein bani.')+
         (innerWidth>980?'':'<br/><br/>'+L('Tap <b>Preview</b> at the top to see it','Upar <b>Preview</b> dabao'))+
+        (S.qaVerdict?'<br/><br/>'+esc(String(S.qaVerdict).slice(0,180)):'')+
         (signedIn()?'':'<br/><br/>'+L('You are not signed in, so saving and publishing are off — the build itself is finished.',
                                       'Aap signed in nahi ho, isliye save aur publish band hain — build to poori ho chuki hai.'))+
         autoImages());

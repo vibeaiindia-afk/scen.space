@@ -78,12 +78,22 @@ aspiration — if it is in the first list, it is in the code.
 - **§32 no baked-in text.** Stated in every image prompt.
 - **§41 fallback.** A failed image run leaves the placeholders and says what
   happened; it never blocks the build.
+- **§7 five openings.** editorial, split, full, statement and product are real
+  layouts now, chosen per build, not one centred hero for everything.
+- **§16 §17 §18 review.** The build marks its own work before it finishes: the
+  page it just wrote goes to the model with §17's questions — could this belong
+  to ten businesses, is every section the same layout, is the accent overused,
+  does the type have hierarchy — and comes back scored. Below 8 at its weakest
+  it changes something and rebuilds. The fixes are a closed list of levers that
+  exist (hero shape, density, alignment, case, radius, section count, reshoot),
+  because advice the studio cannot carry out is not a fix. Two passes at most,
+  and the second only if the first changed something.
 
 ### Not true today — do not claim it
 
-- **§16 §17 §18 §38 §42 visual QA loop.** Nothing screenshots the result and
-  scores it, and nothing regenerates a weak image. The build ends when the
-  files are written.
+- **§38 §42 image QA.** Nothing looks at a generated photograph and decides it
+  is weak. The review below marks the page, not the pictures — it can ask for
+  the set to be reshot, but it cannot tell a good frame from a bad one.
 - **§12 responsive by design.** There are real mobile rules, but the mobile
   layout is the desktop one restructured by CSS, not designed separately.
 - **§29 mobile crops.** One ratio per slot; no 9:16 variant is generated.

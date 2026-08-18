@@ -3001,7 +3001,74 @@ function applyTurn(o){
     if(FEATURES[f]&&b.features.indexOf(f)<0)b.features.push(f)});
   if(Array.isArray(u.dropFeatures))u.dropFeatures.forEach(function(f){
     b.features=b.features.filter(function(x){return x!==f})});
+  if(o.__text)groundTurn(o.__text);
   renderMain();
+}
+
+/* The model reads a brief; the brief also says things outright. A gaming
+   platform came back as a portfolio with no name, while the text it was given
+   said "called MADGAMES.FUN" and "gaming" a dozen times — so where the words
+   are explicit and the model's answer is not supported by them, the words
+   win. Nothing here overrules a field the model got from the text; it fills
+   what was left blank and corrects what the text contradicts. */
+function groundTurn(text){
+  var b=S.brief;
+  if(!b.name){
+    /* A dot is part of a domain, never a sentence: allowing \w and '.' in one
+       run turned "called MADGAMES.FUN. The website…" into the brand
+       "MADGAMES.FUN. The". The plain capitalised form is tried first, since a
+       brief that gives both usually means the shorter one for the logo. */
+    var nm=text.match(/["\u201c]([^"\u201d]{1,40})["\u201d]/)
+         ||text.match(/\b(?:called|named|naam)\s+((?:[A-Z][\w&']*)(?:[ -](?:[A-Z][\w&']*|of|and|&)){0,2})/)
+         ||text.match(/\b(?:called|named)\s+([A-Za-z0-9][\w&']*(?:\.[A-Za-z]{2,6})+)/)
+         ||text.match(/\b(?:website|site|app|brand|project)\s+name\s*[:\u2014-]?\s*([^\n.,]{2,40})/i);
+    if(nm){var v=nm[1].trim().replace(/[.,]+$/,'').replace(/\s+(?:The|A|An)$/,'');if(v)b.name=v.slice(0,48)}
+  }
+  /* Dark or light is never a guess when the brief says it outright. */
+  var wantsDark=/\b(dark|near-?black|charcoal|midnight|black (?:ui|interface|background))\b/i.test(text),
+      wantsLight=/\b(light (?:ui|theme|interface|mode)|white background|bright and clean)\b/i.test(text);
+  if(wantsDark&&!wantsLight&&STYLES[b.style]&&!STYLES[b.style].dark)b.style='cinematic';
+  if(wantsLight&&!wantsDark&&STYLES[b.style]&&STYLES[b.style].dark)b.style='minimal';
+
+  /* The accent, when the brief names one. A specification is full of hex —
+     backgrounds, surfaces, cards — so only the sentence that says "accent"
+     counts, and a colour word in it beats a hex that belongs to the page. */
+  var acc=text.split(/(?<=[.!?\n])\s/).filter(function(l){return /\baccent\b/i.test(l)})[0];
+  if(acc){
+    var named=acc.match(/\b(lime|neon green|yellow-?green|acid green|electric blue|hot pink|neon [a-z]+|[a-z]+ green)\b/i);
+    var col=(named&&findColor(named[0]))||findColor(acc.replace(/#[0-9a-f]{3,8}/gi,''))||(acc.match(/#[0-9a-f]{6}\b/i)||[])[0];
+    if(col)b.accent=col;
+  }
+
+  /* The pages, when the brief lists a navigation. A model that answers with
+     one page has not read the sidebar the client spelled out. */
+  var navLine=text.split(/\n|(?<=[.!?])\s/).filter(function(l){
+    return /\b(sidebar|navigation|nav items?|menu items?|left nav)\b/i.test(l)&&l.split(',').length>=3})[0];
+  if(navLine){
+    var items=navLine.replace(/^[^:]*[:(]|\)/g,'')
+      .replace(/\b(sidebar|navigation|nav|menu|items?|with|should|have|contain|the|a|an|plus|and|left|top)\b/gi,' ')
+      .split(/\s*(?:,|\||\/)\s*/)
+      .map(function(x){return C.titleCase(x.replace(/[^\w. ]/g,' ').replace(/\s+/g,' ').trim())})
+      .filter(function(x){return x&&x.length<=20&&/[a-z]/i.test(x)});
+    if(items.length>=3){
+      if(items[0].toLowerCase()!=='home')items.unshift('Home');
+      if(!items.some(function(x){return /contact/i.test(x)}))items.push('Contact');
+      b.pages=items.slice(0,8);
+    }
+  }
+
+  var ind=matchOne(IND_WORDS,text);
+  if(!ind||ind===b.industry)return;
+  var cur=IND_WORDS[b.industry];
+  if(cur&&cur.test(text))return;          /* the model's trade is in the words too */
+  var old=INDUSTRIES[b.industry]||INDUSTRIES.other,P=INDUSTRIES[ind];
+  if(!P)return;
+  b.industry=ind;b.industryOther='';
+  /* the pack that came with the wrong trade goes with it */
+  if(!b.pages.length||(b.pages.join()===old.pages.join()&&!navLine))b.pages=P.pages.slice();
+  if(!b.features.length||b.features.join()===old.feats.join())b.features=P.feats.slice();
+  if(!b.accent||b.accent===old.accent)b.accent=P.accent;
+  if(!b.pitch||b.pitch===old.pitch)b.pitch='';
 }
 /* The model could not be read. Carry on with the old path, without echoing
    the client's line twice — it is already on screen. */
@@ -3251,6 +3318,7 @@ function handleText(text){
             esc(String(AI.lastError).slice(0,120))+'. Carrying on without it.');
           return resumeInterview(text);
         }
+        if(o)o.__text=text;
         applyTurn(o);
         if(o.reply)agentSay(esc(String(o.reply).slice(0,300)));
         if(o.ready_to_build&&haveEnough(S.brief)){

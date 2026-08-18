@@ -95,19 +95,26 @@ button.pill:hover{border-color:rgba(255,255,255,.28);color:#fff}
 .chat-body{flex:1;min-height:0;overflow-y:auto;padding:18px 16px 8px;scroll-behavior:smooth}
 .chat-body::-webkit-scrollbar{width:7px}
 
-.msg{margin-bottom:18px;animation:fadeUp .34s cubic-bezier(.2,.7,.3,1) both}
+/* The conversation, in the shape of the one the client asked for: no name and
+   no avatar over every reply, the person's own message as a soft pill on the
+   right, the agent's as plain text at reading size, and the work as a bordered
+   card. Their colours, in black. */
+.msg{margin-bottom:22px;animation:fadeUp .34s cubic-bezier(.2,.7,.3,1) both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
 .msg.user{display:flex;justify-content:flex-end}
-.msg.user .bubble{background:rgba(223,255,69,.09);border:1px solid rgba(223,255,69,.2);color:#f2f6dd;
-  padding:9px 13px;border-radius:14px 14px 4px 14px;max-width:86%;font-size:13.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
-.msg.agent .who{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.msg.user .bubble{background:#17171d;border:1px solid #22222b;color:#ececed;
+  padding:11px 16px;border-radius:18px;max-width:84%;font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+/* the label over every agent message is gone; the thinking row keeps the mark */
+.msg.agent .who{display:none;align-items:center;gap:8px;margin-bottom:8px}
+.msg.agent.think .who{display:flex}
 .msg.agent .who b{font-size:12px;font-weight:600;color:#c9c9d2;letter-spacing:-.01em}
 .avatar{width:20px;height:20px;border-radius:7px;flex:0 0 auto;
   background:conic-gradient(from 210deg,#dfff45,#7beeff,#7d6cff,#dfff45);
   box-shadow:0 0 0 1px rgba(255,255,255,.1) inset}
 .avatar.thinking{animation:pulseAv 1.15s ease-in-out infinite}
 @keyframes pulseAv{50%{filter:brightness(1.5) saturate(1.3)}}
-.msg.agent .text{font-size:13.7px;line-height:1.62;color:#dcdce3;white-space:pre-wrap;word-break:break-word}
+.msg.agent .text{font-size:14.4px;line-height:1.65;color:#e4e4e8;white-space:pre-wrap;word-break:break-word;
+  letter-spacing:-.006em}
 .msg.agent .text b{color:#fff;font-weight:600}
 .msg.agent .text code{background:#16161d;border:1px solid var(--line);padding:1px 5px;border-radius:5px;font-size:12px;color:var(--cyan)}
 .msg.agent .text ul{margin:8px 0 0;padding-left:17px}
@@ -123,7 +130,9 @@ button.pill:hover{border-color:rgba(255,255,255,.28);color:#fff}
 
 /* answer chips */
 .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
-.chips button{border:1px solid #23232c;background:#101016;color:#b6b6c1;border-radius:999px;padding:7px 12px;font-size:12.5px;transition:.15s;display:inline-flex;align-items:center;gap:7px}
+.chips{gap:8px;margin-top:14px}
+.chips button{border:1px solid #26262f;background:#0f0f14;color:#cfcfd6;border-radius:11px;padding:9px 14px;
+  font-size:13px;font-weight:500;transition:.15s;display:inline-flex;align-items:center;gap:7px}
 .chips button:hover{border-color:rgba(223,255,69,.45);color:#fff;background:rgba(223,255,69,.07)}
 .chips button.on{border-color:var(--acid);color:var(--acid);background:rgba(223,255,69,.1)}
 .chips button.on:before{content:"✓";font-size:10px}
@@ -144,7 +153,7 @@ button.pill:hover{border-color:rgba(255,255,255,.28);color:#fff}
 
 /* composer */
 .composer{flex:0 0 auto;padding:10px 14px 14px;border-top:1px solid var(--line);background:#0a0a0e}
-.comp-box{border:1px solid #22222b;background:#101016;border-radius:15px;padding:9px 10px 8px;transition:.18s}
+.comp-box{border:1px solid #24242e;background:#0f0f14;border-radius:22px;padding:13px 14px 9px;transition:.18s}
 .comp-box:focus-within{border-color:rgba(223,255,69,.42);box-shadow:0 0 0 3px rgba(223,255,69,.06)}
 .comp-box textarea{width:100%;background:transparent;border:0;outline:0;resize:none;min-height:44px;max-height:150px;
   font-size:13.5px;line-height:1.55;padding:3px 4px}
@@ -155,7 +164,7 @@ button.pill:hover{border-color:rgba(255,255,255,.28);color:#fff}
 .mini:hover{background:#17171e;color:#dcdce3}
 .mini.on{background:rgba(223,255,69,.1);color:var(--acid);box-shadow:inset 0 0 0 1px rgba(223,255,69,.28)}
 .mini i{font-style:normal;font-size:10px;opacity:.7}
-.send{width:30px;height:30px;border-radius:9px;background:var(--acid);color:#090a08;display:grid;place-items:center;
+.send{width:32px;height:32px;border-radius:50%;background:var(--acid);color:#090a08;display:grid;place-items:center;
   font-weight:800;font-size:14px;transition:.16s}
 .send[disabled]{background:#1c1c24;color:#5a5a66;pointer-events:none}
 .send:hover{transform:translateY(-1px)}
@@ -163,7 +172,14 @@ button.pill:hover{border-color:rgba(255,255,255,.28);color:#fff}
 
 /* the build, inside the conversation */
 .workcard{padding:0;background:none;border:0}
-.work{border:1px solid #1e1e26;border-radius:14px;background:#0c0c11;padding:13px 15px 6px}
+.work{border:1px solid #22222b;border-radius:16px;background:#0d0d12;padding:14px 16px 8px}
+/* what you can do with a reply, under it — copy is real, rebuild is real */
+.acts{display:flex;gap:2px;margin-top:9px}
+.acts button{width:28px;height:28px;border-radius:8px;color:#61616d;font-size:13px;display:grid;place-items:center;transition:.14s}
+.acts button:hover{background:#16161d;color:#d6d6de}
+.seg2{display:inline-flex;gap:3px;padding:3px;border:1px solid #22222b;border-radius:11px;background:#0b0b0f;margin-top:10px}
+.seg2 button{padding:6px 16px;border-radius:8px;font-size:12.5px;color:#83838f;font-weight:500}
+.seg2 button.on{background:#191921;color:#fff}
 .work-h{display:block;font-size:12.5px;font-weight:600;color:#e9e9ef;margin-bottom:6px}
 .work .steps{max-height:236px;overflow-y:auto;scrollbar-width:thin}
 .work .step{font-size:12.4px}
@@ -3596,7 +3612,22 @@ function nodeFor(m){
   }else{
     /* No timing on replies. A chat does not report how long it thought. */
     d.innerHTML='<div class="who"><span class="avatar"></span><b>Scen Agent</b></div>'+
-      '<div class="text">'+m.html+'</div>';
+      '<div class="text">'+m.html+'</div>'+
+      /* Two actions, both real. Nothing here is a button that only looks like
+         one — a thumbs-up that goes nowhere is the fake functionality the
+         build standard forbids. */
+      '<div class="acts"><button data-act="copy" title="Copy">⧉</button>'+
+      (S.built?'<button data-act="rebuild" title="Build it again">↻</button>':'')+'</div>';
+    d.addEventListener('click',function(e){
+      var t=e.target.closest('button[data-act]');if(!t)return;
+      if(t.dataset.act==='copy'){
+        var txt=d.querySelector('.text').innerText;
+        try{navigator.clipboard.writeText(txt);toast(L('Copied','Copy ho gaya'))}
+        catch(x){toast(L('Could not copy','Copy nahi hua'))}
+        return;
+      }
+      if(t.dataset.act==='rebuild'){rebuild(L('Rebuilt it.','Dobara bana diya.'))}
+    });
   }
   return d;
 }
@@ -3633,7 +3664,7 @@ var THINK_EN=['Reading that…','Working it out…','Choosing the words…','Alm
 function thinking(label){
   clearThinking();
   var d=document.createElement('div');
-  d.className='msg agent';d.id='thinkNode';
+  d.className='msg agent think';d.id='thinkNode';
   d.innerHTML='<div class="who"><span class="avatar thinking"></span><b>Scen Agent</b></div>'+
     '<div class="text"><span class="typing"><i></i><i></i><i></i></span>'+
     '<span class="thinkline" id="thinkLine"></span></div>';
@@ -5277,7 +5308,16 @@ function startBuild(){
   var card=document.createElement('div');
   card.className='msg agent workcard';
   card.innerHTML='<div class="work"><b class="work-h">'+L('Building ','Bana raha hoon ')+esc(S.brief.name)+'</b>'+
-                 '<div class="steps"></div></div>';
+                 '<div class="steps"></div>'+
+                 '<div class="seg2"><button data-card="details" class="on">'+L('Details','Details')+'</button>'+
+                 '<button data-card="preview">'+L('Previewing','Preview')+'</button></div></div>';
+  card.addEventListener('click',function(e){
+    var t=e.target.closest('button[data-card]');if(!t)return;
+    var det=t.dataset.card==='details';
+    card.querySelectorAll('.seg2 button').forEach(function(x){x.classList.toggle('on',x===t)});
+    card.querySelector('.steps').style.display=det?'':'none';
+    if(!det)setTab('preview');
+  });
   body.appendChild(card);jumpChat();
   var list=card.querySelector('.steps');
   /* the Build pane is still there for anyone who opens it */

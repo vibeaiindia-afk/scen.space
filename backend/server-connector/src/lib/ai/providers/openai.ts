@@ -1,3 +1,4 @@
+import { modelFrom } from '../safe';
 import { ProviderAdapter, ProviderError, type GenerateInput, type ProviderResult } from '../types';
 
 function textFromResponse(body: any): string {
@@ -14,12 +15,12 @@ function textFromResponse(body: any): string {
 export const openAIAdapter: ProviderAdapter = {
   id: 'openai',
   envKey: 'OPENAI_API_KEY',
-  defaultModel: process.env.SCEN_OPENAI_MODEL || 'gpt-5.6',
+  defaultModel: modelFrom(process.env.SCEN_OPENAI_MODEL,'gpt-5.6'),
   isConfigured: () => Boolean(process.env.OPENAI_API_KEY),
   async generate(input: GenerateInput, signal: AbortSignal, modelOverride?: string): Promise<ProviderResult> {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) throw new ProviderError('openai','OPENAI_API_KEY is not configured',503,false,'missing_key');
-    const model = modelOverride || process.env.SCEN_OPENAI_MODEL || 'gpt-5.6';
+    const model = modelOverride || modelFrom(process.env.SCEN_OPENAI_MODEL,'gpt-5.6');
     const payload: any = {
       model,
       input: input.system ? [

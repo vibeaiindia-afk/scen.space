@@ -2450,6 +2450,11 @@ function record(d,ms){
   AI.outTok+=Number(u.outputTokens||0);
   AI.cost+=Number(u.estimatedCostUsd||0);
 }
+function scrubAI(text){
+  return String(text==null?'':text)
+    .replace(/\b(?:xai-|sk-(?:ant-|proj-|live-|test-)?|gsk_|AIza|ghp_|glpat-)[A-Za-z0-9_\-]{12,}\b/g,'[redacted]')
+    .replace(/\b[A-Za-z0-9_\-]{40,}\b/g,'[redacted]');
+}
 function failed(e){
   if(e&&(e.name==='AbortError'||/aborted/i.test(String(e.message||'')))){
     e=new Error('The gateway did not answer in time');e.status=504;e.code='timeout';
@@ -2458,7 +2463,7 @@ function failed(e){
   if(s===401||s===403){AI.state='signedout';AI.lastError='Not signed in on this domain.'}
   else if(s===503||(e&&e.code==='missing_key')){AI.state='error';AI.lastError='No provider key configured on the server.'}
   else if(!s||s===404){AI.state='offline';AI.lastError='The /api routes are not reachable from this page.'}
-  else{AI.state='error';AI.lastError=(e&&e.message)||('Gateway error ('+s+')')}
+  else{AI.state='error';AI.lastError=scrubAI((e&&e.message)||('Gateway error ('+s+')'))}
   return null;
 }
 /* Which models this workspace actually has. /api/capabilities answers with
@@ -2772,11 +2777,18 @@ function req(path,opts){
     });
   });
 }
+/* Defence in depth: whatever the gateway hands back, nothing key-shaped is
+   ever drawn into the chat or the composer note. */
+function scrub(text){
+  return String(text==null?'':text)
+    .replace(/\b(?:xai-|sk-(?:ant-|proj-|live-|test-)?|gsk_|AIza|ghp_|glpat-)[A-Za-z0-9_\-]{12,}\b/g,'[redacted]')
+    .replace(/\b[A-Za-z0-9_\-]{40,}\b/g,'[redacted]');
+}
 function msg(e){
   if(!e)return 'Failed';
   if(e.status===401)return 'Not signed in on this domain.';
   if(e.status===404)return 'This route is not reachable from here.';
-  return String(e.message||'Failed');
+  return scrub(e.message||'Failed');
 }
 
 var LOADERS={

@@ -1,14 +1,15 @@
+import { modelFrom } from '../safe';
 import { ProviderAdapter, ProviderError, type GenerateInput, type ProviderResult } from '../types';
 
 export const anthropicAdapter: ProviderAdapter = {
   id:'anthropic',
   envKey:'ANTHROPIC_API_KEY',
-  defaultModel:process.env.SCEN_ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+  defaultModel:modelFrom(process.env.SCEN_ANTHROPIC_MODEL,'claude-sonnet-4-20250514'),
   isConfigured:()=>Boolean(process.env.ANTHROPIC_API_KEY),
   async generate(input:GenerateInput, signal:AbortSignal, modelOverride?:string):Promise<ProviderResult>{
     const apiKey=process.env.ANTHROPIC_API_KEY;
     if(!apiKey) throw new ProviderError('anthropic','ANTHROPIC_API_KEY is not configured',503,false,'missing_key');
-    const model=modelOverride || process.env.SCEN_ANTHROPIC_MODEL || 'claude-sonnet-4-20250514';
+    const model=modelOverride || modelFrom(process.env.SCEN_ANTHROPIC_MODEL,'claude-sonnet-4-20250514');
     const payload:any={model,max_tokens:Math.max(1,Math.min(input.maxOutputTokens||2048,8192)),messages:[{role:'user',content:input.input}]};
     if(input.system) payload.system=input.system;
     if(typeof input.temperature==='number') payload.temperature=Math.max(0,Math.min(input.temperature,1));

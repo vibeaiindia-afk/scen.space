@@ -1,3 +1,4 @@
+import { modelFrom } from '../safe';
 import { ProviderAdapter, ProviderError, type GenerateInput, type ProviderResult } from '../types';
 
 function extractText(body:any):string{
@@ -6,11 +7,11 @@ function extractText(body:any):string{
 }
 
 export const geminiAdapter:ProviderAdapter={
-  id:'gemini',envKey:'GEMINI_API_KEY',defaultModel:process.env.SCEN_GEMINI_MODEL||'gemini-3.5-flash',isConfigured:()=>Boolean(process.env.GEMINI_API_KEY),
+  id:'gemini',envKey:'GEMINI_API_KEY',defaultModel:modelFrom(process.env.SCEN_GEMINI_MODEL,'gemini-3.5-flash'),isConfigured:()=>Boolean(process.env.GEMINI_API_KEY),
   async generate(input:GenerateInput, signal:AbortSignal, modelOverride?:string):Promise<ProviderResult>{
     const apiKey=process.env.GEMINI_API_KEY;
     if(!apiKey) throw new ProviderError('gemini','GEMINI_API_KEY is not configured',503,false,'missing_key');
-    const model=modelOverride||process.env.SCEN_GEMINI_MODEL||'gemini-3.5-flash';
+    const model=modelOverride||modelFrom(process.env.SCEN_GEMINI_MODEL,'gemini-3.5-flash');
     const payload:any={contents:[{role:'user',parts:[{text:input.input}]}],generationConfig:{maxOutputTokens:Math.max(1,Math.min(input.maxOutputTokens||2048,8192))}};
     if(input.system) payload.systemInstruction={parts:[{text:input.system}]};
     if(typeof input.temperature==='number') payload.generationConfig.temperature=input.temperature;

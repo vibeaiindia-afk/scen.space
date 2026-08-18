@@ -1,10 +1,11 @@
 import { ProviderAdapter, ProviderError, type GenerateInput, type ProviderResult } from '../types';
+import { modelFrom } from '../safe';
 
 // xAI (Grok) speaks the OpenAI chat/completions shape, not the Responses API,
 // so this adapter builds a messages array rather than reusing the OpenAI one.
 // Base URL and model are env-configurable so API revisions need no code change.
 const BASE = () => process.env.SCEN_GROK_BASE_URL || 'https://api.x.ai/v1';
-const MODEL = () => process.env.SCEN_GROK_MODEL || 'grok-4.6';
+const MODEL = () => modelFrom(process.env.SCEN_GROK_MODEL, 'grok-4.6');
 
 export const grokAdapter: ProviderAdapter = {
   id: 'grok',

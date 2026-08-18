@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/user-auth';
 import { generateWithRouting } from '@/lib/ai/router';
 import type { AIFeature, AIProviderId } from '@/lib/ai/types';
+import { redact } from '@/lib/ai/safe';
 
 export const dynamic='force-dynamic';
 /* The gateway gives a provider 45 seconds; a function that Vercel stops at its
@@ -18,5 +19,9 @@ export async function POST(req:NextRequest){
     const preferred=providers.includes(body?.provider as AIProviderId)?body.provider as AIProviderId:undefined;
     const result=await generateWithRouting({feature,input:String(body?.input||''),system:typeof body?.system==='string'?body.system:undefined,maxOutputTokens:Number(body?.maxOutputTokens||0)||undefined,temperature:typeof body?.temperature==='number'?body.temperature:undefined},preferred);
     return NextResponse.json({...result,workspaceId:user.workspaceId},{headers:{'Cache-Control':'no-store','X-Scen-AI-Provider':result.provider,'X-Scen-AI-Request-Id':result.requestId}});
-  }catch(e:any){return NextResponse.json({error:e?.message||'AI gateway failed',code:e?.code||'gateway_error',provider:e?.provider},{status:e?.status||500,headers:{'Cache-Control':'no-store'}})}
+  }catch(e:any){
+    /* A provider's own error can quote what it was sent — "Model not found:
+       xai-…" put a live key in front of the client, in the studio's chat. */
+    return NextResponse.json({error:redact(e?.message||'AI gateway failed'),code:e?.code||'gateway_error',provider:e?.provider},{status:e?.status||500,headers:{'Cache-Control':'no-store'}});
+  }
 }

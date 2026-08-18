@@ -1548,10 +1548,10 @@ function makeJs(b){
 function tint(t,i,ratio){return mix(t.a,t.st.bg,ratio==null?(.72+((i||0)%4)*.06):ratio)}
 /* Figures a business has not given are placeholders that read as placeholders,
    never numbers a visitor could believe. */
+function hasProof(b){return !!(b.__stats&&b.__stats.length)}
 function proof(b,i){
-  var P=pack(b),real=b.__stats&&b.__stats.length?b.__stats:null;
-  if(real)return real[i%real.length];
-  return [['—','your number here'],['—','years, clients, or work'],['—','one figure you can stand behind']][i%3];
+  var real=b.__stats&&b.__stats.length?b.__stats:null;
+  return real?real[i%real.length]:['',''];
 }
 /* A generated photograph when the client paid for one, the drawn placeholder
    when they did not. Everything that shows art asks here, so one switch turns
@@ -1599,8 +1599,8 @@ var SEC={
       art='      <div class="stage" data-reveal>\n'+
 '        <div class="ring r1"></div><div class="ring r2"></div>\n'+
 '        <div class="orb"></div>\n'+
-'        <div class="card3d c1"><b>'+esc(proof(b,0)[0])+'</b>'+esc(proof(b,0)[1])+'</div>\n'+
-'        <div class="card3d c2"><b>'+esc(proof(b,2)[0])+'</b>'+esc(proof(b,2)[1])+'</div>\n'+
+(hasProof(b)?'        <div class="card3d c1"><b>'+esc(proof(b,0)[0])+'</b>'+esc(proof(b,0)[1])+'</div>\n'+
+'        <div class="card3d c2"><b>'+esc(proof(b,2)[0])+'</b>'+esc(proof(b,2)[1])+'</div>\n':'')+
 '      </div>';
     }else{
       art='      <div class="stage" data-reveal style="display:grid;grid-template-columns:1fr 1fr;gap:14px;aspect-ratio:auto">\n'+
@@ -1615,8 +1615,8 @@ var SEC={
 '          <a class="btn" href="'+pageFile(lastPage(b))+'">'+esc(P.cta[2])+'</a>',
 '          <a class="btn ghost" href="'+pageFile(b.pages[1]||'Home')+'">'+esc(b.pages[1]||'Learn more')+'</a>',
 '        </div>',
-'        <div class="proof" data-reveal>'+[0,1,2].map(function(i){
-          var st=proof(b,i);return '<span>'+esc(st[0]+' '+st[1])+'</span>'}).join('')+'</div>',
+(hasProof(b)?'        <div class="proof" data-reveal>'+[0,1,2].map(function(i){
+          var st=proof(b,i);return '<span>'+esc(st[0]+' '+st[1])+'</span>'}).join('')+'</div>':''),
 '      </div>',art,'    </div>','  </section>'].join('\n');
   },
   phero:function(b,t,page){
@@ -1632,7 +1632,13 @@ var SEC={
 '    </div>','  </section>'].join('\n');
   },
   logos:function(b){
-    var row=['Featured in','Trusted by teams','Since '+(2015+(b.name.length%9)),'Independent','Made locally','Award listed'];
+    /* This used to scroll "Featured in · Trusted by teams · Since 2015 ·
+       Award listed" past every visitor — press, trust and a founding year
+       nobody had given. A client can publish that without noticing and cannot
+       defend a word of it. It says what the business does instead. */
+    var P=pack(b),row=(P.gallery||[]).slice(0,4).concat([(INDUSTRIES[b.industry]||INDUSTRIES.other).l]);
+    row=row.filter(Boolean);
+    if(row.length<3)return '';
     var t=row.concat(row).map(function(x){return '<span>'+esc(x)+'</span>'}).join('');
     return '  <div class="marq"><div class="marq-t">'+t+'</div></div>';
   },
@@ -1661,6 +1667,8 @@ var SEC={
   },
   stats:function(b){
     var P=pack(b);
+    /* Three dashes where the numbers should be is worse than no band at all. */
+    if(!hasProof(b))return '';
     return ['  <section style="padding-block:clamp(40px,5vw,64px)">','    <div class="wrap">',
 '      <div class="stats" data-reveal>'+[0,1,2].map(function(i){var s=proof(b,i);
         return '\n        <div><b>'+esc(s[0])+'</b><span>'+esc(s[1])+'</span></div>'}).join('')+'\n      </div>',
@@ -1949,8 +1957,8 @@ function makeGamePage(b,page,pro,t){
 '          <a class="gm-btn" href="game.html?g='+esc(slug(lead[0]))+'">▶ Play '+esc(lead[0])+'</a>\n'+
 '          <a class="gm-btn ghost" href="'+pageFile(b.pages[1]||'Home')+'">Browse all</a>\n'+
 '        </div>\n'+
-'        <div class="gm-hero-stats">'+[0,1,2].map(function(i){var st=proof(b,i);
-        return '<span><b>'+esc(st[0])+'</b>'+esc(st[1])+'</span>'}).join('')+'</div>\n'+
+(hasProof(b)?'        <div class="gm-hero-stats">'+[0,1,2].map(function(i){var st=proof(b,i);
+        return '<span><b>'+esc(st[0])+'</b>'+esc(st[1])+'</span>'}).join('')+'</div>\n':'')+
 '      </div>\n'+
 '      <div class="gm-hero-art" style="background:'+((b.__heroImage)?
         ('linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.45)),url(\''+esc(b.__heroImage)+'\') center/cover no-repeat')
@@ -3396,8 +3404,13 @@ function applyTurn(o){
   if(u.goal&&GOALS[String(u.goal).toLowerCase()])b.goal=String(u.goal).toLowerCase();
   if(u.style&&STYLES[String(u.style).toLowerCase()])b.style=String(u.style).toLowerCase();
   if(u.accent){
+    /* Cyan on the warm-brown Luxury palette is what "the model picked a colour
+       nobody asked for" looks like. A colour is taken when the client's own
+       words called for one; otherwise the trade's accent, which was chosen to
+       sit on that palette, stands. */
     var ac=C.findColor(String(u.accent))||String(u.accent);
-    if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(ac))b.accent=ac;
+    var asked=o.__text&&/\b(colou?r|accent|rang|palette|theme)\b/i.test(o.__text);
+    if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(ac)&&(asked||!b.accent))b.accent=ac;
   }
   if(Array.isArray(u.languages)&&u.languages.length)b.languages=u.languages;
   if(Array.isArray(u.addPages))u.addPages.forEach(function(p){
@@ -3677,6 +3690,19 @@ function refineBrief(text){
   if(nav&&(!b.pages.length||b.pages.join()===P0.pages.join())){
     b.pages=nav;
     chose.push('the pages from your navigation — '+b.pages.join(', '));
+  }
+
+  /* A trade's own accent belongs to its own palette. When the style changed
+     after the accent was chosen, the pairing is nobody's decision — put the
+     trade's accent back unless the client named a colour. */
+  if(b.style&&b.accent&&!/#/.test(text)&&!/\b(colou?r|accent|rang)\b/i.test(text)){
+    var PA=INDUSTRIES[b.industry]||INDUSTRIES.other;
+    if(PA.accent&&b.accent!==PA.accent&&STYLES[b.style]&&STYLES[b.style].dark!==undefined){
+      /* only when the two clash: a light accent on a warm dark page, say */
+      var acc=C.hexToRgb(b.accent),bg=C.hexToRgb(STYLES[b.style].bg);
+      var warmBg=bg[0]>bg[2],coolAccent=acc[2]>acc[0]+30;
+      if(warmBg&&coolAccent){b.accent=PA.accent;chose.push('the accent this trade is built around')}
+    }
   }
 
   /* "Premium, minimal, futuristic, dark" picked Minimal light, because the

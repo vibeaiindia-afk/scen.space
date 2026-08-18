@@ -1228,7 +1228,7 @@ function gameCss(t){
 '.gm-cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);padding:14px 8px 6px}',
 '.gm-rail a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;color:var(--sub);text-decoration:none;font-size:13.5px;transition:.15s}',
 '.gm-rail a:hover{background:'+t.bg3+';color:var(--ink)}',
-'.gm-rail a[aria-current]{background:var(--a);color:var(--aink);font-weight:600}',
+'.gm-rail a[aria-current]{background:'+t.bg3+';color:var(--ink);font-weight:600;box-shadow:inset 2px 0 0 var(--a)}',
 '.gm-rail a em{font-style:normal;width:18px;text-align:center;opacity:.9}',
 '.gm-col{min-width:0;display:flex;flex-direction:column}',
 '.gm-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:12px 22px;background:'+(st.dark?'rgba(0,0,0,.62)':'rgba(255,255,255,.72)')+';backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}',
@@ -1236,24 +1236,39 @@ function gameCss(t){
 '.gm-search input{flex:1;background:0;border:0;outline:0;color:var(--ink);font:inherit;font-size:14px}',
 '.gm-ico{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:'+t.bg3+';color:var(--sub);display:grid;place-items:center;font-size:14px;cursor:pointer}',
 '.gm-ico:hover{color:var(--ink);border-color:var(--a)}',
-'.gm-body{padding:24px 22px 60px;display:flex;flex-direction:column;gap:34px}',
-'.gm-rowhead{display:flex;align-items:baseline;gap:12px;margin-bottom:13px}',
-'.gm-rowhead h2{font-size:19px;letter-spacing:-.02em;margin:0}',
-'.gm-rowhead a{margin-left:auto;font-size:12.5px;color:var(--a);text-decoration:none}',
-'.gm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}',
-'.gm-card{position:relative;border-radius:16px;overflow:hidden;background:'+t.bg3+';border:1px solid var(--line);text-decoration:none;color:inherit;display:block;transition:transform .18s,box-shadow .18s,border-color .18s}',
-'.gm-card:hover{transform:translateY(-3px);border-color:var(--a);box-shadow:0 16px 40px rgba(0,0,0,.38)}',
-'.gm-shot{aspect-ratio:4/3;display:grid;place-items:center;overflow:hidden;position:relative}',
-'.gm-shot span{font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.62}',
-'.gm-shot:after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(0,0,0,0),rgba(0,0,0,.42));transition:transform .22s}',
-'.gm-card:hover .gm-shot:after{transform:scale(1.08)}',
-'.gm-play{position:absolute;inset:0;display:grid;place-items:center;opacity:0;transition:opacity .18s;z-index:2}',
-'.gm-play b{width:44px;height:44px;border-radius:50%;background:var(--a);color:var(--aink);display:grid;place-items:center;font-size:15px;box-shadow:0 8px 26px rgba(0,0,0,.5)}',
-'.gm-card:hover .gm-play{opacity:1}',
-'.gm-meta{padding:10px 12px 12px}',
-'.gm-meta b{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-'.gm-meta span{font-size:11.5px;color:var(--sub)}',
-'.gm-card.wide{grid-column:span 2}.gm-card.wide .gm-shot{aspect-ratio:16/9}',
+'.gm-body{padding:18px 22px 60px;display:flex;flex-direction:column;gap:30px}',
+'.gm-rowhead{display:flex;align-items:center;gap:12px;margin-bottom:12px}',
+'.gm-rowhead h2{font-size:14px;letter-spacing:.1em;text-transform:uppercase;margin:0;color:var(--ink)}',
+'.gm-rowhead h2:before{content:"";display:inline-block;width:3px;height:13px;border-radius:2px;background:var(--a);margin-right:9px;vertical-align:-1px}',
+'.gm-rowhead a{margin-left:auto;font-size:12.5px;color:var(--sub);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 11px;transition:.15s}',
+'.gm-rowhead a:hover{color:var(--a);border-color:var(--a)}',
+'.gm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(174px,1fr));gap:16px;align-items:start}',
+/* the featured block is a fixed four across, so the tall card and the four
+   beside it close a clean rectangle instead of leaving a hole */
+'.gm-grid.feat{grid-template-columns:repeat(4,1fr);align-items:stretch}',
+'.gm-card{position:relative;border-radius:14px;overflow:hidden;background:'+t.bg3+';border:1px solid var(--line);text-decoration:none;color:inherit;display:flex;flex-direction:column;',
+'  transition:transform .2s cubic-bezier(.2,.7,.3,1),box-shadow .2s,border-color .2s}',
+'.gm-card:hover{transform:translateY(-4px);border-color:'+t.line2+';box-shadow:0 18px 44px rgba(0,0,0,.45)}',
+'.gm-shot{aspect-ratio:4/3;position:relative;overflow:hidden;background-size:cover}',
+'.gm-shot:before{content:"";position:absolute;inset:0;opacity:.35;',
+'  background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);',
+'  background-size:22px 22px;mask-image:radial-gradient(120% 100% at 50% 0%,#000,transparent 78%)}',
+'.gm-shot:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 38%,rgba(0,0,0,.55));transition:opacity .2s;opacity:.85}',
+'.gm-card:hover .gm-shot:after{opacity:1}',
+'.gm-chip{position:absolute;top:9px;left:9px;z-index:2;font-size:10px;letter-spacing:.12em;text-transform:uppercase;',
+'  padding:4px 8px;border-radius:999px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(6px);color:#fff}',
+'.gm-play{position:absolute;inset:0;display:grid;place-items:center;opacity:0;transform:scale(.9);transition:.2s;z-index:3}',
+'.gm-play b{width:52px;height:52px;border-radius:50%;background:var(--a);color:var(--aink);display:grid;place-items:center;font-size:16px;',
+'  box-shadow:0 10px 30px rgba(0,0,0,.55),0 0 0 8px rgba(255,255,255,.06)}',
+'.gm-card:hover .gm-play{opacity:1;transform:scale(1)}',
+'.gm-over{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:18px 20px}',
+'.gm-over b{display:block;font-size:clamp(19px,2.4vw,27px);letter-spacing:-.02em;line-height:1.1}',
+'.gm-over span{font-size:12px;color:rgba(255,255,255,.72)}',
+'.gm-meta{padding:11px 13px 13px;display:flex;flex-direction:column;gap:2px}',
+'.gm-meta b{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+'.gm-meta span{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--sub)}',
+'.gm-card.wide{grid-column:span 2;grid-row:span 2}',
+'.gm-card.wide .gm-shot{aspect-ratio:auto;flex:1;min-height:220px}',
 '.gm-empty{color:var(--sub);font-size:13.5px;padding:10px 2px}',
 '.gm-heart{position:absolute;top:9px;right:9px;z-index:3;width:30px;height:30px;border-radius:50%;border:0;cursor:pointer;',
 '  background:rgba(0,0,0,.42);color:#fff;font-size:13px;opacity:0;transition:.16s;backdrop-filter:blur(6px)}',
@@ -1270,7 +1285,9 @@ function gameCss(t){
 '.gm-foot{margin-top:auto;padding:22px;border-top:1px solid var(--line);color:var(--sub);font-size:12.5px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}',
 '@media (max-width:900px){.gm{grid-template-columns:1fr}.gm-rail{position:static;height:auto;flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}',
 '  .gm-rail .gm-cap{display:none}.gm-brand{padding:6px 8px}.gm-rail a{white-space:nowrap}}',
-'@media (max-width:560px){.gm-grid{grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}.gm-card.wide{grid-column:span 2}}'
+'@media (max-width:1180px){.gm-grid.feat{grid-template-columns:repeat(3,1fr)}}',
+'@media (max-width:820px){.gm-grid.feat{grid-template-columns:repeat(2,1fr)}.gm-card.wide{grid-row:span 1}.gm-card.wide .gm-shot{min-height:170px}}',
+'@media (max-width:560px){.gm-grid{grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:12px}.gm-card.wide{grid-column:span 2}}'
 ].join('\n');
 }
 
@@ -1756,28 +1773,44 @@ nav(b,page),'',body,'',footer(b),
 }
 
 /* ---------- games: the platform pages ---------- */
-var GM_ICON={home:'⌂','new games':'✦',popular:'★',trending:'📈',multiplayer:'👥',action:'⚔',
-  adventure:'🧭',racing:'🏁',sports:'🏀',puzzle:'🧩',shooting:'🎯',arcade:'👾',casual:'☕',
-  '.io games':'🌐',favorites:'♥','recently played':'↺',contact:'✉',about:'◇'};
+/* One tone of icon. Emoji next to line glyphs was the giveaway that this
+   navigation had been assembled rather than designed. */
+var GM_ICON={home:'◉','new games':'✦',popular:'★',trending:'↗',multiplayer:'◍',action:'◆',
+  adventure:'◈',racing:'▸',sports:'●',puzzle:'▣',shooting:'◎',arcade:'▤',casual:'○',
+  '.io':'◌','.io games':'◌',favorites:'♥',favourites:'♥','recently played':'↺',
+  contact:'✉',about:'◇',games:'▦',pricing:'◇',blog:'▤'};
+/* Art with something in it. A flat two-stop gradient reads as a placeholder;
+   two light sources, a hue that follows the genre and a fine grid give a card
+   enough to look at while the real thumbnails are missing. */
+var GM_HUE={racing:14,shooting:352,puzzle:268,sports:150,arcade:190,casual:44,
+  action:8,adventure:172,multiplayer:222,'.io':96};
 function gmShot(cat,i){
-  var hue=(i*47)%360;
-  return 'linear-gradient('+(120+i*23)+'deg,hsl('+hue+' 46% 24%),hsl('+((hue+48)%360)+' 38% 13%))';
+  var h=GM_HUE[String(cat).toLowerCase()];
+  if(h==null)h=(i*47)%360;
+  var h2=(h+34)%360;
+  return 'radial-gradient(120% 90% at 18% 8%,hsl('+h+' 78% 42%/.55),transparent 62%),'+
+    'radial-gradient(90% 80% at 88% 92%,hsl('+h2+' 82% 46%/.42),transparent 58%),'+
+    'linear-gradient(158deg,hsl('+h+' 34% 15%),hsl('+h2+' 30% 9%))';
 }
 function gmCards(list,wideFirst){
   return list.map(function(g,i){
-    var name=g[0],cat=g[1],sl=slug(name);
-    return '      <a class="gm-card'+(wideFirst&&i===0?' wide':'')+'" href="game.html?g='+esc(sl)+
+    var name=g[0],cat=g[1],sl=slug(name),big=wideFirst&&i===0;
+    return '      <a class="gm-card'+(big?' wide':'')+'" href="game.html?g='+esc(sl)+
       '" data-slug="'+esc(sl)+'" data-game="'+esc(name.toLowerCase()+' '+cat.toLowerCase())+'">\n'+
-'        <div class="gm-shot" style="background:'+gmShot(cat,i)+'"><span>'+esc(cat)+'</span>\n'+
-'          <div class="gm-play"><b>▶</b></div>\n        </div>\n'+
+'        <div class="gm-shot" style="background:'+gmShot(cat,i)+'">\n'+
+'          <span class="gm-chip">'+esc(cat)+'</span>\n'+
+'          <div class="gm-play"><b>▶</b></div>\n'+
+(big?'          <div class="gm-over"><b>'+esc(name)+'</b><span>'+esc(cat)+'</span></div>\n':'')+
+'        </div>\n'+
 '        <button class="gm-heart" type="button" data-fav="'+esc(sl)+'" aria-label="Add to favourites">♥</button>\n'+
-'        <div class="gm-meta"><b>'+esc(name)+'</b><span>'+esc(cat)+'</span></div>\n      </a>';
+(big?'':'        <div class="gm-meta"><b>'+esc(name)+'</b><span>'+esc(cat)+'</span></div>\n')+
+'      </a>';
   }).join('\n');
 }
 function gmRow(title,list,href,wide){
   if(!list.length)return '';
   return '    <section class="gm-row" data-row>\n      <div class="gm-rowhead"><h2>'+esc(title)+'</h2>'+
-    (href?'<a href="'+href+'">View all →</a>':'')+'</div>\n      <div class="gm-grid">\n'+
+    (href?'<a href="'+href+'">View all →</a>':'')+'</div>\n      <div class="gm-grid'+(wide?' feat':'')+'">\n'+
     gmCards(list,wide)+'\n      </div>\n    </section>';
 }
 function gmPick(cat,all,n,off){

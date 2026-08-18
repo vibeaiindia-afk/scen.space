@@ -3214,6 +3214,18 @@ function matchOne(map,text){for(var k in map)if(map[k].test(text))return k;retur
    platform — sidebar, categories, catalogue and all. What counts is how many
    *different* words of a trade appear, and whether the opening sentence — the
    one that says what the thing is — is one of them. */
+/* Does this brief really support that trade? Same bar as choosing one: a word
+   in the opening line, or two different words of it further down. */
+function industrySupported(k,text){
+  if(!k||!IND_WORDS[k])return false;
+  var t=String(text||''),subject=t.split(/[.\n]/)[0]||'',terms=IND_WORDS[k].source.split('|'),d=0,sub=false;
+  terms.forEach(function(term){
+    var rx;try{rx=new RegExp(term,'i')}catch(e){return}
+    if(rx.test(t)){d++;if(rx.test(subject))sub=true}
+  });
+  if(sub)return true;
+  return t.length<=120?d>=1:d>=2;
+}
 function bestIndustry(text){
   var t=String(text||''),subject=t.split(/[.\n]/)[0]||'',best='',bestN=0,bestD=0;
   Object.keys(IND_WORDS).forEach(function(k){
@@ -3402,7 +3414,27 @@ function groundTurn(text){
   var navLine=navPagesFrom(text);
   if(navLine)b.pages=navLine;
 
+  /* The model names a trade too, and it was taken as long as one of that
+     trade's words appeared anywhere. An iPhone brief that says "console-quality
+     gaming" once satisfied that, so the model's "games" stood and the build
+     came out as a games platform. The model's answer is now held to the same
+     bar as the studio's own reading. */
   var ind=bestIndustry(text);
+  if(b.industry&&!industrySupported(b.industry,text)){
+    var swap=ind||'other';
+    if(swap!==b.industry){
+      var was=INDUSTRIES[b.industry]||INDUSTRIES.other,now=INDUSTRIES[swap];
+      if(now){
+        b.industryOther=ind?'':b.industryOther;
+        b.industry=swap;
+        if(!b.pages.length||b.pages.join()===was.pages.join())b.pages=now.pages.slice();
+        if(!b.features.length||b.features.join()===was.feats.join())b.features=now.feats.slice();
+        if(!b.accent||b.accent===was.accent)b.accent=now.accent;
+        if(!b.pitch||b.pitch===was.pitch)b.pitch='';
+      }
+    }
+    return refineBrief(text),undefined;
+  }
   if(!ind||ind===b.industry)return refineBrief(text),undefined;
   var cur=IND_WORDS[b.industry];
   if(cur&&cur.test(text))return;          /* the model's trade is in the words too */

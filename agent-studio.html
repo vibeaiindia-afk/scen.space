@@ -1255,6 +1255,18 @@ function gameCss(t){
 '.gm-meta span{font-size:11.5px;color:var(--sub)}',
 '.gm-card.wide{grid-column:span 2}.gm-card.wide .gm-shot{aspect-ratio:16/9}',
 '.gm-empty{color:var(--sub);font-size:13.5px;padding:10px 2px}',
+'.gm-heart{position:absolute;top:9px;right:9px;z-index:3;width:30px;height:30px;border-radius:50%;border:0;cursor:pointer;',
+'  background:rgba(0,0,0,.42);color:#fff;font-size:13px;opacity:0;transition:.16s;backdrop-filter:blur(6px)}',
+'.gm-card:hover .gm-heart{opacity:1}',
+'.gm-heart.on{opacity:1;color:var(--a)}',
+'.gm-stage{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#000;aspect-ratio:16/9}',
+'.gm-stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#000}',
+'.gm-wait{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;text-align:center;padding:28px;',
+'  background:radial-gradient(circle at 50% 42%,'+t.bg3+',#000 78%)}',
+'.gm-wait b{font-size:19px}',
+'.gm-wait p{max-width:52ch;color:var(--sub);font-size:13px;line-height:1.7;margin:0}',
+'.gm-wait code{background:'+t.bg2+';border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:12px}',
+'.gm-controls{display:flex;gap:10px;flex-wrap:wrap}',
 '.gm-foot{margin-top:auto;padding:22px;border-top:1px solid var(--line);color:var(--sub);font-size:12.5px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}',
 '@media (max-width:900px){.gm{grid-template-columns:1fr}.gm-rail{position:static;height:auto;flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}',
 '  .gm-rail .gm-cap{display:none}.gm-brand{padding:6px 8px}.gm-rail a{white-space:nowrap}}',
@@ -1265,8 +1277,87 @@ function gameCss(t){
 /* ---------- site javascript ---------- */
 /* The search bar is the first thing anyone touches on a games site, so it
    filters the cards as you type rather than waiting for a back end. */
-function gameJs(){
-  return ['','  /* search across every card on the page */',
+function gameJs(b){
+  var P=pack(b),all=(P.catalogue||INDUSTRIES.games.catalogue);
+  var cat=all.map(function(g,i){
+    return '{s:"'+slug(g[0])+'",n:'+JSON.stringify(g[0])+',c:'+JSON.stringify(g[1])+',art:'+JSON.stringify(gmShot(g[1],i))+',url:""}';
+  }).join(',\n    ');
+  return ['',
+'  /* The catalogue the whole site reads. Give a game its embed address in',
+'     url and the player loads it; until then the player says it is waiting. */',
+'  var GAMES=[',
+'    '+cat,
+'  ];',
+'  var KEY='+JSON.stringify(slug(b.name))+';',
+'  function read(k){try{return JSON.parse(localStorage.getItem(KEY+"."+k)||"[]")}catch(e){return[]}}',
+'  function write(k,v){try{localStorage.setItem(KEY+"."+k,JSON.stringify(v.slice(0,60)))}catch(e){}}',
+'  function favs(){return read("favs")}',
+'  function toggleFav(sl){',
+'    var f=favs(),i=f.indexOf(sl);',
+'    if(i<0)f.unshift(sl);else f.splice(i,1);',
+'    write("favs",f);return f.indexOf(sl)>=0;',
+'  }',
+'  function played(sl){var r=read("recent").filter(function(x){return x!==sl});r.unshift(sl);write("recent",r)}',
+'',
+'  /* hearts on every card */',
+'  [].slice.call(document.querySelectorAll(".gm-heart")).forEach(function(h){',
+'    if(favs().indexOf(h.dataset.fav)>=0)h.classList.add("on");',
+'    h.addEventListener("click",function(e){',
+'      e.preventDefault();e.stopPropagation();',
+'      h.classList.toggle("on",toggleFav(h.dataset.fav));',
+'    });',
+'  });',
+'  /* opening a card is what makes it recently played */',
+'  [].slice.call(document.querySelectorAll(".gm-card")).forEach(function(c){',
+'    c.addEventListener("click",function(){played(c.dataset.slug)});',
+'  });',
+'',
+'  /* the player page */',
+'  var stage=document.getElementById("gstage");',
+'  if(stage){',
+'    var q=(location.search.match(/[?&]g=([^&]+)/)||[])[1]||"";',
+'    var game=GAMES.filter(function(g){return g.s===decodeURIComponent(q)})[0]||GAMES[0];',
+'    document.getElementById("gname").textContent=game.n;',
+'    document.getElementById("gcat").textContent=game.c;',
+'    document.getElementById("gwaitname").textContent=game.n;',
+'    document.title=game.n+" · "+document.title.split("· ").pop();',
+'    played(game.s);',
+'    var frame=document.getElementById("gframe"),wait=document.getElementById("gwait");',
+'    function load(){',
+'      if(!game.url)return;',
+'      frame.src=game.url;wait.style.display="none";',
+'    }',
+'    load();',
+'    var fav=document.getElementById("gfav");',
+'    if(favs().indexOf(game.s)>=0)fav.style.color="var(--a)";',
+'    fav.addEventListener("click",function(){fav.style.color=toggleFav(game.s)?"var(--a)":""});',
+'    document.getElementById("gshare").addEventListener("click",function(){',
+'      var url=location.href;',
+'      if(navigator.share)navigator.share({title:game.n,url:url});',
+'      else if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){alert("Link copied")});',
+'    });',
+'    function full(){ (stage.requestFullscreen||stage.webkitRequestFullscreen||function(){}).call(stage) }',
+'    document.getElementById("gfull").addEventListener("click",full);',
+'    document.getElementById("gfull2").addEventListener("click",full);',
+'    document.getElementById("gplay").addEventListener("click",function(){',
+'      if(game.url)load();',
+'      else alert("No embed address for this game yet — put it in the GAMES list in app.js.");',
+'    });',
+'    document.getElementById("grestart").addEventListener("click",function(){',
+'      if(game.url){frame.src="";setTimeout(load,60)}',
+'    });',
+'    /* more like this */',
+'    var more=document.getElementById("gmore");',
+'    GAMES.filter(function(g){return g.c===game.c&&g.s!==game.s}).slice(0,6).forEach(function(g){',
+'      var a=document.createElement("a");',
+'      a.className="gm-card";a.href="game.html?g="+g.s;a.dataset.slug=g.s;',
+'      a.innerHTML=\'<div class="gm-shot" style="background:\'+g.art+\'"><span>\'+g.c+\'</span>\'+',
+'        \'<div class="gm-play"><b>▶</b></div></div><div class="gm-meta"><b>\'+g.n+\'</b><span>\'+g.c+\'</span></div>\';',
+'      more.appendChild(a);',
+'    });',
+'  }',
+'',
+'  /* search across every card on the page */',
 '  var q=document.getElementById("gmq");',
 '  if(q){',
 '    var cards=[].slice.call(document.querySelectorAll(".gm-card"));',
@@ -1288,17 +1379,20 @@ function gameJs(){
 '      e.preventDefault();',
 '      if(!q)return;',
 '      var c=a.dataset.cat;',
-'      q.value=(c==="recent"||c==="fav")?"":c;',
+'      if(c==="fav"||c==="recent"){',
+'        var keep=read(c==="fav"?"favs":"recent");',
+'        cards.forEach(function(x){x.style.display=keep.indexOf(x.dataset.slug)>=0?"":"none"});',
+'        rows.forEach(function(r){',
+'          var any=[].slice.call(r.querySelectorAll(".gm-card")).some(function(x){return x.style.display!=="none"});',
+'          r.style.display=any?"":"none";',
+'        });',
+'        return;',
+'      }',
+'      q.value=c;',
 '      q.dispatchEvent(new Event("input"));',
 '    });',
 '  });',
-'  /* a card has nothing to open until a game provider is connected */',
-'  [].slice.call(document.querySelectorAll(".gm-card")).forEach(function(c){',
-'    c.addEventListener("click",function(e){',
-'      e.preventDefault();',
-'      alert("This card opens the game once a provider is connected.");',
-'    });',
-'  });'].join('\n');
+''].join('\n');
 }
 function makeJs(b){
   var lines=[
@@ -1368,7 +1462,7 @@ function makeJs(b){
 '    document.documentElement.lang=l.dataset.lang;',
 '  })});']);
   lines.push('})();');
-  if(b.industry==='games')lines.push(gameJs());
+  if(b.industry==='games')lines.push(gameJs(b));
   return lines.join('\n');
 }
 
@@ -1665,12 +1759,18 @@ nav(b,page),'',body,'',footer(b),
 var GM_ICON={home:'⌂','new games':'✦',popular:'★',trending:'📈',multiplayer:'👥',action:'⚔',
   adventure:'🧭',racing:'🏁',sports:'🏀',puzzle:'🧩',shooting:'🎯',arcade:'👾',casual:'☕',
   '.io games':'🌐',favorites:'♥','recently played':'↺',contact:'✉',about:'◇'};
+function gmShot(cat,i){
+  var hue=(i*47)%360;
+  return 'linear-gradient('+(120+i*23)+'deg,hsl('+hue+' 46% 24%),hsl('+((hue+48)%360)+' 38% 13%))';
+}
 function gmCards(list,wideFirst){
   return list.map(function(g,i){
-    var name=g[0],cat=g[1],hue=(i*47)%360;
-    return '      <a class="gm-card'+(wideFirst&&i===0?' wide':'')+'" href="#" data-game="'+esc(name.toLowerCase()+' '+cat.toLowerCase())+'">\n'+
-'        <div class="gm-shot" style="background:linear-gradient('+(120+i*23)+'deg,hsl('+hue+' 46% 24%),hsl('+((hue+48)%360)+' 38% 13%))"><span>'+esc(cat)+'</span>\n'+
+    var name=g[0],cat=g[1],sl=slug(name);
+    return '      <a class="gm-card'+(wideFirst&&i===0?' wide':'')+'" href="game.html?g='+esc(sl)+
+      '" data-slug="'+esc(sl)+'" data-game="'+esc(name.toLowerCase()+' '+cat.toLowerCase())+'">\n'+
+'        <div class="gm-shot" style="background:'+gmShot(cat,i)+'"><span>'+esc(cat)+'</span>\n'+
 '          <div class="gm-play"><b>▶</b></div>\n        </div>\n'+
+'        <button class="gm-heart" type="button" data-fav="'+esc(sl)+'" aria-label="Add to favourites">♥</button>\n'+
 '        <div class="gm-meta"><b>'+esc(name)+'</b><span>'+esc(cat)+'</span></div>\n      </a>';
   }).join('\n');
 }
@@ -1753,11 +1853,64 @@ rows,
 '</body>','</html>'].join('\n');
 }
 
+/* The page a card opens. One file rather than a folder per game: the build is
+   static HTML, so /game/<slug> would need a server to route it — game.html?g=
+   works the moment the folder is opened, and the address still names the game. */
+function makePlayerPage(b,t){
+  var P=pack(b);
+  return ['<!doctype html>','<html lang="'+((b.languages[0]||'English').slice(0,2).toLowerCase())+'">','<head>',
+'<meta charset="utf-8"/>',
+'<meta name="viewport" content="width=device-width,initial-scale=1"/>',
+'<title>Play · '+esc(b.name)+'</title>',
+'<link rel="stylesheet" href="styles.css"/>',
+'</head>','<body>',
+'  <div class="gm">',
+'    <aside class="gm-rail">',
+'      <a class="gm-brand" href="index.html"><i></i>'+esc(b.name)+'</a>',
+'      <span class="gm-cap">Browse</span>',
+b.pages.map(function(p){
+  return '      <a href="'+pageFile(p)+'"><em>'+(GM_ICON[p.toLowerCase()]||'▸')+'</em>'+esc(p)+'</a>'}).join('\n'),
+'    </aside>',
+'    <div class="gm-col">',
+'      <header class="gm-top">',
+'        <a class="gm-ico" href="index.html" title="Back">←</a>',
+'        <b id="gname" style="font-size:15px">Loading…</b>',
+'        <span id="gcat" style="color:var(--sub);font-size:12.5px"></span>',
+'        <span style="flex:1"></span>',
+'        <button class="gm-ico" id="gfav" title="Favourite">♥</button>',
+'        <button class="gm-ico" id="gshare" title="Share">↗</button>',
+'        <button class="gm-ico" id="gfull" title="Full screen">⛶</button>',
+'      </header>',
+'      <main class="gm-body">',
+'        <section class="gm-stage" id="gstage">',
+'          <iframe id="gframe" title="Game" allow="autoplay; fullscreen; gamepad"></iframe>',
+'          <div class="gm-wait" id="gwait">',
+'            <b id="gwaitname">This game</b>',
+'            <p>The player is ready. It loads the game once a provider is connected — the embed URL goes in <code>app.js</code>, in the <code>GAMES</code> list.</p>',
+'          </div>',
+'        </section>',
+'        <div class="gm-controls">',
+'          <button class="btn" id="gplay">Play</button>',
+'          <button class="btn ghost" id="grestart">Restart</button>',
+'          <button class="btn ghost" id="gfull2">Full screen</button>',
+'        </div>',
+'        <section class="gm-row" data-row><div class="gm-rowhead"><h2>More like this</h2></div>',
+'          <div class="gm-grid" id="gmore"></div>',
+'        </section>',
+'      </main>',
+'      <footer class="gm-foot"><b>'+esc(b.name)+'</b><span>'+esc(P.kicker)+'</span></footer>',
+'    </div>',
+'  </div>',
+'<scr'+'ipt src="app.js"></scr'+'ipt>',
+'</body>','</html>'].join('\n');
+}
+
 function buildSite(b,depth){
   b.__depth=depth;
   var t=tokens(b),pro=depth==='pro',games=b.industry==='games';
   var pages=b.pages.map(function(p){
     return{page:p,file:'site/'+pageFile(p),html:games?makeGamePage(b,p,pro,t):makePage(b,p,pro,t)}});
+  if(games)pages.push({page:'Game player',file:'site/game.html',html:makePlayerPage(b,t)});
   return{pages:pages,css:makeCss(b),js:makeJs(b)};
 }
 

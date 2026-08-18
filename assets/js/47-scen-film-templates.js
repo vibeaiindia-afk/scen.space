@@ -19,6 +19,23 @@
 if(typeof TEMPLATES==='undefined')return;
 
 var FILMS=[
+  /* Two product-launch presets, added 2026-08-18: one light, one dark. Both
+     are standalone pages like the films above, so Customize hands the whole
+     page to the studio and the client edits it by talking. */
+  {name:'Halo',file:'/templates/halo.html',category:'Product',
+   tag:'Product launch page — light, type-led, one long scroll',
+   palette:{accent:'#0071e3',accent2:'#f5f5f7'},
+   heroTitle:'Hello, future.',
+   heroSubtitle:'A premium product experience, built around simplicity. Bold type, cinematic spacing and a product-first layout.',
+   components:['Home','Design','Camera','Performance','Buy']},
+
+  {name:'Aura',file:'/templates/aura.html',category:'Product',
+   tag:'Product launch page — dark, one long scroll',
+   palette:{accent:'#7FD8FF',accent2:'#0B0B0D'},
+   heroTitle:'AURA',
+   heroSubtitle:'A phone built around one idea: get out of the way. Titanium body, a camera that reads light, and a battery that outlasts the day.',
+   components:['Home','Design','Camera','Performance','Buy']},
+
   {name:'SynapseX',file:'/templates/synapsex.html',category:'Technology',
    tag:'Scroll-scrubbed film with split hero titles',
    palette:{accent:'#61ff9e',accent2:'#0b0b0f'},

@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f5f5f7" />
+  <title>HALO — Premium Product Experience</title>
+  <meta name="description" content="HALO is a premium product landing page: bold type, cinematic spacing, smooth motion and a product-first layout." />
+  <meta property="og:title" content="HALO — Premium Product Experience" />
+  <meta property="og:description" content="Bold type, cinematic spacing, smooth motion and a product-first layout." />
+  <style>
+    :root{
+      --bg:#f5f5f7; --ink:#1d1d1f; --muted:#6e6e73; --blue:#0071e3;
+      --card:#fff; --line:rgba(0,0,0,.08); --radius:34px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+    body{
+      margin:0;background:var(--bg);color:var(--ink);
+      font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+      -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    }
+    a{color:inherit;text-decoration:none}
+    :focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:6px}
+    .nav{
+      position:fixed;z-index:50;top:0;left:0;right:0;height:48px;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(245,245,247,.82);backdrop-filter:saturate(180%) blur(20px);
+      border-bottom:1px solid rgba(0,0,0,.04);
+    }
+    .nav-inner{width:min(1060px,92%);display:flex;align-items:center;justify-content:space-between;font-size:12px}
+    .brand{font-weight:700;font-size:15px;letter-spacing:-.03em}
+    .nav-links{display:flex;gap:26px;align-items:center}
+    .nav-links a{opacity:.78}.nav-links a:hover{opacity:1}
+    .bag{width:18px;height:18px;border:1.5px solid currentColor;border-radius:5px;position:relative}
+    .bag:before{content:"";position:absolute;width:7px;height:5px;border:1.5px solid currentColor;border-bottom:0;border-radius:5px 5px 0 0;left:4px;top:-5px}
+    .hero{
+      min-height:100vh;display:grid;place-items:center;text-align:center;
+      padding:120px 20px 54px;position:relative;overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 72%, rgba(89,144,255,.22), transparent 25%),
+        radial-gradient(circle at 35% 70%, rgba(255,97,177,.13), transparent 22%),
+        #fff;
+    }
+    .eyebrow{font-size:24px;font-weight:600;letter-spacing:-.02em;margin-bottom:6px}
+    h1{
+      margin:0;font-size:clamp(64px,10vw,150px);line-height:.87;letter-spacing:-.075em;
+      font-weight:700;background:linear-gradient(115deg,#171719 20%,#56565b 58%,#101012 86%);
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+    }
+    .hero-copy{font-size:clamp(22px,2.5vw,34px);font-weight:600;letter-spacing:-.04em;margin:26px auto 12px;max-width:760px}
+    .sub{font-size:17px;line-height:1.55;color:var(--muted);max-width:650px;margin:0 auto}
+    .actions{display:flex;gap:14px;justify-content:center;margin-top:26px;flex-wrap:wrap}
+    .btn{padding:12px 21px;border-radius:999px;background:var(--blue);color:#fff;font-size:17px;border:0;cursor:pointer;display:inline-block}
+    .btn.alt{background:transparent;color:var(--blue);border:1px solid var(--blue)}
+    .phone-stage{height:440px;margin-top:38px;position:relative;display:grid;place-items:center}
+    .phone{
+      width:220px;height:438px;border-radius:48px;padding:8px;position:relative;
+      background:linear-gradient(145deg,#818184,#242426 38%,#9b9b9e 78%,#27272a);
+      box-shadow:0 55px 90px rgba(0,0,0,.24), inset 0 0 0 1px rgba(255,255,255,.5);
+      transform:rotate(-4deg);
+    }
+    .screen{
+      height:100%;border-radius:41px;overflow:hidden;position:relative;background:
+      radial-gradient(circle at 48% 18%,#ffc2e9 0 7%,transparent 25%),
+      radial-gradient(circle at 74% 65%,#6f8cff 0 12%,transparent 34%),
+      linear-gradient(160deg,#16051a 0 31%,#692271 53%,#0a173e 100%);
+    }
+    .island{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:76px;height:23px;background:#080808;border-radius:999px}
+    .glow{position:absolute;inset:auto 20% -80px;width:60%;height:180px;background:#5d83ff;filter:blur(55px);opacity:.7}
+    .section{padding:110px 6vw}
+    .wrap{max-width:1180px;margin:auto}
+    .kicker{font-weight:600;font-size:21px;color:var(--muted);margin:0 0 12px}
+    h2{font-size:clamp(44px,6.5vw,84px);line-height:.94;letter-spacing:-.06em;margin:0 0 50px;max-width:980px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}
+    .card{
+      background:var(--card);border-radius:var(--radius);padding:38px;min-height:390px;
+      position:relative;overflow:hidden;border:1px solid rgba(0,0,0,.03);
+    }
+    .card h3{font-size:33px;line-height:1.02;letter-spacing:-.045em;margin:4px 0 12px}
+    .card p{color:var(--muted);font-size:17px;line-height:1.5;max-width:500px}
+    .span7{grid-column:span 7}.span5{grid-column:span 5}.span12{grid-column:span 12}
+    .camera-visual{
+      height:230px;margin-top:28px;border-radius:26px;background:
+      radial-gradient(circle at 38% 50%,#0a0a0a 0 14%,#2e2e30 15% 23%,#111 24% 28%,transparent 29%),
+      radial-gradient(circle at 68% 50%,#0b0b0b 0 14%,#363638 15% 23%,#111 24% 28%,transparent 29%),
+      linear-gradient(135deg,#d9d9dc,#96969b);
+      box-shadow:inset 0 0 60px rgba(0,0,0,.15);
+    }
+    .chip{
+      height:210px;margin-top:30px;display:grid;place-items:center;border-radius:30px;
+      background:radial-gradient(circle at 50% 50%,#4e1989,#1a0628 53%,#030303);
+    }
+    .chip b{font-size:74px;letter-spacing:-.08em;color:#fff}
+    .dark{background:#000;color:#f5f5f7}
+    .dark .kicker,.dark p{color:#a1a1a6}
+    .dark h2{background:linear-gradient(100deg,#fff,#92929a);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .feature-row{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .mini{background:#111113;border:1px solid rgba(255,255,255,.1);border-radius:28px;padding:28px;min-height:260px}
+    .mini .num{font-size:56px;letter-spacing:-.06em;font-weight:700}
+    .mini h3{font-size:24px}.mini p{font-size:15px;line-height:1.5}
+    .colors{display:flex;gap:10px;margin:24px 0}
+    .dot{width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+    .d1{background:#d8d5cf}.d2{background:#2c2d30}.d3{background:#b9c7d4}.d4{background:#e5b2aa}.d5{background:#cadcb7}
+    .buy{background:#fff;padding:105px 6vw}
+    .buy-box{
+      max-width:1180px;margin:auto;background:#f5f5f7;border-radius:42px;padding:55px;
+      display:grid;grid-template-columns:1.3fr .7fr;align-items:center;gap:30px;
+    }
+    .price{font-size:44px;font-weight:700;letter-spacing:-.05em;margin:10px 0}
+    footer{padding:35px 6vw 55px;color:#6e6e73;font-size:12px;line-height:1.5;background:#f5f5f7}
+    .footer-inner{max-width:980px;margin:auto;border-top:1px solid #d2d2d7;padding-top:18px}
+    .reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s ease}
+    .reveal.show{opacity:1;transform:none}
+    @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+    @media(max-width:800px){
+      .nav-links a:nth-child(-n+4){display:none}
+      .hero{padding-top:100px}
+      .phone-stage{height:390px}.phone{transform:scale(.86) rotate(-4deg)}
+      .section{padding:80px 22px}
+      .grid{display:block}.card{margin-bottom:16px;padding:28px;min-height:auto}
+      .feature-row{grid-template-columns:1fr}.buy{padding:70px 20px}.buy-box{grid-template-columns:1fr;padding:32px}
+      h2{margin-bottom:34px}
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="#top">◉ HALO</a>
+      <div class="nav-links">
+        <a href="#design">Design</a><a href="#camera">Camera</a><a href="#performance">Performance</a><a href="#compare">Highlights</a>
+        <a href="#buy">Buy</a><span class="bag" aria-label="Bag"></span>
+      </div>
+    </div>
+  </nav>
+
+  <main id="top">
+    <section class="hero">
+      <div>
+        <div class="eyebrow reveal">HALO</div>
+        <h1 class="reveal">Hello, future.</h1>
+        <div class="hero-copy reveal">A premium product experience, built around simplicity.</div>
+        <p class="sub reveal">Bold type, cinematic spacing, smooth motion and a product-first layout — ready for your own product story.</p>
+        <div class="actions reveal"><a class="btn" href="#buy">Buy</a><a class="btn alt" href="#design">Learn more</a></div>
+        <div class="phone-stage reveal">
+          <div class="phone"><div class="screen"><div class="island"></div><div class="glow"></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="design" class="section">
+      <div class="wrap">
+        <p class="kicker reveal">Design</p>
+        <h2 class="reveal">Beautiful from every angle.</h2>
+        <div class="grid">
+          <article class="card span7 reveal">
+            <p class="kicker">Precision</p><h3>Refined. Rounded. Remarkably clean.</h3>
+            <p>A soft contoured frame, edge-to-edge display and calm material palette put the product at the centre of attention.</p>
+            <div class="camera-visual"></div>
+          </article>
+          <article class="card span5 reveal">
+            <p class="kicker">Finish</p><h3>Five quiet colours.</h3>
+            <p>Subtle finishes designed to feel personal without getting loud.</p>
+            <div class="colors"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="dot d4"></span><span class="dot d5"></span></div>
+            <div class="phone" style="transform:scale(.53) rotate(9deg);transform-origin:top center;margin:15px auto -170px"></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="camera" class="section" style="padding-top:30px">
+      <div class="wrap">
+        <p class="kicker reveal">Camera</p>
+        <h2 class="reveal">Make every frame feel cinematic.</h2>
+        <div class="grid">
+          <article class="card span5 reveal">
+            <h3>Visual storytelling, in detail.</h3>
+            <p>A spacious camera feature card with macro detail, depth and photography-first messaging.</p>
+            <div class="camera-visual"></div>
+          </article>
+          <article class="card span7 reveal" style="background:#09090a;color:#fff">
+            <p class="kicker" style="color:#aaa">Video</p><h3 style="font-size:46px">Low light.<br>High drama.</h3>
+            <p style="color:#aaa">Deep blacks and controlled gradients give the section a cinematic feel while keeping the product-story rhythm.</p>
+            <div style="height:180px;border-radius:26px;margin-top:25px;background:radial-gradient(circle at 60% 45%,#ffb175,transparent 12%),linear-gradient(120deg,#030305,#2b0e27 48%,#081a31)"></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="performance" class="section dark">
+      <div class="wrap">
+        <p class="kicker reveal">Performance</p>
+        <h2 class="reveal">Fast feels effortless.</h2>
+        <div class="grid">
+          <article class="card span12 reveal" style="background:#0b0b0d;color:#fff">
+            <h3>Built for speed, efficiency and all-day use.</h3>
+            <p>This space is for your real processor, battery and display specifications before launch.</p>
+            <div class="chip"><b>A+</b></div>
+          </article>
+        </div>
+        <div id="compare" class="feature-row" style="margin-top:18px">
+          <article class="mini reveal"><div class="num">120</div><h3>Smooth motion</h3><p>Premium scrolling and responsive interaction.</p></article>
+          <article class="mini reveal"><div class="num">48</div><h3>Detail first</h3><p>Swap these figures for verified product specifications.</p></article>
+          <article class="mini reveal"><div class="num">1×</div><h3>Simple by design</h3><p>Clear hierarchy, fewer distractions, strong calls to action.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="buy" class="buy">
+      <div class="buy-box reveal">
+        <div>
+          <p class="kicker">Ready when you are.</p>
+          <h2 style="font-size:clamp(42px,5vw,70px);margin-bottom:18px">Choose your HALO.</h2>
+          <p style="color:#6e6e73;font-size:17px;max-width:600px">Replace this copy with your store, financing, exchange and delivery details.</p>
+        </div>
+        <div>
+          <div class="price">Price on announcement</div>
+          <a class="btn" href="#buy">Notify me</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <p>Concept template. Product visuals, figures and pricing are placeholders — verify every specification, price and claim before publishing.</p>
+      <p>HALO is a fictional product used to demonstrate the layout. Not affiliated with any manufacturer.</p>
+    </div>
+  </footer>
+
+  <script>
+    var reveals=[].slice.call(document.querySelectorAll('.reveal'));
+    if('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches){
+      var io=new IntersectionObserver(function(entries){
+        entries.forEach(function(e){ if(e.isIntersecting){e.target.classList.add('show');io.unobserve(e.target)} })
+      },{threshold:.12});
+      reveals.forEach(function(el){io.observe(el)});
+      setTimeout(function(){
+        [].slice.call(document.querySelectorAll('.hero .reveal')).forEach(function(el,i){
+          setTimeout(function(){el.classList.add('show')},i*100);
+        });
+      },80);
+      window.addEventListener('scroll',function(){
+        var p=document.querySelector('.phone');
+        if(!p)return;
+        var y=Math.min(window.scrollY,650);
+        p.style.transform='translateY('+(y*.035)+'px) rotate('+(-4+y*.004)+'deg)';
+      },{passive:true});
+    }else{
+      reveals.forEach(function(el){el.classList.add('show')});
+    }
+  </script>
+</body>
+</html>

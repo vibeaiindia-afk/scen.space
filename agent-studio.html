@@ -1235,14 +1235,28 @@ function makeCss(b){
 '@media (max-width:560px){.grid3,.grid4,.stats,.slots{grid-template-columns:1fr}.stats{gap:26px}}',
 /* one long page */
 '.onepage{scroll-behavior:smooth}',
-'.ch{padding:clamp(70px,11vh,130px) 0;border-top:1px solid var(--line)}',
-'.ch-in{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,72px);align-items:center}',
+'.onepage .hero{min-height:min(92vh,880px);display:grid;align-items:center;padding-block:clamp(80px,14vh,150px)}',
+'.onepage .hero h1{font-size:clamp(52px,9vw,132px);letter-spacing:-.06em;line-height:.92}',
+'.onepage .hero .lead{font-size:clamp(16px,1.7vw,22px);max-width:34ch}',
+'.onepage .nav{backdrop-filter:blur(18px)}',
+'.ch{padding:clamp(96px,16vh,180px) 0;position:relative}',
+'.ch+.ch{border-top:1px solid var(--line)}',
+'.ch-in{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,6vw,90px);align-items:center}',
 '.ch.flip .ch-in>.ch-copy{order:2}',
-'.ch h2{font-size:clamp(30px,4.6vw,58px);letter-spacing:-.04em;line-height:1.02;margin:14px 0 16px}',
-'.ch p{color:var(--sub);font-size:16px;line-height:1.75;max-width:52ch;margin:0 0 22px}',
-'.ch-art{position:relative;border-radius:var(--rad);min-height:min(58vh,460px);border:1px solid var(--line);',
-'  display:grid;place-items:center;overflow:hidden}',
-'.ch-art span{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.5)}',
+'.ch .kicker{display:inline-block;font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--a);opacity:.9}',
+'.ch h2{font-size:clamp(38px,6.4vw,86px);letter-spacing:-.055em;line-height:.98;margin:18px 0 20px;',
+'  background:linear-gradient(180deg,var(--ink),color-mix(in srgb,var(--ink) 58%,transparent));',
+'  -webkit-background-clip:text;background-clip:text;color:transparent}',
+'.ch p{color:var(--sub);font-size:clamp(15px,1.35vw,18px);line-height:1.7;max-width:46ch;margin:0 0 26px}',
+'.ch-art{position:relative;border-radius:clamp(18px,2vw,28px);min-height:min(66vh,540px);',
+'  border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;',
+'  box-shadow:0 40px 120px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06)}',
+'.ch-art:before{content:"";position:absolute;inset:0;opacity:.5;',
+'  background:radial-gradient(60% 50% at 50% 0%,color-mix(in srgb,var(--a) 42%,transparent),transparent 70%)}',
+'.ch-art span{position:relative;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.62)}',
+/* a fine seam of accent light under each band, the way a launch page paces itself */
+'.ch:after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:min(680px,72%);height:1px;',
+'  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--a) 55%,transparent),transparent);opacity:.5}',
 '.onepage .nav-links a{font-size:13px}',
 '@media (max-width:900px){.ch-in{grid-template-columns:1fr}.ch.flip .ch-in>.ch-copy{order:0}.ch-art{min-height:240px}}'
 ].join('\n')+(b.industry==='games'?'\n\n'+gameCss(t):'');
@@ -3640,8 +3654,29 @@ function absorbBrief(text){
     got.push(fe.map(function(f){return FEATURES[f]?FEATURES[f].l:f}).join(', '));
   }
 
-  var hex=text.match(/#([0-9a-f]{6}|[0-9a-f]{3})\b/i);
-  if(hex&&!b.accent){b.accent='#'+hex[1];got.push('accent <b>#'+C.esc(hex[1])+'</b>')}
+  /* Not the first hex in the brief — that is usually the background. A brief
+     that names its palette names several, and only the one in a sentence about
+     the accent is the accent; a hex sitting in a background or surface line is
+     explicitly not. */
+  if(!b.accent){
+    var lines=text.split(/\n|(?<=[.!?])\s/);
+    var acc='',i2;
+    for(i2=0;i2<lines.length;i2++){
+      if(!/\baccent\b/i.test(lines[i2]))continue;
+      var m2=lines[i2].match(/#([0-9a-f]{6}|[0-9a-f]{3})\b/i);
+      if(m2){acc='#'+m2[1];break}
+      var named=C.findColor(lines[i2]);
+      if(named){acc=named;break}
+    }
+    if(!acc){
+      for(i2=0;i2<lines.length;i2++){
+        if(/\b(background|bg|surface|card|canvas|base)\b/i.test(lines[i2]))continue;
+        var m3=lines[i2].match(/#([0-9a-f]{6}|[0-9a-f]{3})\b/i);
+        if(m3){acc='#'+m3[1];break}
+      }
+    }
+    if(acc){b.accent=acc;got.push('accent <b>'+C.esc(acc)+'</b>')}
+  }
 
   got=got.concat(refineBrief(text));
 

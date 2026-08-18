@@ -3274,6 +3274,41 @@ var HREF_RE=/(https?:\/\/[^\s"'<>]+|\/[a-z0-9][a-z0-9\-\/\.]{0,60}|#[a-z0-9\-]{1
 var URLONLY_RE=/https?:\/\/[^\s"'<>]+/i;
 /* "menu me Home, Menu aur Contact daal do" — the items are what is left once
    the instruction words are taken out. */
+/* What a sentence can point at on a preset, and what it can ask of it. */
+var PART={
+  title:/\b(title|heading|headline|h1|hero text|bada text|bade text)\b/i,
+  text :/\b(text|paragraph|para|subtitle|caption|description|copy|likha|likhi|line)\b/i,
+  menu :/\b(menu|nav(?:igation)?|top ?bar|upper ?bar|uu?p+er wali bar|header)\b/i,
+  brand:/\b(logo|brand|pill)\b/i,
+  object:/\b(3d|3-d|object|model)\b/i,
+  page :/\b(page|site|website|sab kuch|everything|whole page|poora)\b/i
+};
+var LOOK={
+  bigger :/\b(bigger|larger|big|bada|bda|bara|badha|badhao|increase|grow)\b/i,
+  smaller:/\b(smaller|chota|chhota|chhoti|choti|reduce|shrink|decrease|kam kar)\b/i,
+  center :/\b(cent(?:er|re)|beech|bich|middle)\b/i,
+  left   :/\b(left|baye|baayi)\b/i,
+  right  :/\b(right|daye|daayi)\b/i,
+  up     :/\b(upar|uper|top|raise)\b/i,
+  down   :/\b(neeche|niche|down|lower)\b/i,
+  caps   :/\b(uppercase|caps|capital)\b/i,
+  lower  :/\b(lowercase|small letters)\b/i,
+  bold   :/\b(bold|heavy|thick|mota|moti)\b/i,
+  thin   :/\b(thin|lightweight|patla|patli)\b/i,
+  wide   :/\b(wide|spaced|spacing|tracking|khula|khuli)\b/i,
+  tight  :/\b(tight|narrow|compact|chipk)\b/i,
+  serif  :/\bserif\b/i,
+  sans   :/\bsans\b/i,
+  mono   :/\bmono(space)?\b/i
+};
+var FONTS={serif:'Georgia,"Times New Roman",serif',
+  sans:'"Helvetica Neue",Helvetica,Arial,sans-serif',
+  mono:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'};
+function partNamed(text){
+  var keys=['title','text','menu','brand','object','page'];
+  for(var i=0;i<keys.length;i++)if(PART[keys[i]].test(text))return keys[i];
+  return '';
+}
 function looksLikePresetEdit(text){
   return /\b(menu|nav(?:igation)?|top ?bar|upper ?bar|uu?p+er wali bar|header|link|href|video|film|clip|reel|image|photo|picture|logo|button)\b/i.test(text)&&
     (HREF_RE.test(text)||
@@ -3297,6 +3332,58 @@ function parseEdit(text){
     b.name=nm.slice(0,48);S.projectName=b.name;$('#projName').textContent=b.name;
     done.push('renamed it to <b>'+esc(b.name)+'</b>')}
 
+  /* The look of a named part — its size, where it sits, its case, its type.
+     Read before the colour rule, or "title ko blue kr do" repaints the whole
+     site's accent instead of the title. Everything lands as an override on the
+     preset, so the designer's own rules are never edited. */
+  if(presetHome()){
+    var part=partNamed(text);
+    if(part){
+      var st0=(b.__style&&b.__style[part])||{},st1={};
+      Object.keys(st0).forEach(function(k){st1[k]=st0[k]});
+      var look=[];
+      if(LOOK.bigger.test(t)&&!LOOK.smaller.test(t)){
+        st1.zoom=Math.min(2.5,Math.round((st1.zoom||1)*125)/100);look.push('bigger')}
+      if(LOOK.smaller.test(t)){
+        st1.zoom=Math.max(0.4,Math.round((st1.zoom||1)*80)/100);look.push('smaller')}
+      if(LOOK.center.test(t)){st1.align='center';look.push('centred')}
+      else if(LOOK.left.test(t)){st1.align='left';look.push('moved left')}
+      else if(LOOK.right.test(t)){st1.align='right';look.push('moved right')}
+      if(LOOK.up.test(t)){st1.dy='-6vh';look.push('moved up')}
+      if(LOOK.down.test(t)){st1.dy='6vh';look.push('moved down')}
+      if(LOOK.caps.test(t)){st1.transform='uppercase';look.push('in capitals')}
+      if(LOOK.lower.test(t)){st1.transform='lowercase';look.push('in lower case')}
+      if(LOOK.bold.test(t)){st1.weight=700;look.push('bolder')}
+      if(LOOK.thin.test(t)){st1.weight=300;look.push('lighter')}
+      if(LOOK.wide.test(t)){st1.track='.08em';look.push('more spaced out')}
+      if(LOOK.tight.test(t)){st1.track='-.02em';look.push('tighter')}
+      if(LOOK.serif.test(t)){st1.font=FONTS.serif;look.push('in a serif')}
+      else if(LOOK.mono.test(t)){st1.font=FONTS.mono;look.push('in a monospace')}
+      else if(LOOK.sans.test(t)){st1.font=FONTS.sans;look.push('in a sans')}
+      var pc=findColor(text);
+      if(pc&&/\b(colou?r|rang|kar ?do|kr ?do|karo|kro|make|paint)\b/i.test(t)){st1.color=pc;look.push('now '+pc)}
+      if(look.length){
+        b.__style=b.__style||{};b.__style[part]=st1;
+        done.push('the <b>'+esc(part)+'</b> is '+esc(look.join(', ')));
+      }
+    }
+  }
+
+  /* A .glb link is unambiguous — read it before the motion rule sees "3d" and
+     files the whole sentence as a request for more parallax. */
+  if(presetHome()){
+    var glb=(text.match(/https?:\/\/[^\s"'<>]+\.(?:glb|gltf)(?:\?[^\s"'<>]*)?/i)||[])[0];
+    if(glb){
+      b.__object={url:glb};
+      done.push('put your 3D model on the '+esc(presetName())+' page — it turns on its own and a drag '+
+        'spins it. If nothing appears, that address is not serving a .glb');
+    }else if(PART.object.test(text)&&/\b(add|put|daal|dal|lga|lgao|lagao|chahiye|karo|kro|kar do|kr do|banao)\b/i.test(text)&&
+             !LOOK.bigger.test(t)&&!LOOK.smaller.test(t)){
+      done.push('send me the model’s address and I will place it — a <code>.glb</code> or <code>.gltf</code> '+
+        'link. There is no object library wired into the studio, so it has to be a file on the web');
+    }
+  }
+
   var tag=text.match(/(?:tagline|one[- ]liner|headline|strapline)\s*[:—-]\s*(.+)/i);
   if(tag){b.pitch=tag[1].trim().slice(0,180);done.push('rewrote the one-liner')}
 
@@ -3318,7 +3405,8 @@ function parseEdit(text){
     if(S.depth!=='lite'){S.depth='lite';setDepthLabel();done.push('trimmed back to the core sections')}}
 
   if(/\b(no|less|subtle|calm|still)\b.*motion|\bcalm it down\b/.test(t)){b.motion='subtle';done.push('dialled the motion back')}
-  else if(/\b(3d|three d|full motion|cinematic|parallax)\b/.test(t)){
+  /* "3d object daal do" is an object, not a request for more parallax */
+  else if(/\b(3d|three d|full motion|cinematic|parallax)\b/.test(t)&&!/\b(object|model|glb|gltf)\b/.test(t)){
     b.motion=/3d|three d|full/.test(t)?'full':'cinematic';done.push('motion is now <b>'+b.motion+'</b>')}
 
   var FKEY={store:/\b(shop|store|cart|checkout|ecommerce|e-commerce|products?)\b/,
@@ -3501,7 +3589,10 @@ function editHelp(t0){
       esc(presetName())+" page says</li>"+
       "<li><code>menu me Home, Menu, Contact daal do</code> — items in its top bar</li>"+
       "<li><code>link the Download button to /contact</code> — or any https address</li>"+
-      "<li><code>change the video to https://…mp4</code> · <code>change the image to https://…jpg</code></li>":"")+
+      "<li><code>change the video to https://…mp4</code> · <code>change the image to https://…jpg</code></li>"+
+      "<li><code>title bada kro</code> · <code>text ko beech me lao</code> · <code>menu chota kro</code> — "+
+      "size, position, capitals, spacing, serif or mono, and the colour of one part</li>"+
+      "<li><code>3d object daal do https://…glb</code> — your own model, turning on the page</li>":"")+
     "</ul>",Math.max(1,Math.round((Date.now()-t0)/1000)));
 }
 
@@ -4128,6 +4219,22 @@ function fill(el,text){
 /* Finds the element that carries a line the preset is known to open with —
    the wording in the file is rarely identical to the wording in the gallery,
    so the first few words decide it. */
+/* the element that carries a line the preset is known to open with */
+function pickLine(doc,was,sel){
+  var want=flat(was).toLowerCase();
+  if(!want)return null;
+  var key=want.split(' ').slice(0,4).join(' ');
+  var els=doc.querySelectorAll(sel),best=null,bestLen=1e9;
+  for(var i=0;i<els.length;i++){
+    var have=flat(els[i].innerHTML).toLowerCase();
+    if(!have||els[i].querySelector('img,video,svg,a,button'))continue;
+    var hit=have===want||have.indexOf(key)===0||
+      (want.indexOf(have)===0&&have.length>14&&have.length>=want.length*0.4);
+    if(!hit||have.length>want.length*3||have.length>=bestLen)continue;
+    best=els[i];bestLen=have.length;
+  }
+  return best;
+}
 function swapLine(doc,was,now,sel){
   var want=flat(was).toLowerCase();
   if(!want||!String(now||'').trim())return false;
@@ -4277,6 +4384,68 @@ function menuHref(label){
   return '#';
 }
 
+/* The parts of a preset worth naming in a sentence. Marked once, so a style
+   rule can point at "the title" without knowing which template is open. */
+function tagParts(doc,P){
+  function mark(el,name){if(el&&!el.getAttribute('data-scen'))el.setAttribute('data-scen',name)}
+  if(P.title)mark(pickLine(doc,P.title,'h1,h2,h3,.title,[class*=title],[class*=hero]'),'title');
+  if(P.subtitle)mark(pickLine(doc,P.subtitle,'p,[class*=micro],[class*=sub],[class*=lead],[class*=copy]'),'text');
+  if(P.name){
+    var brand=findPhrase(doc,P.name)||findPhrase(doc,S.brief.name||'');
+    mark(brand,'brand');
+  }
+}
+/* Overrides, appended last so they win without touching a line the designer
+   wrote. zoom rather than a font-size: the preset sizes its type in clamp()
+   and vw, and multiplying that keeps it responsive. */
+function styleCss(map){
+  var out='';
+  Object.keys(map).forEach(function(k){
+    var v=map[k]||{},sel=k==='page'?'body':'[data-scen="'+k+'"]',d='';
+    if(v.zoom)d+='zoom:'+v.zoom+';';
+    if(v.color)d+='color:'+v.color+';';
+    if(v.weight)d+='font-weight:'+v.weight+';';
+    if(v.font)d+='font-family:'+v.font+';';
+    if(v.track)d+='letter-spacing:'+v.track+';';
+    if(v.transform)d+='text-transform:'+v.transform+';';
+    if(v.dy)d+='margin-top:'+v.dy+';';
+    if(v.align){
+      d+='text-align:'+v.align+';';
+      if(v.align==='center')d+='left:0;right:0;margin-left:auto;margin-right:auto;max-width:none;';
+      else if(v.align==='left')d+='left:5vw;right:auto;';
+      else d+='right:5vw;left:auto;';
+    }
+    if(d)out+=sel+'{'+d.replace(/;/g,' !important;')+'}\n';
+  });
+  return out;
+}
+/* A real 3D model on the preset, loaded by <model-viewer>. The customer brings
+   the .glb; nothing here generates one. */
+function applyObject(doc,obj){
+  if(!obj||!obj.url)return;
+  var head=doc.head||doc.documentElement;
+  if(!head.querySelector('script[data-scen-mv]')){
+    var sc=doc.createElement('script');
+    sc.type='module';sc.setAttribute('data-scen-mv','');
+    sc.src='https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js';
+    head.appendChild(sc);
+  }
+  var mv=doc.querySelector('model-viewer[data-scen]');
+  if(!mv){
+    mv=doc.createElement('model-viewer');
+    mv.setAttribute('data-scen','object');
+    mv.setAttribute('camera-controls','');
+    mv.setAttribute('auto-rotate','');
+    mv.setAttribute('disable-zoom','');
+    mv.setAttribute('shadow-intensity','1');
+    mv.setAttribute('alt','3D object');
+    mv.style.cssText='position:fixed;z-index:6;right:5vw;bottom:8vh;'+
+      'width:min(38vw,420px);height:min(38vw,420px);background:transparent';
+    doc.body.appendChild(mv);
+  }
+  mv.setAttribute('src',obj.url);
+}
+
 function presetPage(){
   if(presetState!=='ready'||!S.preset)return '';
   var P=S.preset,b=S.brief,src=presetSrc;
@@ -4301,6 +4470,17 @@ function presetPage(){
   if(b.__links&&b.__links.length)applyLinks(doc,b.__links);
   if(b.__media&&b.__media.length)applyMedia(doc,b.__media);
   if(b.__menu&&b.__menu.length)applyMenu(doc,b.__menu);
+  if(b.__object)applyObject(doc,b.__object);
+  tagParts(doc,P);
+  if(b.__style&&Object.keys(b.__style).length){
+    var css=styleCss(b.__style);
+    if(css){
+      var st=doc.createElement('style');
+      st.setAttribute('data-scen-css','');
+      st.textContent=css;
+      (doc.head||doc.documentElement).appendChild(st);
+    }
+  }
   return '<!doctype html>\n'+doc.documentElement.outerHTML;
 }
 
@@ -4328,7 +4508,8 @@ function briefSig(){
      colour, and the edits made to its own words, links, film and top bar */
   return [b.name,b.pitch,b.accent,
     JSON.stringify(b.__words||''),JSON.stringify(b.__links||''),
-    JSON.stringify(b.__media||''),JSON.stringify(b.__menu||'')].join('\u0000');
+    JSON.stringify(b.__media||''),JSON.stringify(b.__menu||''),
+    JSON.stringify(b.__style||''),JSON.stringify(b.__object||'')].join('\u0000');
 }
 function syncPreview(){
   if(gen||presetState!=='ready')return;

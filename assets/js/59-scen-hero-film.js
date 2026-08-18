@@ -18,11 +18,21 @@ if(vid){
   /* Some browsers refuse the first play() until the tab has been touched. */
   document.addEventListener('pointerdown',kick,{once:true,passive:true});
 
-  /* Off screen it is burning battery for nobody. */
-  if(window.IntersectionObserver)
-    new IntersectionObserver(function(entries){
-      entries.forEach(function(en){en.isIntersecting?kick():vid.pause()});
-    },{threshold:.01}).observe(film);
+  /* Off screen it is burning battery for nobody. The observer is held in a
+     variable so nothing can collect it while it still has work to do. */
+  var inView=true;
+  if(window.IntersectionObserver){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){inView=en.isIntersecting;inView?kick():vid.pause()});
+    },{threshold:.01});
+    io.observe(film);
+  }
+
+  /* A hidden tab gets its muted autoplay paused by the browser and its
+     observer callbacks throttled, so coming back needs its own nudge. */
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden&&inView)kick();
+  });
 }
 
 var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;

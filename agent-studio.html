@@ -831,7 +831,7 @@ function applySeed(seed){
 
 var S={
   v:1,phase:'interview',step:0,brief:freshBrief(),msgs:[],pending:null,skip:[],seedLabel:'',
-  depth:'lite',planFirst:false,mode:'design',tab:'tools',tool:'brief',
+  depth:'lite',planFirst:false,mode:'design',tab:'tools',tool:'aigateway',
   file:'',device:'desktop',previewKind:'site',buildLog:[],files:[],built:false,
   atts:[],projectName:'',preset:null,pane:false,lang:'',picking:false,pick:'',autoImages:true
 };
@@ -4566,6 +4566,14 @@ function planData(){
 /* One sentence saying what is about to happen, in the order it happens. */
 function intentLine(b){
   var what=b.kind==='app'?L('app','app'):b.kind==='both'?L('site and app','site aur app'):L('site','site');
+  if(b.__base){
+    var m=null;for(var i=0;i<BASES.length;i++)if(BASES[i].name===b.__base)m=BASES[i];
+    var shown=C.titleCase(String(b.__base).toLowerCase());
+    return L("I'll build <b>"+esc(b.name)+"</b> on <b>"+esc(shown)+"</b> — "+(m?m.what:'one of our built pages')+
+             " — and make it yours: your name, your words, your colour. The rest of the pages are written around it.",
+             "<b>"+esc(b.name)+"</b> ko <b>"+esc(shown)+"</b> par bana raha hoon — "+(m?m.what:'hamara bana hua page')+
+             " — aur ise aapka bana dunga: aapka naam, aapke shabd, aapka colour. Baaki pages iske aas-paas likhunga.");
+  }
   return L("I'll build <b>"+esc(b.name)+"</b> — your "+what+". Designing the interface first "+
            "(palette, type, layout), then writing the pages. The preview fills in as it goes.",
            "<b>"+esc(b.name)+"</b> bana raha hoon — aapki "+what+". Pehle interface design karunga "+
@@ -4576,6 +4584,73 @@ function intentLine(b){
    The model reads it properly when the gateway is up; the word lists read it
    when it is not. Either way the missing decisions are made here, said in one
    line, and every one of them can be changed by talking afterwards. */
+/* The best pages in this product are the hand-built ones under /templates —
+   Nova is a seventeen-section product launch with sticky scroll scenes and a
+   live colour picker, and the generator does not write anything close to it.
+   Until now a typed brief could never reach them: they arrived only by
+   pressing Customize in the gallery, so someone who asked for an Apple-style
+   launch page got the generic brochure the section writer produces.
+
+   A base is used only on a clear match — a phone brief gets Nova, a bakery
+   brief gets nothing and the generator writes it as before. Home becomes that
+   page carrying the client's name, one-liner and accent; the rest of the site
+   is generated around it, which is exactly what Customize already does. */
+/* `name` is the word as the page actually writes it: the swap that puts the
+   client's name in is case-sensitive, and nova.html says NOVA in all thirteen
+   places, so 'Nova' replaced nothing and the build came out still called
+   after the template. */
+var BASES=[
+  {slug:'nova',file:'/templates/nova.html',name:'NOVA',accent:'#0071e3',
+   title:'NOVA',subtitle:'Powerful. Beautiful.',
+   what:'a cinematic product launch page',
+   re:/\b(apple|iphone|phone|smartphone|handset|device|hardware|gadget|laptop|macbook|tablet|ipad|watch|earbud|headphone|drone|console|product launch|launch page|flagship)\b/i},
+  {slug:'aura',file:'/templates/aura.html',name:'AURA',accent:'#7FD8FF',title:'AURA',
+   what:'a dark product page',
+   re:/\b(titanium|matte black|dark product|night mode|stealth)\b/i},
+  {slug:'worlds',file:'/templates/worlds.html',name:'Worlds',accent:'#f6f3ec',
+   what:'a film-led studio page',
+   re:/\b(creative agency|design studio|production house|film studio|vfx|animation studio|immersive)\b/i},
+  {slug:'lumora',file:'/templates/lumora.html',name:'Lumora',accent:'#182C41',
+   what:'a calm, mood-switching page',
+   re:/\b(mindful|meditat|wellness|yoga|calm|breathwork|therapy|mental health)\b/i},
+  {slug:'serene',file:'/templates/serene.html',name:'Serene',accent:'#6BADC4',
+   what:'a beauty and wellness page',
+   re:/\b(beauty|salon|skincare|spa|cosmetic|aesthetic clinic|makeup)\b/i},
+  {slug:'synthetic-nature',file:'/templates/synthetic-nature.html',name:'Synthetic Nature',accent:'#ffffff',
+   what:'a slow, photographic page',
+   re:/\b(photograph|photo studio|wildlife|nature film|documentary|landscape)\b/i},
+  {slug:'synapsex',file:'/templates/synapsex.html',name:'SynapseX',accent:'#61ff9e',
+   what:'a scroll-scrubbed technology page',
+   re:/\b(neuro|biotech|ai research|machine learning|deep tech|robotics|quantum)\b/i},
+  {slug:'frame',file:'/templates/frame.html',name:'FRAME',accent:'#d50000',title:'FRAME',
+   what:'an editorial film page',
+   re:/\b(film|cinema|motion design|music video|editorial fashion)\b/i}
+];
+function matchBase(text){
+  var t=String(text||'');
+  for(var i=0;i<BASES.length;i++)if(BASES[i].re.test(t))return BASES[i];
+  return null;
+}
+/* Fetch it before the build starts, and drop it silently if it will not load —
+   a base that is not there is not a reason to stop building. */
+function withBase(text,cb){
+  if(presetFile()||presetState==='ready')return cb();
+  var m=matchBase(text+' '+(S.brief.pitch||'')+' '+(S.brief.name||''));
+  if(!m)return cb();
+  S.preset={slug:m.slug,file:m.file,name:m.name,title:m.title||'',subtitle:m.subtitle||'',accent:m.accent||''};
+  S.brief.__base=m.name;save();
+  var settled=false;
+  var give=setTimeout(function(){
+    if(settled)return;settled=true;
+    S.preset=null;delete S.brief.__base;save();cb();
+  },7000);
+  loadPreset(function(){
+    if(settled)return;settled=true;clearTimeout(give);
+    if(presetState!=='ready'){S.preset=null;delete S.brief.__base;save()}
+    cb();
+  });
+}
+
 function startFromPrompt(text){
   var b=S.brief;
   absorbBrief(text);
@@ -4590,9 +4665,11 @@ function startFromPrompt(text){
     /* nothing is left to ask, and nothing may re-ask it */
     S.skip=(S.skip||[]).concat(FLOW.map(function(f){return f.id}));
     S.step=FLOW.length;save();refreshTools();
-    clearThinking();
-    agentSay(intentLine(b),Math.max(1,Math.round((Date.now()-t0)/1000)));
-    setTimeout(startBuild,340);
+    withBase(text,function(){
+      clearThinking();
+      agentSay(intentLine(b),Math.max(1,Math.round((Date.now()-t0)/1000)));
+      setTimeout(startBuild,340);
+    });
   }
 
   if(!X.usable()){setTimeout(go,700);return}
@@ -5419,8 +5496,14 @@ function rebuild(reason,t0){
    `scen.uimode` key the main app uses, so the two surfaces agree.
    Labels follow the client-facing vocabulary (AI gateway → AI, and so on);
    the panels themselves are untouched and all still reachable. */
+/* PROJECT — Brief, Plan, Files, Activity — is gone. Those four are the build
+   talking about itself: a form of the answers, a list of the sections it will
+   write, the files it wrote and a log of the steps. The conversation says all
+   of it in a sentence, the preview shows the result and Code shows the files,
+   so the group was a fourth copy of things the client had already been told.
+   The panels themselves are still built and still render; nothing links to
+   them from here. */
 var TOOLS=[
-  ['PROJECT','simple',[['brief','▤','Brief'],['plan','◇','Plan'],['files','⌸','Files'],['log','⌁','Activity']]],
   ['SCEN CLOUD','advanced',[['aigateway','✦','AI'],['publishing','◈','Publishing'],['domains','🌐','Domain'],['database','⛁','Data'],
     ['users','◍','Login & Users'],['monitoring','📈','Site Health'],['storage','▦','Storage'],
     ['security','⛨','Security']]],
@@ -5432,7 +5515,7 @@ function uiMode(){try{return localStorage.getItem(MODE_KEY)==='advanced'?'advanc
 function setUiMode(m){
   try{localStorage.setItem(MODE_KEY,m)}catch(e){}
   /* A panel that is being hidden must not stay selected underneath. */
-  if(m==='simple'&&!toolIsSimple(S.tool)){S.tool='brief';save()}
+  if(m==='simple'&&!toolIsSimple(S.tool)){S.tool='aigateway';save()}
   renderTools();renderMain();
 }
 function toolIsSimple(id){

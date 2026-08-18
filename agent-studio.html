@@ -497,6 +497,21 @@ var INDUSTRIES={
       ['Can you handle allergies?','Tell us when you book and the kitchen will work around it.'],
       ['Is there parking?','Street parking after 7pm, and a paid lot two minutes away.']],
     cta:['Book a table','Evenings fill up about a week ahead.','Reserve now']},
+  games:{l:'Games / arcade',e:'🎮',
+    pages:['Home','New Games','Popular','Multiplayer','Contact'],
+    feats:['accounts','analytics','gallery'],accent:'#a8ff3e',
+    kicker:'Play · Discover · Repeat',
+    pitch:'Browser games that open in one click — nothing to install and nothing to sign up for.',
+    services:[['Play in one click','Every game runs in the browser. No download, no launcher, no account before you play.'],
+      ['Something new each week','New titles land every week, and the ones people keep playing move up the front page.'],
+      ['Play with other people','Multiplayer rooms open straight from the card — share the link and they are in.']],
+    gallery:['Racing','Shooting','Puzzle','.io'],
+    stats:[['1,200+','games'],['0','downloads'],['4.7','average rating']],
+    quote:['Opened it on a break and lost the whole break.','Aditya K.'],
+    faq:[['Do I need an account?','No. Accounts only keep your favourites and what you played last.'],
+      ['Does it work on a phone?','Yes — the grid and the player both fit a small screen.'],
+      ['How do games get added?','Through the provider\u2019s own embed, so they stay updated at the source.']],
+    cta:['Play now','Pick anything on the page — it opens straight away.','Start playing']},
   realestate:{l:'Real estate',e:'🏠',
     pages:['Home','Listings','About','Contact'],
     feats:['forms','gallery','maps'],accent:'#5ab7ff',
@@ -830,7 +845,7 @@ var FLOW=[
     if(!b.features.length)b.features=P.feats.slice();
     if(!b.accent)b.accent=P.accent;
   },
-  ack:function(b){var P=INDUSTRIES[b.industry];
+  ack:function(b){var P=INDUSTRIES[b.industry]||INDUSTRIES.other;
     return "Right — "+(b.industryOther||P.l).toLowerCase()+". I've pre-loaded a page set and a feature list for that; you'll get to change both."}},
 
 {id:'name',type:'text',optional:true,ph:'Brand or project name',
@@ -848,7 +863,7 @@ var FLOW=[
 {id:'pitch',type:'text',optional:true,ph:'One line — what you do and for whom',
   q:function(b){return "Describe "+esc(b.name)+" in one line. This becomes the sentence under your headline, so plain beats clever."},
   extra:function(){return[{v:'__auto',l:'Write it for me'}]},
-  set:function(b,v){b.pitch=(v==='__auto'||!v)?INDUSTRIES[b.industry].pitch:v.slice(0,180)},
+  set:function(b,v){b.pitch=(v==='__auto'||!v)?(INDUSTRIES[b.industry]||INDUSTRIES.other).pitch:v.slice(0,180)},
   ack:function(b,v){return v==='__auto'?"Here's my draft — you can rewrite it any time after the build:\n\n<b>"+esc(b.pitch)+"</b>":"Got it."}},
 
 {id:'goal',type:'single',
@@ -916,11 +931,12 @@ var FLOW=[
   opts:function(b){
     var out=[];
     if(b.refs.length&&b.refs[0].color)out.push({v:b.refs[0].color,l:'From your reference',sw:b.refs[0].color});
-    out.push({v:INDUSTRIES[b.industry].accent,l:'Suggested',sw:INDUSTRIES[b.industry].accent});
+    var PA=INDUSTRIES[b.industry]||INDUSTRIES.other;
+    out.push({v:PA.accent,l:'Suggested',sw:PA.accent});
     ['#dfff45','#7beeff','#7d6cff','#ff6b64','#3ddc84','#ffb838','#ff5fbf','#e6c565'].forEach(function(c){
       if(!out.some(function(o){return o.v===c}))out.push({v:c,l:'',sw:c})});
     return out},
-  set:function(b,v){var c=findColor(v)||v;b.accent=/^#/.test(c)?c:INDUSTRIES[b.industry].accent},
+  set:function(b,v){var c=findColor(v)||v;b.accent=/^#/.test(c)?c:(INDUSTRIES[b.industry]||INDUSTRIES.other).accent},
   ack:function(b){return "Accent set to <code>"+esc(b.accent)+"</code>. I'll derive the hover, focus and gradient tints from it."}},
 
 {id:'motion',type:'single',
@@ -1501,7 +1517,7 @@ function sectionsFor(page,b,pro){
     out.push('hero');
     if(pro)out.push('logos');
     out.push('services');
-    if(has(b,'gallery')||pro)out.push('showcase');
+    if(has(b,'gallery')||pro||b.industry==='games')out.push('showcase');
     if(pro)out.push('stats');
     if(has(b,'store'))out.push('products');
     if(has(b,'bookings'))out.push('booking');
@@ -1515,6 +1531,7 @@ function sectionsFor(page,b,pro){
   if(/shop|menu|tickets|store/.test(n))out.push('products');
   else if(/reserv|book|appoint/.test(n))out.push('booking',has(b,'maps')?'map':null);
   else if(/service|treatment|class|course/.test(n))out.push('servicelist',pro?'pricing':null,pro?'faq':null);
+  else if(/game|arcade|multiplayer|trending|popular|new games|\.io/.test(n))out.push('showcase',pro?'stats':null);
   else if(/work|gallery|lookbook|listing|venue/.test(n))out.push('showcase',pro?'testimonial':null);
   else if(/pricing|membership/.test(n))out.push('pricing',pro?'faq':null);
   else if(/blog|writing|news/.test(n))out.push('posts');
@@ -1740,7 +1757,7 @@ function generate(b,depth){
   return{files:files,site:site};
 }
 function briefJson(b,depth){
-  return{project:b.name,kind:b.kind,industry:INDUSTRIES[b.industry].l,customIndustry:b.industryOther||undefined,
+  return{project:b.name,kind:b.kind,industry:(INDUSTRIES[b.industry]||INDUSTRIES.other).l,customIndustry:b.industryOther||undefined,
     pitch:b.pitch,goal:b.goal,audience:b.audience||undefined,pages:b.pages,features:b.features,
     design:{style:b.style,styleLabel:STYLES[b.style].l,accent:b.accent,motion:b.motion},
     content:b.content,languages:b.languages,domain:b.domain||slug(b.name)+'.scen.space',
@@ -2528,6 +2545,7 @@ function looksLikeBrief(st,text){
    because that pattern carried a bare "studio", so the specific trades are
    tested first and agency no longer claims the word on its own. */
 var IND_WORDS={
+  games:/\bgames?\b|gaming|arcade|browser game|multiplayer|esports|\.io\b/i,
   fitness:/fitness|gym|yoga|pilates|workout|training studio|crossfit|jim/i,
   clinic:/clinic|health|medical|dental|therapy|wellness|mindful|spa/i,
   restaurant:/restaurant|caf|bistro|diner|menu|eatery|food/i,
@@ -2612,9 +2630,25 @@ function saidDefaults(chose){
    through the same add/drop the edit reader already uses. */
 function applyTurn(o){
   var b=S.brief,u=o&&o.brief_updates;if(!u)return;
-  ['name','pitch','goal','style','accent','industry','kind','location'].forEach(function(k){
-    if(u[k])b[k]=u[k];
-  });
+  /* Every field here is written straight into the brief the generator reads,
+     so a trade the studio has never heard of — "gaming", "entertainment" —
+     used to land in b.industry and the build then threw on
+     INDUSTRIES[b.industry].l, four steps in, with the pill stuck on
+     "Building…" and nothing said. The model names things; this decides
+     whether the name is one the build can use. */
+  ['name','pitch','location'].forEach(function(k){if(u[k])b[k]=u[k]});
+  if(u.industry){
+    var ind=String(u.industry).toLowerCase().trim();
+    if(INDUSTRIES[ind])b.industry=ind;
+    else{b.industry='other';b.industryOther=String(u.industry).slice(0,40)}
+  }
+  if(u.kind&&['website','app','both'].indexOf(String(u.kind).toLowerCase())>=0)b.kind=String(u.kind).toLowerCase();
+  if(u.goal&&GOALS[String(u.goal).toLowerCase()])b.goal=String(u.goal).toLowerCase();
+  if(u.style&&STYLES[String(u.style).toLowerCase()])b.style=String(u.style).toLowerCase();
+  if(u.accent){
+    var ac=C.findColor(String(u.accent))||String(u.accent);
+    if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(ac))b.accent=ac;
+  }
   if(Array.isArray(u.languages)&&u.languages.length)b.languages=u.languages;
   if(Array.isArray(u.addPages))u.addPages.forEach(function(p){
     p=C.titleCase(String(p));if(b.pages.indexOf(p)<0)b.pages.push(p)});
@@ -2641,7 +2675,18 @@ function resumeInterview(text){
 
 function absorbBrief(text){
   var b=S.brief,got=[];
-  if(!b.pitch){b.pitch=text.replace(/\s+/g,' ').trim().slice(0,240);got.push('the brief')}
+  if(!b.pitch){
+    /* The one-liner goes under the headline, so it cannot be the instruction
+       that asked for the site: "Build a complete, production-ready online
+       browser gaming website called…" is not a sentence to print on a home
+       page. The first sentence is used when it describes the place; when it
+       gives an order, the trade's own line stands in until the copy is
+       written. */
+    var first=text.replace(/\s+/g,' ').trim().split(/(?<=[.!?])\s/)[0]||'';
+    var orders=/^\s*(build|make|create|design|develop|generate|banao|bana do|chahiye|i want|i need|please)\b/i;
+    b.pitch=(first&&first.length<=160&&!orders.test(first))?first:'';
+    got.push('the brief');
+  }
 
   /* A quoted name is exact. Unquoted, take up to three capitalised words —
      "Serenity Flow" was being cut to "Serenity" by stopping at the first
@@ -3192,7 +3237,19 @@ function startBuild(){
       if(sub)row.querySelector('.sub').textContent=sub;
       row.querySelector('.ms').textContent=(Date.now()-a)+'ms';
       if(st.compose){
-        gen=buildFiles();
+        /* Composing is where a bad value from the gateway shows up. Thrown
+           here it used to stop the chain dead: every row ticked, no files, an
+           empty preview and a pill that said "Building…" forever. */
+        try{gen=buildFiles()}
+        catch(err){
+          gen=null;
+          try{delete S.brief.__copy;delete S.brief.__plan;gen=buildFiles()}catch(e2){}
+          agentSay(gen?
+            'The live copy and plan could not be assembled — '+esc(String(err&&err.message||err).slice(0,140))+
+            '. I built the page with the local writer instead, so nothing is lost.':
+            'The build failed while putting the pages together — '+esc(String(err&&err.message||err).slice(0,140))+
+            '. Tell me to try again and I will rerun it.');
+        }
         if(S.tab==='preview')renderMain();
       }
       if(st.file)emitFile(st.file);
@@ -3734,7 +3791,7 @@ PANE.brief=function(){
   var rows=[
     ['Building',b.kind?({website:'Website',app:'Mobile app',both:'Website + app'})[b.kind]:''],
     ['Name',b.name],
-    ['Business',b.industry?(b.industryOther||INDUSTRIES[b.industry].l):''],
+    ['Business',b.industry?(b.industryOther||(INDUSTRIES[b.industry]||INDUSTRIES.other).l):''],
     ['One-liner',b.pitch],
     ['Goal',b.goal?GOALS[b.goal]:''],
     ['Audience',b.audience],

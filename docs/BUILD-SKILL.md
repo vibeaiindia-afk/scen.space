@@ -80,6 +80,19 @@ aspiration — if it is in the first list, it is in the code.
   happened; it never blocks the build.
 - **§7 five openings.** editorial, split, full, statement and product are real
   layouts now, chosen per build, not one centred hero for everything.
+- **§42 order.** The pictures are made inside the build, from the direction
+  chosen two steps earlier, before the pages are written — not after the site
+  has already appeared in grey.
+- **§16 §17 §18 §42 review from a screenshot.** The studio photographs its own
+  preview — the iframe is serialised into an SVG foreignObject and drawn to a
+  canvas, since no library may be loaded here — and sends the picture to a
+  vision model. Reading the markup is the fallback for when a shot cannot be
+  taken.
+- **"the model fixes the code".** What the review saw goes back for a
+  stylesheet patch, written by the code model and appended after everything
+  else so it wins. CSS only, validated before it is used: no @import, no url(),
+  balanced braces, under 2.5KB, and thrown away whenever the design changes
+  under it.
 - **§16 §17 §18 review.** The build marks its own work before it finishes: the
   page it just wrote goes to the model with §17's questions — could this belong
   to ten businesses, is every section the same layout, is the accent overused,
@@ -91,9 +104,11 @@ aspiration — if it is in the first list, it is in the code.
 
 ### Not true today — do not claim it
 
-- **§38 §42 image QA.** Nothing looks at a generated photograph and decides it
-  is weak. The review below marks the page, not the pictures — it can ask for
-  the set to be reshot, but it cannot tell a good frame from a bad one.
+- **§38 image QA, partly.** The hero photograph is looked at by a vision model
+  before it is kept — text in the frame, broken anatomy, a subject sitting
+  where the headline goes — and reshot once from its own description of what to
+  shoot instead. The other three are kept unexamined: four vision calls per
+  build cost more time than they save.
 - **§12 responsive by design.** There are real mobile rules, but the mobile
   layout is the desktop one restructured by CSS, not designed separately.
 - **§29 mobile crops.** One ratio per slot; no 9:16 variant is generated.

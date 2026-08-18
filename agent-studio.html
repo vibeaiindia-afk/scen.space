@@ -1483,7 +1483,11 @@ function makeCss(b){
 '  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--a) 55%,transparent),transparent);opacity:.5}',
 '.onepage .nav-links a{font-size:13px}',
 '@media (max-width:900px){.ch-in{grid-template-columns:1fr}.ch.flip .ch-in>.ch-copy{order:0}.ch-art{min-height:240px}}'
-].join('\n')+dirCss(b,t)+(b.industry==='games'?'\n\n'+gameCss(t):'');
+].join('\n')+dirCss(b,t)+(b.industry==='games'?'\n\n'+gameCss(t):'')+
+  /* Last, so it wins: what the review asked for after looking at the built
+     page. Written by the model, validated before it got here, and thrown away
+     the moment the design changes under it. */
+  (b.__fixCss?'\n\n/* after the design review */\n'+b.__fixCss:'');
 }
 
 /* ---------- the games platform ----------
@@ -3118,6 +3122,84 @@ function readReview(o){
   });
   return out;
 }
+/* The same review, from a picture instead of the markup — §42's "screenshot →
+   critique". The vision route answers with the same shape, so everything
+   downstream is unchanged. */
+function reviewShot(b,dataUri){
+  var t0=Date.now();
+  var hint='Review this page as a design director. Business: '+briefSummary(b).slice(0,700)+
+    '\n\nfixes must come from this list exactly: '+QA_FIXES.join(', ');
+  /* this block is evaluated before the API block exists, so the route is
+     looked up when it is called rather than when it is defined */
+  return window.__SCEN_API.visionReview(dataUri,'page',hint).then(function(d){
+    var o=jsonFrom(d&&d.text);
+    if(!o)throw Object.assign(new Error('The review was not JSON'),{status:502});
+    var r=readReview(o);
+    if(!r)throw Object.assign(new Error('The review came back unusable'),{status:502});
+    AI.lastMs=Date.now()-t0;
+    return{review:r,provider:(d&&d.provider)||'openai',model:(d&&d.model)||'',ms:Date.now()-t0};
+  }).catch(function(e){failed(e);return null});
+}
+
+/* Is one generated photograph fit to publish — §38. */
+function reviewPhoto(url){
+  return imageData(url).then(function(dataUri){
+    if(!dataUri)return null;
+    return window.__SCEN_API.visionReview(dataUri,'photo','Can this be published on a client website?')
+      .then(function(d){
+        var o=jsonFrom(d&&d.text);if(!o)return null;
+        return{usable:o.usable!==false,score:Number(o.score)||0,
+               faults:(Array.isArray(o.faults)?o.faults:[]).slice(0,3).map(String),
+               reshoot:String(o.reshoot||'').slice(0,400)};
+      });
+  }).catch(function(){return null});
+}
+/* A generated image lives behind the session cookie, so it is fetched here and
+   turned into the data URI the review route takes. */
+function imageData(url){
+  if(!url)return Promise.resolve('');
+  return fetch(url,{credentials:'same-origin'}).then(function(r){
+    if(!r.ok)throw new Error(String(r.status));
+    return r.blob();
+  }).then(function(bl){
+    if(bl.size>5000000)return '';
+    return new Promise(function(res){
+      var fr=new FileReader();
+      fr.onload=function(){res(String(fr.result||''))};
+      fr.onerror=function(){res('')};
+      fr.readAsDataURL(bl);
+    });
+  }).catch(function(){return ''});
+}
+
+/* What the review saw, turned into a stylesheet patch by the model that writes
+   code — grok when it is answering, whatever the router has otherwise. CSS
+   only: it is appended after everything else, so it can correct the build
+   without being able to break its markup. */
+function patchCss(b,problems,css){
+  var t0=Date.now();
+  var input='A design review of this page found:\n- '+problems.join('\n- ')+
+    '\n\nThe page uses these custom properties: --bg --bg2 --bg3 --ink --sub --line --a --aink --soft --rad --wrap.\n'+
+    'Existing stylesheet (truncated):\n'+String(css||'').slice(0,4000)+
+    '\n\nWrite CSS that fixes those findings when appended after that stylesheet. '+
+    'Use the custom properties above rather than new colours. Do not change the palette. '+
+    'No @import, no url(), no fonts, no !important on more than two rules. Under 2500 characters.\n'+
+    'Return JSON only: {"css":"...","why":"one short sentence"}';
+  return post('code',input,'You are a front-end engineer. Reply with one JSON object and nothing else.',
+    {maxOutputTokens:900,temperature:.3})
+    .then(function(d){
+      record(d,Date.now()-t0);
+      var o=jsonFrom(d.text);if(!o)return null;
+      var css2=String(o.css||'').trim();
+      /* what a stylesheet from a model is allowed to contain */
+      if(!css2||css2.length>2600)return null;
+      if(/@import|url\s*\(|javascript:|<\/?script|expression\s*\(/i.test(css2))return null;
+      if((css2.match(/\{/g)||[]).length!==(css2.match(/\}/g)||[]).length)return null;
+      return{css:css2,why:str(o.why,''),provider:d.provider,model:d.model};
+    })
+    .catch(function(e){failed(e);return null});
+}
+
 function reviewBuild(b,html){
   var t0=Date.now();
   return post('analysis',reviewPrompt(b,html),
@@ -3276,7 +3358,7 @@ function test(){
 }
 
 window.__SCEN_AI={AI:AI,probe:probe,usable:usable,label:label,readModels:readModels,designUI:designUI,
-  reviewBuild:reviewBuild,
+  reviewBuild:reviewBuild,reviewShot:reviewShot,reviewPhoto:reviewPhoto,patchCss:patchCss,
   writeCopy:writeCopy,writePlan:writePlan,readEdit:readEdit,readTurn:readTurn,test:test,SECTION_IDS:SECTION_IDS};
 })();
 </script>
@@ -3427,6 +3509,12 @@ function revokeOtherSessions(){
   return req('/api/auth/sessions?others=true',{method:'DELETE'}).then(function(d){
     ensure('sessions',true);return d;});
 }
+/* A picture, and a question about it. mode 'page' marks a screenshot of the
+   build; mode 'photo' decides whether one generated image can be published. */
+function visionReview(dataUri,mode,hint){
+  return req('/api/ai/vision-review',{method:'POST',body:{image:dataUri,mode:mode||'page',hint:hint||''}});
+}
+
 function heroImage(prompt,aspect){
   return req('/api/image/generate',{method:'POST',body:{
     mode:'generate',prompt:prompt,aspectRatio:aspect||'16:9',size:'1K',quality:'medium',
@@ -3442,6 +3530,7 @@ function heroImage(prompt,aspect){
 window.__SCEN_API={API:API,ensure:ensure,ensureAll:ensureAll,reset:reset,req:req,msg:msg,
   saveProject:saveProject,saveVersion:saveVersion,listVersions:listVersions,publish:publish,
   addDomain:addDomain,invite:invite,revokeOtherSessions:revokeOtherSessions,heroImage:heroImage,
+  visionReview:visionReview,
   siteSnapshot:siteSnapshot,settingsFor:settingsFor};
 })();
 </script>
@@ -5086,6 +5175,7 @@ function fellNote(){return AI.fell?'  ·  '+AI.fell:''}
 
 function applyDesign(d){
   var b=S.brief;
+  delete b.__fixCss;          /* patched against the previous look */
   b.__ui={display:d.display,body:d.body,radius:d.radius,heroAlign:d.heroAlign,
           density:d.density,caps:d.caps,surface:d.surface,idea:d.idea||''};
   if(/^#[0-9a-f]{6}$/i.test(d.bg||''))b.__bg=d.bg;
@@ -5122,6 +5212,16 @@ function buildPlanSteps(){
       });
     }});
   else out.push({l:L('Creating the visual direction','Visual direction bana raha hoon'),s:STYLES[b.style].l+' · '+b.accent,ms:520});
+
+  /* §42 — the pictures are made before the page is written, not after it.
+     They used to run once the build had finished and then trigger a second
+     build, so the client watched a site of grey rectangles appear, then watched
+     it rebuild. The plan is made from the direction the step above just chose,
+     which is the order the client's workflow asks for. */
+  if(live&&signedIn()&&!b.__art&&!b.__noImages&&S.autoImages!==false){
+    out.push({l:L('Making the pictures','Photos bana raha hoon'),s:'4 images · '+(4*IMG_COST)+' credits',ms:600,
+      run:function(){return buildImages(4)}});
+  }
 
   if(live)out.push({l:L('Writing the words','Words likh raha hoon'),s:'',ms:640,compose:true,
     run:function(){
@@ -5257,6 +5357,64 @@ function startBuild(){
                        :'Now the change you asked for while that ran.');
     setTimeout(next,600);
   }
+  /* A picture of the preview, taken inside the page.
+
+     There is no screenshot API in a browser tab and no library may be loaded
+     here, so the iframe's own document is serialised into an SVG
+     foreignObject and drawn to a canvas. Two things break it and both are
+     handled: a generated photograph that has not finished loading taints
+     nothing but arrives blank, so the shot waits a beat for images; and a
+     document that will not serialise at all returns nothing, which sends the
+     review back to reading markup instead of failing the build. */
+  function shotOfPreview(){
+    return new Promise(function(resolve){
+      var f=document.querySelector('#previewFrame')||document.querySelector('iframe');
+      var doc=null;try{doc=f&&f.contentDocument}catch(e){}
+      if(!doc||!doc.documentElement)return resolve('');
+      var w=Math.min(1280,doc.documentElement.clientWidth||1280);
+      var h=Math.min(1600,Math.max(700,doc.documentElement.clientHeight||900));
+      var html;
+      try{
+        var clone=doc.documentElement.cloneNode(true);
+        /* scripts never run inside foreignObject and only bloat the payload */
+        Array.prototype.slice.call(clone.querySelectorAll('script')).forEach(function(n){n.remove()});
+        /* …but the page's own reveal animation starts everything at opacity 0
+           and is turned on by one of those scripts. Without this the review
+           was handed a black rectangle with a navigation bar on it, and would
+           have marked the design on a page nobody can see. */
+        var unhide=doc.createElement('style');
+        unhide.textContent='[data-reveal],[data-reveal] *{opacity:1!important;transform:none!important;'+
+          'filter:none!important;clip-path:none!important;visibility:visible!important}'+
+          'html,body{overflow:visible!important}'+
+          '*{animation:none!important;transition:none!important}';
+        (clone.querySelector('head')||clone).appendChild(unhide);
+        html=new XMLSerializer().serializeToString(clone);
+      }catch(e){return resolve('')}
+      var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'+
+        '<foreignObject width="100%" height="100%">'+
+        '<div xmlns="http://www.w3.org/1999/xhtml">'+html+'</div>'+
+        '</foreignObject></svg>';
+      var img=new Image(),url;
+      try{url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}
+      catch(e){return resolve('')}
+      var settled=false;
+      var give=setTimeout(function(){if(!settled){settled=true;resolve('')}},9000);
+      img.onload=function(){
+        if(settled)return;settled=true;clearTimeout(give);
+        try{
+          var cv=document.createElement('canvas');
+          cv.width=Math.round(w*0.8);cv.height=Math.round(h*0.8);
+          var cx=cv.getContext('2d');
+          cx.fillStyle='#0b0b0f';cx.fillRect(0,0,cv.width,cv.height);
+          cx.drawImage(img,0,0,cv.width,cv.height);
+          resolve(cv.toDataURL('image/jpeg',0.72));
+        }catch(e){resolve('')}
+      };
+      img.onerror=function(){if(!settled){settled=true;clearTimeout(give);resolve('')}};
+      img.src=url;
+    });
+  }
+
   /* §16–§18 — mark the page, fix the worst of it, stop. Two passes at most,
      and the second only if the first actually changed something: a loop that
      keeps regenerating is a build that never ends. */
@@ -5299,7 +5457,10 @@ function startBuild(){
       if(settled)return;settled=true;
       close(L('review took too long','review mein der lagi'));after();
     },30000);
-    X.reviewBuild(b,home.body).then(function(r){
+    /* Look at it, the way the client's workflow says: a picture of the page
+       goes to the vision model. Only when a shot cannot be taken does this
+       fall back to reading the markup. */
+    function onReview(r,how){
       if(settled)return;settled=true;clearTimeout(give);
       setAiPill();
       if(!r){close(L('review unavailable','review nahi ho paaya'));return after()}
@@ -5309,15 +5470,42 @@ function startBuild(){
       S.qaVerdict=r.review.verdict||'';
       var did=[];
       if(low!=null&&low<8)r.review.fixes.forEach(function(f){var t=applyQaFix(f);if(t)did.push(t)});
-      close((low!=null?low+'/10 '+L('at its weakest','sabse kamzor'):'')+(did.length?' · '+did.join(', '):''));
+      var head=(low!=null?low+'/10 '+L('at its weakest','sabse kamzor'):'')+
+               (how?' · '+how:'')+(did.length?' · '+did.join(', '):'');
+      /* §"the model fixes the code" — the levers are blunt, so what it saw is
+         handed back for a stylesheet patch. CSS only, appended last so it
+         wins, and validated before it goes anywhere near the build. */
+      var problems=(r.review.problems||[]).slice(0,3);
+      if(low!=null&&low<8&&problems.length&&(S.qaRuns||0)<=1){
+        X.patchCss(b,problems,(gen&&gen.files.filter(function(f){return /styles\.css$/.test(f.path)})[0]||{}).body||'')
+          .then(function(pr){
+            setAiPill();
+            if(pr&&pr.css){b.__fixCss=pr.css;did.push(L('rewrote part of the stylesheet','stylesheet ka hissa dobara likha'))}
+            finishPass(head+(pr&&pr.css?' · '+L('css patched','css patch'):''),did);
+          },function(){finishPass(head,did)});
+        return;
+      }
+      finishPass(head,did);
+    }
+    function finishPass(head,did){
+      close(head);
       if(!did.length)return after();
       save();
       try{gen=buildFiles()}catch(e){}
       if(S.tab==='preview')renderMain();
       qaPass(after);
+    }
+
+    shotOfPreview().then(function(shot){
+      if(shot&&signedIn()){
+        X.reviewShot(b,shot).then(function(r){onReview(r,L('from a screenshot','screenshot se'))},
+          function(){X.reviewBuild(b,home.body).then(function(r){onReview(r,L('from the markup','markup se'))},
+            function(){onReview(null)})});
+        return;
+      }
+      X.reviewBuild(b,home.body).then(function(r){onReview(r,L('from the markup','markup se'))},function(){onReview(null)});
     },function(){
-      if(settled)return;settled=true;clearTimeout(give);
-      close(L('review unavailable','review nahi ho paaya'));after();
+      X.reviewBuild(b,home.body).then(function(r){onReview(r,L('from the markup','markup se'))},function(){onReview(null)});
     });
   }
 
@@ -6749,7 +6937,8 @@ function maybeDraft(){
   if(!haveEnough(S.brief))return;
   var b=S.brief;
   var sig=[b.name,b.industry,b.style,b.accent,b.motion,S.depth,b.__bg,b.__dir,(b.pages||[]).join(),(b.features||[]).join(),(b.__onepage||[]).join(),
-    b.__ui?[b.__ui.display,b.__ui.body,b.__ui.radius,b.__ui.heroAlign,b.__ui.density,b.__ui.caps,b.__ui.surface].join('|'):''].join('\u0000');
+    b.__ui?[b.__ui.display,b.__ui.body,b.__ui.radius,b.__ui.heroAlign,b.__ui.density,b.__ui.caps,b.__ui.surface,b.__ui.hero].join('|'):'',
+    b.__fixCss?String(b.__fixCss).length:''].join('\u0000');
   if(sig===draftSig)return;
   draftSig=sig;
   try{
@@ -7148,6 +7337,68 @@ function imagePlan(b,n){
 }
 /* kept: everything downstream asks for prompts, not for a plan */
 function imagePrompts(b,n){return imagePlan(b,n)}
+/* The image run as a build step: one plan, n calls, a budget of its own, and
+   whatever came back goes into the brief before the pages are composed. It
+   never throws — a build does not stop because a photograph did not arrive. */
+function buildImages(n){
+  n=n||4;
+  var list;
+  try{list=imagePlan(S.brief,n)}
+  catch(e){return Promise.resolve(L('could not plan the images — kept the placeholders',
+                                    'image plan nahi bana — placeholders rakhe'))}
+  var made=[],hero='',stop=Date.now()+55000,reason='';
+  return new Promise(function(resolve){
+    (function next(i){
+      if(i>=list.length||Date.now()>stop){
+        S.brief.__imagesRun=true;
+        if(hero)S.brief.__heroImage=hero;
+        if(made.length)S.brief.__art=made;
+        if(hero||made.length){save();N.ensure('credits',true);setAcctPill()}
+        var count=made.length+(hero?1:0);
+        return resolve(count?(count+L(' photographs, art-directed as one set',' photos, ek hi set ki tarah')+
+                              (reason?' · '+reason:''))
+                            :(reason||L('no images came back — kept the placeholders',
+                                        'koi image nahi aayi — placeholders rakhe')));
+      }
+      thinkingSay(L('Making picture '+(i+1)+' of '+list.length+'…','Photo bana raha hoon '+(i+1)+'/'+list.length+'…'));
+      N.heroImage(list[i].prompt,list[i].aspect).then(function(img){
+        /* §38 — a picture that arrived is not the same as a picture that can
+           be published. The hero is looked at properly and reshot once if it
+           comes back with text in it, broken hands or a subject sitting where
+           the headline goes; the rest are kept, because four vision calls per
+           build costs more time than it saves. */
+        var check=(list[i].slot==='hero'&&Date.now()<stop-20000)
+          ? X.reviewPhoto(img.url) : Promise.resolve(null);
+        check.then(function(v){
+          if(v&&v.usable===false&&v.reshoot&&Date.now()<stop-12000){
+            thinkingSay(L('That one was not usable — reshooting…','Wo theek nahi thi — dobara bana raha hoon…'));
+            reason=L('reshot the hero: '+(v.faults[0]||'not usable'),'hero dobara: '+(v.faults[0]||'theek nahi thi'));
+            return N.heroImage(v.reshoot+' Photographic, no text, no logos, no interface.',list[i].aspect)
+              .then(function(img2){
+                if(list[i].slot==='hero'&&!hero)hero=img2.url;else made.push(img2.url);
+                next(i+1);
+              },function(){
+                if(list[i].slot==='hero'&&!hero)hero=img.url;else made.push(img.url);
+                next(i+1);
+              });
+          }
+          if(list[i].slot==='hero'&&!hero)hero=img.url;else made.push(img.url);
+          next(i+1);
+        },function(){
+          if(list[i].slot==='hero'&&!hero)hero=img.url;else made.push(img.url);
+          next(i+1);
+        });
+      },function(e){
+        if(e&&(e.status===402||/credit/i.test(String(e.message||'')))){
+          reason=L('ran out of credits','credits khatam');
+          return next(list.length);
+        }
+        next(i+1);
+      });
+    })(0);
+  });
+}
+
 function imageFlow(n){
   n=n||4;
   if(!signedIn()){
@@ -7205,7 +7456,9 @@ function imageFlow(n){
    website was the wrong shape. They run after the build, they say what they
    cost while they run, and "no images" turns them off for good. */
 function autoImages(){
-  if(S.autoImages===false||!signedIn()||S.brief.__art||S.brief.__noImages)return '';
+  /* the build makes them itself now; this is only the path for a build that
+     ran before there was a session, or one whose step was skipped */
+  if(S.autoImages===false||!signedIn()||S.brief.__art||S.brief.__imagesRun||S.brief.__noImages)return '';
   setTimeout(function(){imageFlow(4)},700);
   return '<br/><br/>'+L('Making 4 real photographs for it now — '+(4*IMG_COST)+' credits. '+
       'Say <code>no images</code> if you would rather keep the placeholders.',

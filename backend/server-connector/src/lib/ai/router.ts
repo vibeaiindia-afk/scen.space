@@ -54,7 +54,13 @@ export async function generateWithRouting(input:GenerateInput,preferred?:AIProvi
       const e=err instanceof ProviderError?err:new ProviderError(order[i],String(err?.message||err),500,true);
       note(`${input.feature} · ${order[i]} failed (${e.status}${e.code?', '+e.code:''}): ${redact(e.message).slice(0,160)}`);
       attempts.push({provider:order[i],status:e.status,code:e.code,message:redact(e.message).slice(0,200)});
-      if(!e.retriable){(e as any).attempts=attempts;throw e}
+      /* A bad key, a missing key or a model the account cannot run is fatal to
+         that provider — it is not a reason to fail the request while another
+         provider sits configured and idle. Only a complaint about the input
+         itself is fatal to all of them, since the next one would say the same
+         thing about the same text. */
+      const inputsFault=e.status===400||e.status===413||e.code==='invalid_input'||e.code==='input_too_large';
+      if(inputsFault){(e as any).attempts=attempts;throw e}
       last=e;
     }
   }

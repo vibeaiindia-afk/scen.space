@@ -131,5 +131,10 @@ export async function cashfreeSubscriptionCheckout(input:{workspaceId:string;use
     subscription_note:`Scen ${input.planKey} plan`,
     subscription_tags:tags({workspace_id:input.workspaceId,user_id:input.userId,plan_key:input.planKey,kind:'subscription'}),
   },apiVersion);
-  return {id:String(x.subscription_id||subId),url:x.subscription_session_id?null:(x.authorization_link||x.subscription_link||null),sessionId:x.subscription_session_id||null,raw:x};
+  // Cashfree has moved the authorization link between API versions and nests it
+  // under authorization_details in 2025-01-01. Reading only the top level, and
+  // then blanking the url whenever a session id came back, left the caller with
+  // no way at all to reach a payment page.
+  const link=x.authorization_details?.authorization_link||x.authorization_link||x.subscription_link||null;
+  return {id:String(x.subscription_id||subId),url:link,sessionId:x.subscription_session_id||null,raw:x};
 }

@@ -1131,7 +1131,11 @@ document.addEventListener('click',e=>{
     a.disabled=true;const lbl=a.textContent;a.textContent='Opening checkout…';
     api('/api/billing/checkout',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':(crypto.randomUUID?crypto.randomUUID():String(Date.now()))},
       body:JSON.stringify({kind:'subscription',plan,currency:'INR',phone:digits,name:state.userName||''})})
-      .then(d=>{if(d.url){location.href=d.url;return}closeModal();toast('Checkout created')})
+      .then(d=>{if(d.url){location.href=d.url;return}
+        // A checkout with no payment page is not a success. Closing the modal on
+        // a "Checkout created" toast left the customer believing they had paid
+        // when nothing had been charged and no page had opened.
+        if(msg)msg.textContent='The payment provider did not return a payment page. Nothing has been charged \u2014 please try again in a moment.'})
       .catch(e=>{if(msg)msg.textContent=e.message||'Checkout failed. Please try again.'})
       .finally(()=>{a.disabled=false;a.textContent=lbl});
     return}

@@ -498,6 +498,17 @@ var INDUSTRIES={
       ['Is there parking?','Street parking after 7pm, and a paid lot two minutes away.']],
     cta:['Book a table','Evenings fill up about a week ahead.','Reserve now']},
   games:{l:'Games / arcade',e:'🎮',
+    /* Placeholder titles, so the grid has something to lay out before real
+       games are connected. Named, not lorem — a wall of "Game 1" tells the
+       client nothing about how their platform will read. */
+    catalogue:[['Drift Kings','Racing'],['Neon Rally','Racing'],['Block Rush','Puzzle'],
+      ['Tower Fall','Puzzle'],['Last Round','Shooting'],['Sniper Alley','Shooting'],
+      ['Hoop Nights','Sports'],['Penalty King','Sports'],['Cube Runner','Arcade'],
+      ['Pixel Dash','Arcade'],['Snake.io','.io'],['Hex Wars.io','.io'],
+      ['Metro Drift','Racing'],['Zero Gravity','Adventure'],['Deep Dive','Adventure'],
+      ['Card Clash','Multiplayer'],['Arena 12','Multiplayer'],['Word Storm','Casual'],
+      ['Bubble Line','Casual'],['Ghost Lane','Action'],['Iron Squad','Action'],
+      ['Skate Loop','Sports'],['Mind Maze','Puzzle'],['Turbo Cart','Racing']],
     pages:['Home','New Games','Popular','Multiplayer','Contact'],
     feats:['accounts','analytics','gallery'],accent:'#a8ff3e',
     kicker:'Play · Discover · Repeat',
@@ -1199,10 +1210,96 @@ function makeCss(b){
 '  .stage{order:-1;max-width:420px;margin-inline:auto}',
 '}',
 '@media (max-width:560px){.grid3,.grid4,.stats,.slots{grid-template-columns:1fr}.stats{gap:26px}}'
+].join('\n')+(b.industry==='games'?'\n\n'+gameCss(t):'');
+}
+
+/* ---------- the games platform ----------
+   A brochure page is the wrong shape for a place people come to play: the
+   point is to see many games at once and open one in a click. This is the
+   shell that gets — a rail of categories, a search that filters as you type,
+   and rows of cards. */
+function gameCss(t){
+  var st=t.st;
+  return ['/* platform shell */',
+'.gm{display:grid;grid-template-columns:236px 1fr;min-height:100vh}',
+'.gm-rail{position:sticky;top:0;height:100vh;overflow:auto;background:'+t.bg2+';border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:4px}',
+'.gm-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px;letter-spacing:-.02em;padding:6px 8px 16px;color:var(--ink);text-decoration:none}',
+'.gm-brand i{width:11px;height:11px;border-radius:4px;background:var(--a);box-shadow:0 0 14px var(--a);display:block}',
+'.gm-cap{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);padding:14px 8px 6px}',
+'.gm-rail a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;color:var(--sub);text-decoration:none;font-size:13.5px;transition:.15s}',
+'.gm-rail a:hover{background:'+t.bg3+';color:var(--ink)}',
+'.gm-rail a[aria-current]{background:var(--a);color:var(--aink);font-weight:600}',
+'.gm-rail a em{font-style:normal;width:18px;text-align:center;opacity:.9}',
+'.gm-col{min-width:0;display:flex;flex-direction:column}',
+'.gm-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:12px 22px;background:'+(st.dark?'rgba(0,0,0,.62)':'rgba(255,255,255,.72)')+';backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}',
+'.gm-search{flex:1;max-width:560px;display:flex;align-items:center;gap:9px;background:'+t.bg3+';border:1px solid var(--line);border-radius:999px;padding:9px 15px}',
+'.gm-search input{flex:1;background:0;border:0;outline:0;color:var(--ink);font:inherit;font-size:14px}',
+'.gm-ico{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:'+t.bg3+';color:var(--sub);display:grid;place-items:center;font-size:14px;cursor:pointer}',
+'.gm-ico:hover{color:var(--ink);border-color:var(--a)}',
+'.gm-body{padding:24px 22px 60px;display:flex;flex-direction:column;gap:34px}',
+'.gm-rowhead{display:flex;align-items:baseline;gap:12px;margin-bottom:13px}',
+'.gm-rowhead h2{font-size:19px;letter-spacing:-.02em;margin:0}',
+'.gm-rowhead a{margin-left:auto;font-size:12.5px;color:var(--a);text-decoration:none}',
+'.gm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}',
+'.gm-card{position:relative;border-radius:16px;overflow:hidden;background:'+t.bg3+';border:1px solid var(--line);text-decoration:none;color:inherit;display:block;transition:transform .18s,box-shadow .18s,border-color .18s}',
+'.gm-card:hover{transform:translateY(-3px);border-color:var(--a);box-shadow:0 16px 40px rgba(0,0,0,.38)}',
+'.gm-shot{aspect-ratio:4/3;display:grid;place-items:center;overflow:hidden;position:relative}',
+'.gm-shot span{font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.62}',
+'.gm-shot:after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(0,0,0,0),rgba(0,0,0,.42));transition:transform .22s}',
+'.gm-card:hover .gm-shot:after{transform:scale(1.08)}',
+'.gm-play{position:absolute;inset:0;display:grid;place-items:center;opacity:0;transition:opacity .18s;z-index:2}',
+'.gm-play b{width:44px;height:44px;border-radius:50%;background:var(--a);color:var(--aink);display:grid;place-items:center;font-size:15px;box-shadow:0 8px 26px rgba(0,0,0,.5)}',
+'.gm-card:hover .gm-play{opacity:1}',
+'.gm-meta{padding:10px 12px 12px}',
+'.gm-meta b{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+'.gm-meta span{font-size:11.5px;color:var(--sub)}',
+'.gm-card.wide{grid-column:span 2}.gm-card.wide .gm-shot{aspect-ratio:16/9}',
+'.gm-empty{color:var(--sub);font-size:13.5px;padding:10px 2px}',
+'.gm-foot{margin-top:auto;padding:22px;border-top:1px solid var(--line);color:var(--sub);font-size:12.5px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}',
+'@media (max-width:900px){.gm{grid-template-columns:1fr}.gm-rail{position:static;height:auto;flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}',
+'  .gm-rail .gm-cap{display:none}.gm-brand{padding:6px 8px}.gm-rail a{white-space:nowrap}}',
+'@media (max-width:560px){.gm-grid{grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}.gm-card.wide{grid-column:span 2}}'
 ].join('\n');
 }
 
 /* ---------- site javascript ---------- */
+/* The search bar is the first thing anyone touches on a games site, so it
+   filters the cards as you type rather than waiting for a back end. */
+function gameJs(){
+  return ['','  /* search across every card on the page */',
+'  var q=document.getElementById("gmq");',
+'  if(q){',
+'    var cards=[].slice.call(document.querySelectorAll(".gm-card"));',
+'    var rows=[].slice.call(document.querySelectorAll("[data-row]"));',
+'    q.addEventListener("input",function(){',
+'      var v=q.value.trim().toLowerCase();',
+'      cards.forEach(function(c){',
+'        c.style.display=!v||(c.dataset.game||"").indexOf(v)>=0?"":"none";',
+'      });',
+'      rows.forEach(function(r){',
+'        var any=[].slice.call(r.querySelectorAll(".gm-card")).some(function(c){return c.style.display!=="none"});',
+'        r.style.display=any?"":"none";',
+'      });',
+'    });',
+'  }',
+'  /* the rail categories filter the same way */',
+'  [].slice.call(document.querySelectorAll("[data-cat]")).forEach(function(a){',
+'    a.addEventListener("click",function(e){',
+'      e.preventDefault();',
+'      if(!q)return;',
+'      var c=a.dataset.cat;',
+'      q.value=(c==="recent"||c==="fav")?"":c;',
+'      q.dispatchEvent(new Event("input"));',
+'    });',
+'  });',
+'  /* a card has nothing to open until a game provider is connected */',
+'  [].slice.call(document.querySelectorAll(".gm-card")).forEach(function(c){',
+'    c.addEventListener("click",function(e){',
+'      e.preventDefault();',
+'      alert("This card opens the game once a provider is connected.");',
+'    });',
+'  });'].join('\n');
+}
 function makeJs(b){
   var lines=[
 '/* '+b.name+' — behaviour */',
@@ -1271,6 +1368,7 @@ function makeJs(b){
 '    document.documentElement.lang=l.dataset.lang;',
 '  })});']);
   lines.push('})();');
+  if(b.industry==='games')lines.push(gameJs());
   return lines.join('\n');
 }
 
@@ -1563,11 +1661,103 @@ nav(b,page),'',body,'',footer(b),
 '</body>','</html>'].join('\n');
 }
 
+/* ---------- games: the platform pages ---------- */
+var GM_ICON={home:'⌂','new games':'✦',popular:'★',trending:'📈',multiplayer:'👥',action:'⚔',
+  adventure:'🧭',racing:'🏁',sports:'🏀',puzzle:'🧩',shooting:'🎯',arcade:'👾',casual:'☕',
+  '.io games':'🌐',favorites:'♥','recently played':'↺',contact:'✉',about:'◇'};
+function gmCards(list,wideFirst){
+  return list.map(function(g,i){
+    var name=g[0],cat=g[1],hue=(i*47)%360;
+    return '      <a class="gm-card'+(wideFirst&&i===0?' wide':'')+'" href="#" data-game="'+esc(name.toLowerCase()+' '+cat.toLowerCase())+'">\n'+
+'        <div class="gm-shot" style="background:linear-gradient('+(120+i*23)+'deg,hsl('+hue+' 46% 24%),hsl('+((hue+48)%360)+' 38% 13%))"><span>'+esc(cat)+'</span>\n'+
+'          <div class="gm-play"><b>▶</b></div>\n        </div>\n'+
+'        <div class="gm-meta"><b>'+esc(name)+'</b><span>'+esc(cat)+'</span></div>\n      </a>';
+  }).join('\n');
+}
+function gmRow(title,list,href,wide){
+  if(!list.length)return '';
+  return '    <section class="gm-row" data-row>\n      <div class="gm-rowhead"><h2>'+esc(title)+'</h2>'+
+    (href?'<a href="'+href+'">View all →</a>':'')+'</div>\n      <div class="gm-grid">\n'+
+    gmCards(list,wide)+'\n      </div>\n    </section>';
+}
+function gmPick(cat,all,n,off){
+  var hit=all.filter(function(g){return g[1].toLowerCase()===String(cat).toLowerCase()});
+  var pool=hit.length?hit:all;
+  var out=[],i=off||0;
+  while(out.length<n&&pool.length)out.push(pool[(i++)%pool.length]);
+  return out;
+}
+function makeGamePage(b,page,pro,t){
+  var P=pack(b),all=(P.catalogue||INDUSTRIES.games.catalogue),n=page.toLowerCase();
+  var rail=b.pages.map(function(p){
+    return '      <a href="'+pageFile(p)+'"'+(p===page?' aria-current="page"':'')+'><em>'+
+      (GM_ICON[p.toLowerCase()]||'▸')+'</em>'+esc(p)+'</a>'}).join('\n');
+  var cats=['Action','Racing','Puzzle','Sports','Shooting','Arcade','Casual','.io'];
+  var catLinks=cats.map(function(c){
+    return '      <a href="#" data-cat="'+esc(c.toLowerCase())+'"><em>'+(GM_ICON[c.toLowerCase()]||'▸')+'</em>'+esc(c)+'</a>'}).join('\n');
+
+  var rows;
+  if(n==='home'){
+    rows=[gmRow('Featured',all.slice(0,5),'',true),
+      gmRow('Trending now',all.slice(5,13),pageFile(b.pages[1]||'Home')),
+      gmRow('Popular',all.slice(9,17),''),
+      gmRow('New games',all.slice(13,21),''),
+      gmRow('Multiplayer',gmPick('Multiplayer',all,6,0),'')].filter(Boolean).join('\n\n');
+  }else if(/contact|about/.test(n)){
+    rows='    <section class="gm-row"><div class="gm-rowhead"><h2>'+esc(page)+'</h2></div>\n'+
+      '      <p style="color:var(--sub);max-width:62ch;line-height:1.7">'+esc(P.pitch)+'</p>\n'+
+      '      <p style="margin-top:14px"><a class="btn" href="mailto:hello@'+slug(b.name)+'.com">'+esc(P.cta[0])+'</a></p>\n    </section>';
+  }else{
+    var key=n.replace(/\s*games?$/,'').trim();
+    rows=gmRow(page,gmPick(key,all,12,3),'');
+  }
+
+  var title=n==='home'?b.name+' — '+P.kicker.replace(/ · /g,', '):page+' · '+b.name;
+  return ['<!doctype html>','<html lang="'+((b.languages[0]||'English').slice(0,2).toLowerCase())+'">','<head>',
+'<meta charset="utf-8"/>',
+'<meta name="viewport" content="width=device-width,initial-scale=1"/>',
+'<title>'+esc(title)+'</title>',
+'<meta name="description" content="'+esc(P.pitch)+'"/>',
+'<link rel="stylesheet" href="styles.css"/>',
+'</head>','<body>',
+'  <div class="gm">',
+'    <aside class="gm-rail">',
+'      <a class="gm-brand" href="index.html"><i></i>'+esc(b.name)+'</a>',
+'      <span class="gm-cap">Browse</span>',
+rail,
+'      <span class="gm-cap">Categories</span>',
+catLinks,
+'      <span class="gm-cap">Yours</span>',
+'      <a href="#" data-cat="recent"><em>↺</em>Recently played</a>',
+'      <a href="#" data-cat="fav"><em>♥</em>Favourites</a>',
+'    </aside>',
+'    <div class="gm-col">',
+'      <header class="gm-top">',
+'        <label class="gm-search"><span aria-hidden="true">⌕</span>',
+'          <input id="gmq" type="search" placeholder="Search games…" aria-label="Search games"/>',
+'        </label>',
+'        <span class="grow" style="flex:1"></span>',
+'        <button class="gm-ico" title="Recently played">↺</button>',
+'        <button class="gm-ico" title="Favourites">♥</button>',
+'        <button class="gm-ico" title="Full screen">⛶</button>',
+'        <button class="gm-ico" title="Account">◍</button>',
+'      </header>',
+'      <main class="gm-body">',
+rows,
+'      </main>',
+'      <footer class="gm-foot"><b>'+esc(b.name)+'</b><span>'+esc(P.kicker)+'</span>'+
+  '<span style="margin-left:auto">Thumbnails and titles are placeholders until real games are connected.</span></footer>',
+'    </div>',
+'  </div>',
+'<scr'+'ipt src="app.js"></scr'+'ipt>',
+'</body>','</html>'].join('\n');
+}
+
 function buildSite(b,depth){
   b.__depth=depth;
-  var t=tokens(b),pro=depth==='pro';
+  var t=tokens(b),pro=depth==='pro',games=b.industry==='games';
   var pages=b.pages.map(function(p){
-    return{page:p,file:'site/'+pageFile(p),html:makePage(b,p,pro,t)}});
+    return{page:p,file:'site/'+pageFile(p),html:games?makeGamePage(b,p,pro,t):makePage(b,p,pro,t)}});
   return{pages:pages,css:makeCss(b),js:makeJs(b)};
 }
 

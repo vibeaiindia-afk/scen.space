@@ -3198,6 +3198,10 @@ function showPick(){
 function applyPick(text){
   var b=S.brief,was=S.pick,now=String(text||'').trim();
   if(!was||!now)return null;
+  /* "koi aur design dikhao" is a request about the site, not the words to put
+     in the thing that was selected. Anything that reads as an instruction goes
+     back to the ordinary edit path. */
+  if(/\b(design|layout|theme|direction|section|page|colou?r|background|image|images|font|bigger|smaller|dikhao|dikha|badal|badlo|rebuild|publish)\b/i.test(now))return null;
   var m=now.match(/^(?:change (?:it|this) to|make (?:it|this)|say|likho|kar do|kr do|isko)\s+(.+)$/i);
   if(m)now=m[1].trim();
   now=now.replace(/^["'\u201c]|["'\u201d]$/g,'').trim();
@@ -3421,7 +3425,7 @@ var IND_WORDS={
   games:/\bgames?\b|gaming|arcade|browser game|multiplayer|esports|\.io\b/i,
   fitness:/fitness|gym|yoga|pilates|workout|training studio|crossfit|jim/i,
   clinic:/clinic|health|medical|dental|therapy|wellness|mindful|spa/i,
-  restaurant:/restaurant|caf|bistro|diner|menu|eatery|food/i,
+  restaurant:/restaurant|caf|bistro|diner|menu|eatery|food|bakery|bakehouse|patisserie|coffee|dhaba|kitchen/i,
   realestate:/real ?estate|property|properties|realty|listing/i,
   fashion:/fashion|clothing|apparel|boutique|lookbook|wear/i,
   agency:/agency|consultanc|creative firm|design studio/i,
@@ -3790,6 +3794,9 @@ function absorbBrief(text){
        !/\b(pro display|pro text|neue|grotesk|mono)\b/i.test(qm[1]))quoted=qm;
   }
   var nm=nameText.match(/\b(?:called|named|naam)\s+((?:[A-Z][\w&']*)(?:[ -](?:[A-Z][\w&']*|of|and|&)){0,2})/)
+        /* "…bana do — Copper Oven, warm aur simple" — the dash is how people
+           hand over a name in a sentence that started in Hinglish */
+        ||nameText.match(/[\u2014\u2013-]\s*([A-Z][\w&']*(?:\s[A-Z][\w&']*){0,2})\b/)
         ||quoted
         /* Brands are usually written CamelCase or capitalised up front, with
            no "called" anywhere — "RamsFitness gym ki website bnao". */
@@ -6136,7 +6143,14 @@ window.addEventListener('message',function(e){
   if(e.data&&e.data.scenPicked){
     var p=e.data.scenPicked;
     if(!p.text)return;
-    S.pick=p.text;save();
+    S.pick=p.text;
+    /* Selecting stays on until something is picked, then stops: leaving it on
+       turned the next click into another selection and the next sentence into
+       replacement text for whatever was under the cursor. */
+    S.picking=false;save();
+    var fr0=$('#prevFrame');
+    if(fr0&&fr0.contentWindow)fr0.contentWindow.postMessage({scenPick:false},'*');
+    if(S.tab==='preview')renderMain();
     showPick();
     agentSay(L('Selected — “<b>'+esc(p.text)+'</b>”. Tell me what it should say, or what to change about it.',
                '“<b>'+esc(p.text)+'</b>” chun liya. Bolo isme kya likhna hai ya kya badalna hai.'));

@@ -846,7 +846,7 @@ function load(){try{
    ============================================================ */
 var FLOW=[
 {id:'kind',type:'single',
-  q:function(){return "I'm Scen. Tell me what you want built and I will build it \u2014 I only ask when something genuinely changes the result.\n\nWhat are we making?"},
+  q:function(){return "I'm Scen. Tell me what to build \u2014 one line about the business is enough.\n\nI design it and write it straight away; everything after that you change by talking to me."},
   opts:function(){return[
     {v:'website',l:'A website'},{v:'app',l:'A mobile app'},{v:'both',l:'Website + app'}]},
   set:function(b,v){b.kind=v},
@@ -1097,7 +1097,31 @@ function dirCss(b,t){
 (d.hero==='center'?'.hero-grid,.lp-hero-in{grid-template-columns:1fr;text-align:center;justify-items:center}.lead{margin-inline:auto}':''),
 (dirOf(b)==='swiss'?'.wrap{--wrap:min(1240px,100% - 40px)}.hero{padding-block:clamp(56px,9vh,110px)}':''),
 (dirOf(b)==='bold'?'.btn{border-radius:4px;border:2px solid var(--ink)}.btn.ghost{border-color:var(--ink)}':''),
-(dirOf(b)==='editorial'?'.sec-head h2{max-width:18ch}.hero h1{font-style:italic}':'')
+(dirOf(b)==='editorial'?'.sec-head h2{max-width:18ch}.hero h1{font-style:italic}':''),
+uiCss(b)
+].filter(Boolean).join('\n');
+}
+
+/* The art direction the model chose for this one site, written after the
+   deterministic direction so it wins where the two disagree. Nothing here is
+   required: a build with no gateway, or a design that came back unusable,
+   simply keeps the direction above. */
+var DENSITY={airy:['clamp(96px,13vw,190px)','64px'],balanced:['clamp(64px,9vw,128px)','48px'],
+             tight:['clamp(44px,6vw,84px)','34px']};
+function uiCss(b){
+  var u=b.__ui;if(!u)return '';
+  var den=DENSITY[u.density]||DENSITY.balanced;
+  return ['','/* interface — designed for this brief */',
+u.body?'body{font-family:'+u.body+'}':'',
+u.display?'h1,h2,h3,.brand,.ch h2,.lp-hero h1{font-family:'+u.display+'}':'',
+'body{--rad:'+u.radius+'px}',
+'section{padding:'+den[0]+' 0}',
+'.sec-head{margin-bottom:'+den[1]+'}',
+(u.heroAlign==='center'
+  ?'.hero-grid,.lp-hero-in{grid-template-columns:1fr;text-align:center;justify-items:center}.hero p.lead{margin-inline:auto}.hero-cta{justify-content:center}'
+  :'.hero-grid{text-align:left;justify-items:stretch}'),
+(u.caps?'h2,.sec-head h2{text-transform:uppercase;letter-spacing:.02em}':''),
+(u.surface?'body{--bg2:'+u.surface+'}':'')
 ].filter(Boolean).join('\n');
 }
 
@@ -2762,6 +2786,73 @@ function writeCopy(b,hist){
     .catch(function(e){failed(e);return null});
 }
 
+/* ---------- the design, decided before the pages are written ----------
+   Every build shared one look because the studio owned every design decision.
+   The model is asked for a design system first — palette, type, radius,
+   rhythm, how the hero sits — and the build is written to it. Bounded on
+   purpose: colours must be hex, sizes must be numbers, and the fonts come from
+   a list the page can actually render, so a strange answer degrades to the
+   studio's own direction instead of a broken page. */
+var UI_FONTS={
+  geist:'"Geist",Inter,system-ui,-apple-system,sans-serif',
+  general:'"General Sans","Geist",system-ui,sans-serif',
+  system:'-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif',
+  serif:'Georgia,"Times New Roman",serif',
+  mono:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'
+};
+function designPrompt(b,hist){
+  return 'You are the art director for one website. Decide how it should look, then stop.\n\n'+
+  'BRIEF:\n'+briefSummary(b)+
+  (hist&&hist.length?'\n\nConversation so far:\n'+hist.join('\n'):'')+
+  '\n\nReturn one JSON object and nothing else:\n'+
+  '{"idea":"one sentence describing the visual idea, in plain words",\n'+
+  ' "bg":"#rrggbb","surface":"#rrggbb","ink":"#rrggbb","accent":"#rrggbb",\n'+
+  ' "display":"geist|general|system|serif|mono","body":"geist|general|system|serif|mono",\n'+
+  ' "radius":0-32,"heroAlign":"left|center","density":"airy|balanced|tight",\n'+
+  ' "motion":"subtle|cinematic|full","caps":true|false}\n\n'+
+  'Rules:\n'+
+  '- Choose for this business, not for websites in general. A bakery, a law firm and a '+
+  'gaming platform should not come out looking the same.\n'+
+  '- ink must be readable on bg: keep a strong contrast between them.\n'+
+  '- accent is used on buttons and small marks. It must be visible on bg and never equal to it.\n'+
+  '- surface is one step from bg, for cards.\n'+
+  '- Serif display with a sans body is a real choice; so is mono for something technical.\n'+
+  '- No explanation outside the JSON.';
+}
+function readDesign(o){
+  function hex(v){v=String(v||'').trim();return /^#([0-9a-f]{6})$/i.test(v)?v:''}
+  var bg=hex(o.bg),ink=hex(o.ink),accent=hex(o.accent),surface=hex(o.surface);
+  if(!bg||!ink||!accent)return null;
+  /* a palette nobody can read is not a design */
+  var lb=C.lumOf?C.lumOf(bg):null;
+  var d={
+    idea:str(o.idea,''),bg:bg,ink:ink,accent:accent,surface:surface||C.mix(bg,ink,.06),
+    display:UI_FONTS[String(o.display||'').toLowerCase()]||UI_FONTS.geist,
+    body:UI_FONTS[String(o.body||'').toLowerCase()]||UI_FONTS.geist,
+    radius:Math.max(0,Math.min(32,Number(o.radius)||0)),
+    heroAlign:o.heroAlign==='center'?'center':'left',
+    density:['airy','balanced','tight'].indexOf(o.density)>=0?o.density:'balanced',
+    motion:['subtle','cinematic','full'].indexOf(o.motion)>=0?o.motion:'cinematic',
+    caps:!!o.caps
+  };
+  return d;
+}
+function designUI(b,hist){
+  var t0=Date.now();
+  return post('planning',designPrompt(b,hist),
+    'You are an art director. Reply with one JSON object and nothing else.',
+    {maxOutputTokens:400,temperature:.9})
+    .then(function(d){
+      record(d,Date.now()-t0);
+      var o=jsonFrom(d.text);
+      if(!o)throw Object.assign(new Error('The model did not return usable JSON'),{status:502});
+      var design=readDesign(o);
+      if(!design)throw Object.assign(new Error('The design came back unusable'),{status:502});
+      return{design:design,provider:d.provider,model:d.model,ms:Date.now()-t0};
+    })
+    .catch(function(e){failed(e);return null});
+}
+
 /* ---------- page plan ---------- */
 var SECTION_IDS=['logos','services','servicelist','showcase','stats','products','booking',
   'pricing','testimonial','faq','posts','team','contact','map','steps','prose'];
@@ -2905,7 +2996,7 @@ function test(){
     .catch(function(e){failed(e);return{ok:false,error:AI.lastError}});
 }
 
-window.__SCEN_AI={AI:AI,probe:probe,usable:usable,label:label,readModels:readModels,
+window.__SCEN_AI={AI:AI,probe:probe,usable:usable,label:label,readModels:readModels,designUI:designUI,
   writeCopy:writeCopy,writePlan:writePlan,readEdit:readEdit,readTurn:readTurn,test:test,SECTION_IDS:SECTION_IDS};
 })();
 </script>
@@ -3220,16 +3311,18 @@ function applyPick(text){
 function step(){return FLOW[S.step]}
 
 function askCurrent(animate){
+  /* skip the trade question wherever the flow lands on it */
+  while(FLOW[S.step]&&FLOW[S.step].id==='industry'){settleIndustry(S.brief);S.step++}
   // a seeded brief already answers some steps — walk past them
   while(FLOW[S.step]&&(S.skip||[]).indexOf(FLOW[S.step].id)>=0)S.step++;
   var st=step();if(!st)return finishInterview();
   S.pending='q';save();
   var text=st.q(S.brief);
-  /* Buttons make this a form. With the gateway up, readTurn understands
-     whatever the person types, so let them just talk — the way they would to
-     anyone else. Signed out there is no model to read a sentence, so the
-     guided choices stay: they are the only thing that works then. */
-  var guided=!X.usable();
+  /* Buttons made this a form, and the form is gone: whatever the client types
+     is the brief, gateway or no gateway — the word lists read it when there is
+     no model to. A row of chips under the first question is the one thing this
+     flow must never show, because picking "A website" answers nothing. */
+  var guided=false;
   if(animate===false){agentSay(text.replace(/\n/g,'<br/>'));if(guided)renderAnswerBox();return}
   var t0=Date.now();
   thinking();
@@ -3523,10 +3616,20 @@ function briefGiven(b){
 }
 function haveEnough(b){
   if(briefGiven(b)&&b.name)return true;      /* they described it — that is the brief */
-  return !!(b.name && b.kind && b.industry && (b.pages||[]).length);
+  return !!(b.name && b.kind && (b.pages||[]).length);
 }
 /* Assumptions a designer would make without stopping to ask. All editable. */
+/* The trade was a wall of thirteen chips with emoji on them, and it decided
+   nothing the agent cannot decide itself. It is never asked now: the brief's
+   own words settle it, the gateway settles it, or it falls to the general pack
+   — and the client is never handed a menu of businesses to classify
+   themselves into. */
+function settleIndustry(b){
+  if(b.industry&&INDUSTRIES[b.industry])return;
+  b.industry='other';
+}
 function fillDefaults(b){
+  settleIndustry(b);
   /* §3 and §49 — the agent decides these, and says so in one line rather than
      leaving the brief to show "not answered yet" beside "enough to start".
      Returns what it chose so the conversation can mention it. */
@@ -3585,7 +3688,7 @@ function applyTurn(o){
        sit on that palette, stands. */
     var ac=C.findColor(String(u.accent))||String(u.accent);
     var asked=o.__text&&/\b(colou?r|accent|rang|palette|theme)\b/i.test(o.__text);
-    if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(ac)&&(asked||!b.accent))b.accent=ac;
+    if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(ac)&&(asked||!b.accent)){b.accent=ac;if(asked)b.__accentAsked=1}
   }
   if(Array.isArray(u.languages)&&u.languages.length)b.languages=u.languages;
   if(Array.isArray(u.addPages))u.addPages.forEach(function(p){
@@ -3819,7 +3922,7 @@ function absorbBrief(text){
       if(!/\baccent\b/i.test(aLines[ai]))continue;
       var ah=aLines[ai].match(/#([0-9a-f]{6}|[0-9a-f]{3})\b/i);
       var ac2=ah?('#'+ah[1]):C.findColor(aLines[ai]);
-      if(ac2){b.accent=ac2;got.push('accent <b>'+C.esc(ac2)+'</b>');break}
+      if(ac2){b.accent=ac2;b.__accentAsked=1;got.push('accent <b>'+C.esc(ac2)+'</b>');break}
     }
   }
 
@@ -3873,7 +3976,7 @@ function absorbBrief(text){
         if(m3){acc='#'+m3[1];break}
       }
     }
-    if(acc){b.accent=acc;got.push('accent <b>'+C.esc(acc)+'</b>')}
+    if(acc){b.accent=acc;b.__accentAsked=1;got.push('accent <b>'+C.esc(acc)+'</b>')}
   }
 
   got=got.concat(refineBrief(text));
@@ -4098,6 +4201,7 @@ function panelAsk(text){
 
 function handleText(text){
   var atts=S.atts.slice();
+  clearNextChips();
 
   /* Something is selected in the preview: this message is about that. */
   if(S.pick){
@@ -4239,6 +4343,33 @@ function handleText(text){
         return;
       }
       /* nothing local to apply and no gateway — let it be an answer */
+    }
+
+    /* One prompt, then the build.
+
+       This used to be fourteen questions — trade, name, one-liner, goal,
+       audience, pages, features, style, accent, motion, content, languages,
+       domain — and a plan to approve at the end of them. Every one of those is
+       a decision a designer makes and shows you, not a form a client fills in,
+       and all of them are still changeable by saying so afterwards. So the
+       first real sentence is the brief: it goes to the model, the model
+       decides the rest, and the build starts. Nothing in between.
+
+       Three things still are not a brief and are handled above or below:
+       small talk, an edit to what is already in the preview, and a question
+       about the studio itself. */
+    if(intent.kind!=='question'&&text.trim().split(/\s+/).length>=2){
+      userSay(text,atts);S.atts=[];renderAtts();
+      var bare=text.trim().match(/^(?:a |an )?(website|web ?site|site|app|mobile app|both|website \+ app|website and app)[.!]?$/i);
+      if(bare){
+        var w=bare[1].toLowerCase();
+        S.brief.kind=/both|and/.test(w)?'both':(/app/.test(w)?'app':'website');
+        save();
+        agentSay(L('Right. And what is it for? One line about the business — I take it from there.',
+                   'Theek hai. Kis cheez ke liye? Business ke baare mein ek line — aage main sambhal loonga.'));
+        return;
+      }
+      return startFromPrompt(text);
     }
 
     /* §47 — extraction first. Ask the model what this turn actually contained
@@ -4402,18 +4533,54 @@ function planData(){
   return{pages:pages,sections:total,files:files,credits:credits};
 }
 
+/* One sentence saying what is about to happen, in the order it happens. */
+function intentLine(b){
+  var what=b.kind==='app'?L('app','app'):b.kind==='both'?L('site and app','site aur app'):L('site','site');
+  return L("I'll build <b>"+esc(b.name)+"</b> — your "+what+". Designing the interface first "+
+           "(palette, type, layout), then writing the pages. The preview fills in as it goes.",
+           "<b>"+esc(b.name)+"</b> bana raha hoon — aapki "+what+". Pehle interface design karunga "+
+           "(colour, type, layout), phir pages likhunga. Preview saath-saath bharega.");
+}
+
+/* The client's first sentence, turned into a build without asking anything.
+   The model reads it properly when the gateway is up; the word lists read it
+   when it is not. Either way the missing decisions are made here, said in one
+   line, and every one of them can be changed by talking afterwards. */
+function startFromPrompt(text){
+  var b=S.brief;
+  absorbBrief(text);
+  if(!b.pitch)b.pitch=String(text).replace(/\s+/g,' ').trim().slice(0,180);
+  var t0=Date.now();
+  thinking();
+
+  function go(){
+    if(!b.name)b.name=C.suggestName(b);
+    fillDefaults(b);
+    if(!S.projectName){S.projectName=b.name;$('#projName').textContent=b.name}
+    /* nothing is left to ask, and nothing may re-ask it */
+    S.skip=(S.skip||[]).concat(FLOW.map(function(f){return f.id}));
+    S.step=FLOW.length;save();refreshTools();
+    clearThinking();
+    agentSay(intentLine(b),Math.max(1,Math.round((Date.now()-t0)/1000)));
+    setTimeout(startBuild,340);
+  }
+
+  if(!X.usable()){setTimeout(go,700);return}
+  X.readTurn(text,b,transcript()).then(function(o){
+    setAiPill();
+    if(o){o.__text=text;applyTurn(o)}
+    go();
+  }).catch(go);
+}
+
 function finishInterview(){
   S.phase='review';save();setPhasePill();
   input.placeholder='Reply, or ask for a change…';
   var b=S.brief,P=planData();
-  var lines=[L('Here is what I have.','Ye mere paas hai.'),'',
-    '<b>'+esc(b.name)+'</b> — '+esc(b.pitch),'',
-    '<ul>',
-    '<li>'+P.pages.length+' pages · '+P.sections+' sections</li>',
-    '<li>'+(b.features.length?b.features.map(function(f){return FEATURES[f].l}).join(', '):'no extra modules')+'</li>',
-    '<li>'+STYLES[b.style].l+' · accent <code>'+esc(b.accent)+'</code> · '+esc(b.motion)+' motion</li>',
-    '<li>'+(b.kind==='both'?'Website and app':b.kind==='app'?'App plus a landing page':'Website')+'</li>',
-    '</ul>'].join('\n');
+  /* This was a specification read back to the client — pages, sections,
+     modules, accent, motion — sitting between them and the thing they asked
+     for. It is all on the right, and all of it changes on request. One line. */
+  var lines=intentLine(b);
 
   var t0=Date.now();thinking();
   setTimeout(function(){
@@ -4528,6 +4695,19 @@ function reviewEditHelp(){ return "I can change the name, the one-liner, the pag
 /* ============================================================
    The build run
    ============================================================ */
+/* What the art director decided, written into the brief the generator already
+   reads. Nothing new is invented here: the background goes through __bg, which
+   derives ink, panels and hairlines from it exactly as a typed colour does, and
+   a colour the client asked for by name is never overwritten. */
+function applyDesign(d){
+  var b=S.brief;
+  b.__ui={display:d.display,body:d.body,radius:d.radius,heroAlign:d.heroAlign,
+          density:d.density,caps:d.caps,surface:d.surface,idea:d.idea||''};
+  if(/^#[0-9a-f]{6}$/i.test(d.bg||''))b.__bg=d.bg;
+  if(/^#[0-9a-f]{6}$/i.test(d.accent||'')&&!b.__accentAsked)b.accent=d.accent;
+  save();
+}
+
 function buildPlanSteps(){
   var b=S.brief,pro=S.depth==='pro',P=planData(),out=[],live=X.usable();
   out.push({l:'Setting up your pages',s:b.pages.length+' pages',ms:420});
@@ -4543,7 +4723,20 @@ function buildPlanSteps(){
   else{delete b.__plan;
     out.push({l:'Laying out the sections',s:P.sections+' sections across '+P.pages.length+' pages',ms:560})}
 
-  out.push({l:'Designing the interface',s:STYLES[b.style].l+' · '+b.accent,ms:520});
+  /* The design comes before the words, the way it would with a person: the
+     model decides the palette, the type, the radius, the density and where the
+     hero sits for this one business, and the rest of the build is written to
+     match. Without a gateway the deterministic direction stands, which is what
+     every build used to get. */
+  if(live)out.push({l:'Designing the interface',s:'',ms:520,
+    run:function(){
+      return X.designUI(b,transcript()).then(function(r){
+        if(!r){delete b.__ui;setAiPill();return 'gateway unavailable — used the built-in direction'}
+        applyDesign(r.design);setAiPill();
+        return r.design.idea?String(r.design.idea).slice(0,90):(r.provider+' · '+r.model);
+      });
+    }});
+  else out.push({l:'Designing the interface',s:STYLES[b.style].l+' · '+b.accent,ms:520});
 
   if(live)out.push({l:'Adding the content',s:'',ms:640,compose:true,
     run:function(){
@@ -4682,30 +4875,60 @@ function startBuild(){
     refreshTools();renderMain();clearThinking();
     setTimeout(function(){
       setMode('design');
-      var P=planData();
-      agentSay(L('Done — <b>'+esc(S.brief.name)+'</b> is built.','Ho gaya — <b>'+esc(S.brief.name)+'</b> ban gayi.')+'<ul>'+
-        '<li>'+gen.files.length+' files, '+P.sections+' sections, '+secs+'s</li>'+
-        '<li>'+(S.brief.__copy?'Copy written live by '+esc(AI.provider)+' · '+esc(AI.model):
-          'Copy written by the local writer — '+esc(X.label().toLowerCase()))+'</li>'+
-        /* on a phone the pane is behind a tab, not beside the chat */
-        '<li>'+(innerWidth>980?L('Preview is open on the right','Preview daayin taraf khula hai')
-                              :L('Tap <b>Preview</b> at the top to see it','Upar <b>Preview</b> dabao'))+
-        L(' — switch pages and devices from the bar',' — bar se page aur device badal sakte ho')+'</li>'+
-        (presetHome()?'<li>Home is the <b>'+esc(presetName())+'</b> preset itself, carrying your name, your '+
-          'one-liner and your accent. Its own header is the designer\u2019s, so the other pages open from the '+
-          'bar above the preview rather than from a link on it</li>':'')+
-        '<li>Every file is readable under <b>Code</b>, and downloadable</li>'+
-        (signedIn()?'<li>Signed in as '+esc(accountName())+' — <b>Publishing</b> can save it to your workspace and put it live</li>':
-          '<li>Not signed in, so saving and publishing are off — the build itself is finished either way</li>')+
-        '</ul>'+autoImages()+'<br/><br/>Tell me what to change and I rebuild it: <code>make it deep teal</code>, '+
-        '<code>add a pricing page</code>, <code>drop the blog</code>, <code>rename it to Ember &amp; Oak</code>, '+
-        '<code>more sections</code>.');
+      /* What was built, in the words someone would use to describe it — the
+         list of files, modules, credits and instructions that used to be here
+         is all in the panes on the right, and reading a manifest back to
+         someone who asked for a website is not an answer. */
+      var P=planData(),b=S.brief;
+      var made=P.pages.slice(0,4).map(function(p){return esc(p.name)}).join(', ')+
+               (P.pages.length>4?' and '+(P.pages.length-4)+' more':'');
+      agentSay(L('Done — <b>'+esc(b.name)+'</b> is live in the preview.',
+                 'Ho gaya — <b>'+esc(b.name)+'</b> preview mein live hai.')+' '+
+        L(P.pages.length+' pages ('+made+'), '+P.sections+' sections, '+
+            (b.__ui&&b.__ui.idea?esc(String(b.__ui.idea).replace(/\.$/,''))+'. ':'')+
+            'written in '+secs+'s.',
+          P.pages.length+' pages ('+made+'), '+P.sections+' sections, '+
+            (b.__ui&&b.__ui.idea?esc(String(b.__ui.idea).replace(/\.$/,''))+'. ':'')+
+            secs+'s mein bani.')+
+        (innerWidth>980?'':'<br/><br/>'+L('Tap <b>Preview</b> at the top to see it','Upar <b>Preview</b> dabao'))+
+        (signedIn()?'':'<br/><br/>'+L('You are not signed in, so saving and publishing are off — the build itself is finished.',
+                                      'Aap signed in nahi ho, isliye save aur publish band hain — build to poori ho chuki hai.'))+
+        autoImages());
+      nextChips();
       $('#prevBadge').classList.remove('hidden');
       drainQueued();              /* §37 — whatever was said while this ran */
     },420);
   }
   run();
 }
+/* What a person would ask for next, offered as one tap. Every one of them is
+   an ordinary sentence — the same thing typed by hand does the same work, so
+   these are a shortcut, not a second way in. */
+function nextChips(){
+  clearNextChips();
+  var b=S.brief,out=[];
+  function want(cond,label){if(cond&&out.length<5)out.push(label)}
+  want(b.features.indexOf('forms')<0,L('Add a contact form','Contact form daalo'));
+  want(b.pages.map(function(p){return p.toLowerCase()}).indexOf('pricing')<0,
+       L('Add a pricing page','Pricing page daalo'));
+  want(b.motion!=='full',L('Put a 3D object in the hero','Hero mein 3D object daalo'));
+  want(b.features.indexOf('gallery')<0,L('Add a gallery','Gallery daalo'));
+  want(true,L('Try another colour','Doosra colour dikhao'));
+  want(S.depth!=='pro',L('More sections','Aur sections'));
+  if(!out.length)return;
+  var box=document.createElement('div');
+  box.id='nextChips';box.className='msg agent';box.style.marginTop='-8px';
+  box.innerHTML='<div class="chips">'+out.slice(0,4).map(function(l){
+    return '<button data-say="'+esc(l)+'">'+esc(l)+'</button>'}).join('')+'</div>';
+  box.addEventListener('click',function(e){
+    var t=e.target.closest('button[data-say]');if(!t)return;
+    var say=t.dataset.say;
+    clearNextChips();userSay(say);applyEdit(say);
+  });
+  body.appendChild(box);scrollChat();
+}
+function clearNextChips(){var n=$('#nextChips');if(n)n.remove()}
+
 function emitFile(path){
   refreshTools();
   if(S.tab==='code'||S.tool==='files'){
@@ -4887,7 +5110,7 @@ function parseEdit(text){
                 'background ab <code>'+esc(col)+'</code> hai'));
   }
   else if(col&&/colour|color|accent|make it|switch to|palette|teal|gold|green|blue|red|violet|purple|pink|orange|amber|cyan|lime|coral|mint|rose|magenta|indigo|emerald|crimson|bronze|peach|sky/.test(t)){
-    b.accent=col;done.push(L('accent is now <code>'+esc(col)+'</code>',
+    b.accent=col;b.__accentAsked=1;done.push(L('accent is now <code>'+esc(col)+'</code>',
                              'accent ab <code>'+esc(col)+'</code> hai'))}
 
   var aboutMotion=/\bmotion|parallax|animat/.test(t);
@@ -5022,7 +5245,7 @@ function applyPatch(o){
     done.push('renamed it to <b>'+esc(b.name)+'</b>')}
   if(typeof o.pitch==='string'&&o.pitch.trim()){b.pitch=o.pitch.trim().slice(0,180);done.push('rewrote the one-liner')}
   if(typeof o.accent==='string'&&/^#[0-9a-f]{6}$/i.test(o.accent.trim())){
-    b.accent=o.accent.trim();done.push('accent is now <code>'+esc(b.accent)+'</code>')}
+    b.accent=o.accent.trim();b.__accentAsked=1;done.push('accent is now <code>'+esc(b.accent)+'</code>')}
   if(STYLES[o.style]&&b.style!==o.style){b.style=o.style;done.push('switched the style to <b>'+STYLES[o.style].l+'</b>')}
   if(['subtle','cinematic','full'].indexOf(o.motion)>=0&&b.motion!==o.motion){
     b.motion=o.motion;done.push('motion is now <b>'+esc(o.motion)+'</b>')}
@@ -6043,7 +6266,8 @@ function maybeDraft(){
   if(S.built||S.phase==='building')return;
   if(!haveEnough(S.brief))return;
   var b=S.brief;
-  var sig=[b.name,b.industry,b.style,b.accent,b.motion,S.depth,b.__bg,b.__dir,(b.pages||[]).join(),(b.features||[]).join(),(b.__onepage||[]).join()].join('\u0000');
+  var sig=[b.name,b.industry,b.style,b.accent,b.motion,S.depth,b.__bg,b.__dir,(b.pages||[]).join(),(b.features||[]).join(),(b.__onepage||[]).join(),
+    b.__ui?[b.__ui.display,b.__ui.body,b.__ui.radius,b.__ui.heroAlign,b.__ui.density,b.__ui.caps,b.__ui.surface].join('|'):''].join('\u0000');
   if(sig===draftSig)return;
   draftSig=sig;
   try{

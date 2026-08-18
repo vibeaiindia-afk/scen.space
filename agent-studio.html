@@ -3099,6 +3099,24 @@ function applyTurn(o){
   renderMain();
 }
 
+/* The pages a brief spells out in its navigation. Shared, because both the
+   gateway path and the local reader need the same answer — two copies of this
+   drifted apart the moment one of them was fixed. */
+function navPagesFrom(text){
+  var line=String(text).split(/\n|(?<=[.!?])\s/).filter(function(l){
+    return /\b(sidebar|navigation|nav items?|menu items?|left nav|navigation items)\b/i.test(l)&&l.split(',').length>=3})[0];
+  if(!line)return null;
+  var items=line.replace(/^[^:]*[:(]|\)/g,'')
+    .replace(/\b(sticky|left|top|sidebar|navigation|nav|menu|items?|with|should|have|contain|the|a|an|plus|and)\b/gi,' ')
+    .split(/\s*(?:,|\||\/)\s*/)
+    .map(function(x){return C.titleCase(x.replace(/[^\w. ]/g,' ').replace(/\s+/g,' ').trim().replace(/[.\s]+$/,''))})
+    .filter(function(x){return x&&x.length<=20&&/[a-z]/i.test(x)});
+  if(items.length<3)return null;
+  if(items[0].toLowerCase()!=='home')items.unshift('Home');
+  if(!items.some(function(x){return /contact/i.test(x)}))items.push('Contact');
+  return items.slice(0,8);
+}
+
 /* The model reads a brief; the brief also says things outright. A gaming
    platform came back as a portfolio with no name, while the text it was given
    said "called MADGAMES.FUN" and "gaming" a dozen times — so where the words
@@ -3136,23 +3154,11 @@ function groundTurn(text){
 
   /* The pages, when the brief lists a navigation. A model that answers with
      one page has not read the sidebar the client spelled out. */
-  var navLine=text.split(/\n|(?<=[.!?])\s/).filter(function(l){
-    return /\b(sidebar|navigation|nav items?|menu items?|left nav)\b/i.test(l)&&l.split(',').length>=3})[0];
-  if(navLine){
-    var items=navLine.replace(/^[^:]*[:(]|\)/g,'')
-      .replace(/\b(sidebar|navigation|nav|menu|items?|with|should|have|contain|the|a|an|plus|and|left|top)\b/gi,' ')
-      .split(/\s*(?:,|\||\/)\s*/)
-      .map(function(x){return C.titleCase(x.replace(/[^\w. ]/g,' ').replace(/\s+/g,' ').trim())})
-      .filter(function(x){return x&&x.length<=20&&/[a-z]/i.test(x)});
-    if(items.length>=3){
-      if(items[0].toLowerCase()!=='home')items.unshift('Home');
-      if(!items.some(function(x){return /contact/i.test(x)}))items.push('Contact');
-      b.pages=items.slice(0,8);
-    }
-  }
+  var navLine=navPagesFrom(text);
+  if(navLine)b.pages=navLine;
 
   var ind=matchOne(IND_WORDS,text);
-  if(!ind||ind===b.industry)return;
+  if(!ind||ind===b.industry)return refineBrief(text),undefined;
   var cur=IND_WORDS[b.industry];
   if(cur&&cur.test(text))return;          /* the model's trade is in the words too */
   var old=INDUSTRIES[b.industry]||INDUSTRIES.other,P=INDUSTRIES[ind];
@@ -3163,6 +3169,7 @@ function groundTurn(text){
   if(!b.features.length||b.features.join()===old.feats.join())b.features=P.feats.slice();
   if(!b.accent||b.accent===old.accent)b.accent=P.accent;
   if(!b.pitch||b.pitch===old.pitch)b.pitch='';
+  refineBrief(text);
 }
 /* The model could not be read. Carry on with the old path, without echoing
    the client's line twice — it is already on screen. */
@@ -3242,6 +3249,8 @@ function absorbBrief(text){
   var hex=text.match(/#([0-9a-f]{6}|[0-9a-f]{3})\b/i);
   if(hex&&!b.accent){b.accent='#'+hex[1];got.push('accent <b>#'+C.esc(hex[1])+'</b>')}
 
+  got=got.concat(refineBrief(text));
+
   /* Only skip what is now actually filled. */
   S.skip=(S.skip||[]).slice();
   [['name',b.name],['industry',b.industry],['pitch',b.pitch],['goal',b.goal],
@@ -3257,6 +3266,94 @@ function absorbBrief(text){
   }
   save();
   return got;
+}
+
+/* A pasted brief is raw material, not a form. Whatever the words imply and
+   nobody spelled out is decided here — once, from the brief's own language —
+   and every decision is handed back in the reply so the client can argue with
+   it instead of discovering it in the build. Nothing is overwritten: this only
+   fills what is still empty, and only when the brief points somewhere. */
+function refineBrief(text){
+  var b=S.brief,t=String(text||'').toLowerCase(),chose=[];
+
+  /* A long, specified brief has earned the deeper build. Lite is for a
+     sentence; someone who wrote out sections and a nav wants the sections. */
+  if(S.depth!=='pro'&&(text.length>520||/\b(production[- ]ready|complete|full (?:site|website)|premium|detailed|sections?)\b/i.test(text))){
+    S.depth='pro';setDepthLabel();
+    chose.push('the deeper build — stats, testimonials, an FAQ and a marquee');
+  }
+
+  /* The look. Read dark first: "premium dark gaming interface" is a dark
+     brief that happens to use the word premium, and answering it with Luxury
+     warm gives a games platform a brown page. */
+  if(!b.style){
+    var look=/\b(dark|near-?black|charcoal|midnight|neon|gaming interface|cinematic|immersive|dramatic)\b/.test(t)?'cinematic':
+             /\b(editorial|magazine|type[- ]led|serif)\b/.test(t)?'editorial':
+             /\b(luxur|high[- ]end|elegant|classy|boutique|gold)\b/.test(t)?'luxury':
+             /\b(playful|fun|bright|colou?rful|youth)\b/.test(t)?'playful':
+             /\b(minimal|clean|simple|white background|airy)\b/.test(t)?'minimal':'';
+    if(look&&STYLES[look]){b.style=look;chose.push('a '+STYLES[look].l.toLowerCase()+' look')}
+  }
+
+  /* The pages, when the brief lists a navigation. A client who spelled out
+     fourteen menu items should not get the trade's five defaults. */
+  var P0=INDUSTRIES[b.industry]||INDUSTRIES.other;
+  var nav=navPagesFrom(text);
+  if(nav&&(!b.pages.length||b.pages.join()===P0.pages.join())){
+    b.pages=nav;
+    chose.push('the pages from your navigation — '+b.pages.join(', '));
+  }
+
+  /* A background the brief actually names settles the palette. "Premium" put
+     a gaming platform on Luxury warm — a brown page — while the same brief
+     said its background was #0E0F12: near-black and neutral, which is the
+     cinematic palette, not the warm one. */
+  var bgLine=text.split(/\n|(?<=[.!?])\s/).filter(function(l){return /\b(background|bg|base|canvas|surface)\b/i.test(l)})[0];
+  var bgHex=bgLine&&(bgLine.match(/#[0-9a-f]{6}\b/i)||[])[0];
+  if(bgHex){
+    var rgb=C.hexToRgb(bgHex),mx=Math.max(rgb[0],rgb[1],rgb[2]),mn=Math.min(rgb[0],rgb[1],rgb[2]);
+    var nearBlack=mx<70,neutral=(mx-mn)<26;
+    if(nearBlack&&neutral&&b.style!=='cinematic'&&b.style!=='editorial'){
+      b.style='cinematic';chose.push('the near-black palette your background asks for');
+    }
+  }
+
+  /* How much it moves. */
+  if(!b.motion){
+    b.motion=/\b(3d|parallax|immersive|hover zoom|animated|motion|cinematic)\b/.test(t)?'full':
+             /\b(no animation|static|calm|quiet|subtle)\b/.test(t)?'subtle':'cinematic';
+    if(b.motion!=='cinematic')chose.push(b.motion==='full'?'full motion':'motion kept subtle');
+  }
+
+  /* Who it is for — briefs usually say, in passing. */
+  if(!b.audience){
+    var aud=text.match(/\bfor\s+((?:teenagers?|adults?|students?|professionals?|families|kids|gamers?|players?|beginners?|businesses)[^.\n]{0,60})/i);
+    if(aud){b.audience=aud[1].trim().slice(0,120);chose.push('written for '+b.audience.toLowerCase())}
+  }
+
+  /* Things the brief asks for by name that the feature list already knows. */
+  var extra={accounts:/\b(account|sign ?up|log ?in|profile|favou?rites|saved|leaderboard)\b/i,
+    analytics:/\b(analytics|tracking|engagement|most played|popular)\b/i,
+    gallery:/\b(thumbnail|gallery|screenshots?|images?|cards?)\b/i,
+    store:/\b(shop|store|checkout|buy|purchase|cart)\b/i,
+    blog:/\b(blog|news|articles?|updates page)\b/i,
+    forms:/\b(contact form|enquiry|inquiry|support form|get in touch)\b/i,
+    multilang:/\b(international|multi[- ]?lingual|languages?|translat)\b/i,
+    chat:/\b(live chat|support widget|whatsapp)\b/i};
+  var added=[];
+  b.features=(b.features||[]).slice();
+  Object.keys(extra).forEach(function(f){
+    if(FEATURES[f]&&extra[f].test(text)&&b.features.indexOf(f)<0){b.features.push(f);added.push(FEATURES[f].l)}
+  });
+  if(added.length)chose.push(added.join(', ').toLowerCase());
+
+  /* A one-liner for the page, when the brief only gave instructions. */
+  if(!b.pitch){
+    var P=INDUSTRIES[b.industry]||INDUSTRIES.other;
+    b.pitch=P.pitch;chose.push('a one-liner you can rewrite in a sentence');
+  }
+  if(chose.length)save();
+  return chose.map(function(c){return 'chose '+c});
 }
 
 /* Everything the panels hold, reachable by asking. The studio put publishing,

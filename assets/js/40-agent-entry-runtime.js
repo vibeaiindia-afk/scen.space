@@ -24,17 +24,28 @@
   var CAT2IND={Travel:'travel',Entertainment:'events',Agency:'agency','Real Estate':'realestate',
     Wellness:'fitness',Portfolio:'portfolio',Luxury:'fashion',SaaS:'saas',Restaurant:'restaurant',
     Research:'education',Fashion:'fashion',Health:'clinic',Education:'education',Events:'events'};
+  /* The address is slugified further down the stack, so a two-word template
+     travelled as "?template=kinetic-cut" while its seed still said
+     "kinetic cut" — the studio compared the two, found no match and opened on
+     an empty brief. Both sides are slugified from the same place now. */
+  function tplSlug(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
   function seedFor(t){
-    var slug=String(t.name||'').toLowerCase();
+    var slug=tplSlug(t.name);
     var pages=(t.components||[]).filter(function(p){return p&&!/^home$/i.test(p)}).slice(0,5);
     pages=['Home'].concat(pages);
     if(!pages.some(function(p){return /contact/i.test(p)}))pages.push('Contact');
+    var accent=(t.palette&&t.palette.accent)||'';
     return{slug:slug,label:'the '+t.name+' template',name:t.name,
       industry:CAT2IND[t.category]||'other',
       pitch:t.heroSubtitle||t.tag||'',
-      accent:(t.palette&&t.palette.accent)||'',
+      accent:accent,
       style:'cinematic',motion:'full',kind:'website',content:'agent',
-      pages:pages,languages:['English']};
+      pages:pages,languages:['English'],
+      /* The studio previews the preset itself and keeps it as the home page of
+         the build, so it needs the file and the wording the preset starts
+         from — that is what it looks for when it puts the brief into it. */
+      preset:{slug:slug,file:t.file||'',name:t.name,
+        title:t.heroTitle||'',subtitle:t.heroSubtitle||'',accent:accent}};
   }
 
   function shot(accent,label){
@@ -45,7 +56,7 @@
   function liveCards(){
     var list=(typeof TEMPLATES!=='undefined'?TEMPLATES:[]);
     return list.map(function(t){
-      var slug=String(t.name||'').toLowerCase();
+      var slug=tplSlug(t.name);
       var accent=(t.palette&&t.palette.accent)||'#dfff45';
       var count=t.sections?t.sections.length+' sections':'3D scenes';
       return '<article class="tpl-card" data-group="live">'+shot(accent,'Live template')+

@@ -77,6 +77,8 @@ button.pill:hover{border-color:rgba(255,255,255,.28);color:#fff}
 .tab.on{color:#fff;background:#17171f;box-shadow:inset 0 0 0 1px var(--line)}
 .tab em{font-style:normal;opacity:.85}
 .tab .badge{width:6px;height:6px;border-radius:50%;background:var(--acid);box-shadow:0 0 8px var(--acid)}
+/* Wide enough for both, the chat is never hidden and needs no tab of its own. */
+.tab-chat{display:none}
 
 .shell{flex:1;min-height:0;display:flex}
 
@@ -265,6 +267,7 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
 /* preview */
 .prev-shell{height:calc(100vh - var(--topbar));display:flex;flex-direction:column}
 .prev-bar{height:46px;flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid var(--line);background:#08080b}
+.prev-note{font-size:11.5px;color:#7d7d88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .prev-stage{flex:1;min-height:0;display:grid;place-items:center;padding:22px;overflow:auto;
   background:radial-gradient(circle at 20% 0%,rgba(125,108,255,.09),transparent 42%),radial-gradient(circle at 85% 90%,rgba(123,238,255,.06),transparent 40%)}
 .frame{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.1);
@@ -315,6 +318,8 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
   .tools{display:none}.tb-center{position:static;transform:none;margin-left:auto}
   .chat{width:100%;border-right:0}.main{display:none}
   body.pane-open .chat{display:none}body.pane-open .main{display:block}
+  /* The pane swaps places with the chat here, so there has to be a way back. */
+  .tab-chat{display:flex}
 }
 /* §51 — on a phone the header ran to 904px on a 375px screen, so Invite,
    Publish and the account pill sat off the edge with nothing to scroll them
@@ -355,6 +360,7 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
     </div>
 
     <nav class="tb-center" aria-label="Workspace">
+      <button class="tab tab-chat" data-tab="chat"><em>✦</em>Chat</button>
       <button class="tab on" data-tab="tools"><em>⚒</em>Tools</button>
       <button class="tab" data-tab="preview"><em>▭</em>Preview<span class="badge hidden" id="prevBadge"></span></button>
       <button class="tab" data-tab="code"><em>❮❯</em>Code</button>
@@ -714,18 +720,26 @@ var TEMPLATE_SEEDS={
     pitch:'A stone arch, emerald water, and a compact old city made for slow mornings, late light, and one unforgettable crossing.',
     accent:'#74b5e0',style:'cinematic',motion:'full',kind:'website',content:'agent',
     pages:['Home','Old Bridge','Old Town','Routes','Contact'],
-    features:['gallery','maps'],languages:['English']}
+    features:['gallery','maps'],languages:['English'],
+    preset:{slug:'mostar',file:'/mostar/index.html',name:'Mostar',
+      title:'MOSTAR',subtitle:'',accent:'#74b5e0'}}
 };
 var SEED_SKIP=['kind','industry','pitch','audience','pages','style','motion','content','languages'];
+function urlTemplate(){
+  var t=new URLSearchParams(location.search).get('template');
+  return t?slug(t):'';        /* slug('') answers 'untitled', so the guard matters */
+}
 function seedFromUrl(){
   var p=new URLSearchParams(location.search);
-  var t=(p.get('template')||'').toLowerCase().trim();
+  var t=urlTemplate();
   if(t){
     // the site hands the full template over in storage, since it knows more
     // about the preset than a query string can carry
     try{
       var raw=localStorage.getItem('scen.agentstudio.seed');
-      if(raw){var o=JSON.parse(raw);if(o&&String(o.slug||'').toLowerCase()===t)return o}
+      // both sides slugified: the address says "kinetic-cut" where the seed
+      // was written as "kinetic cut", and a raw comparison dropped the seed
+      if(raw){var o=JSON.parse(raw);if(o&&slug(o.slug||'')===t)return o}
     }catch(e){}
     if(TEMPLATE_SEEDS[t])return TEMPLATE_SEEDS[t];
   }
@@ -738,9 +752,20 @@ function seedFromUrl(){
   }
   return null;
 }
+/* Even with no seed to read — a shared link, a cleared storage — the address
+   still names the preset, and the preset pages are served under that same
+   slug. Enough to show the visitor the page they pressed Customize on; the
+   interview is untouched, since a slug says nothing about their business. */
+function presetFromUrl(){
+  var t=urlTemplate();
+  if(!t)return null;
+  return{slug:t,file:'/templates/'+t+'.html',name:titleCase(t.replace(/-/g,' ')),
+    title:'',subtitle:'',accent:''};
+}
 function applySeed(seed){
+  S.preset=(seed.preset&&seed.preset.file)?seed.preset:null;
   Object.keys(seed).forEach(function(k){
-    if(k==='label'||k==='slug')return;
+    if(k==='label'||k==='slug'||k==='preset')return;
     var v=seed[k];
     if(v==null||v===''||(Array.isArray(v)&&!v.length))return;   // blanks fall through to the pack
     S.brief[k]=v;
@@ -765,7 +790,7 @@ var S={
   v:1,phase:'interview',step:0,brief:freshBrief(),msgs:[],pending:null,skip:[],seedLabel:'',
   depth:'lite',planFirst:true,mode:'design',tab:'tools',tool:'brief',
   file:'',device:'desktop',previewKind:'site',buildLog:[],files:[],built:false,
-  atts:[],projectName:''
+  atts:[],projectName:'',preset:null,pane:false
 };
 
 function save(){try{
@@ -956,7 +981,8 @@ window.__SCEN_CORE={
   esc:esc,$:$,$$:$$,save:save,load:load,toast:toast,modal:modal,closeModal:closeModal,
   slug:slug,titleCase:titleCase,mix:mix,inkOn:inkOn,findColor:findColor,hexToRgb:hexToRgb,
   rgbToHex:rgbToHex,wait:wait,bytes:bytes,pick:pick,freshBrief:freshBrief,suggestName:suggestName,
-  seedFromUrl:seedFromUrl,applySeed:applySeed,TEMPLATE_SEEDS:TEMPLATE_SEEDS
+  seedFromUrl:seedFromUrl,applySeed:applySeed,presetFromUrl:presetFromUrl,
+  TEMPLATE_SEEDS:TEMPLATE_SEEDS
 };
 })();
 </script>
@@ -2232,7 +2258,11 @@ window.__SCEN_API={API:API,ensure:ensure,ensureAll:ensureAll,reset:reset,req:req
 var C=window.__SCEN_CORE,G=window.__SCEN_GEN,X=window.__SCEN_AI,AI=X.AI;
 var N=window.__SCEN_API,API=N.API;
 var S=C.S,FLOW=C.FLOW,INDUSTRIES=C.INDUSTRIES,STYLES=C.STYLES,FEATURES=C.FEATURES,GOALS=C.GOALS;
-var $=C.$,$$=C.$$,esc=C.esc,save=C.save,toast=C.toast,modal=C.modal,closeModal=C.closeModal;
+var $=C.$,$$=C.$$,esc=C.esc,toast=C.toast,modal=C.modal,closeModal=C.closeModal;
+/* Every state change already ends in save(); the preview follows it rather
+   than waiting for a rebuild, which is how a preset takes on the answers as
+   they are given. syncPreview() is a no-op once there is a build to show. */
+function save(){C.save();syncPreview()}
 var slug=C.slug,wait=C.wait,bytes=C.bytes,findColor=C.findColor;
 var gen=null;               // current generated file set
 
@@ -2301,14 +2331,19 @@ function askCurrent(animate){
   var st=step();if(!st)return finishInterview();
   S.pending='q';save();
   var text=st.q(S.brief);
-  if(animate===false){agentSay(text.replace(/\n/g,'<br/>'));renderAnswerBox();return}
+  /* Buttons make this a form. With the gateway up, readTurn understands
+     whatever the person types, so let them just talk — the way they would to
+     anyone else. Signed out there is no model to read a sentence, so the
+     guided choices stay: they are the only thing that works then. */
+  var guided=!X.usable();
+  if(animate===false){agentSay(text.replace(/\n/g,'<br/>'));if(guided)renderAnswerBox();return}
   var t0=Date.now();
   thinking();
   var delay=520+Math.min(900,text.length*4);
   setTimeout(function(){
     clearThinking();
-    agentSay(text.replace(/\n/g,'<br/>'),Math.max(1,Math.round((Date.now()-t0)/1000)));
-    renderAnswerBox();
+    agentSay(text.replace(/\n/g,'<br/>'));
+    if(guided)renderAnswerBox();
   },delay);
 }
 
@@ -3088,7 +3123,7 @@ function buildPlanSteps(){
 function startBuild(){
   S.phase='building';S.built=false;S.files=[];S.buildLog=[];save();
   setPhasePill();setMode('build');
-  setTab('preview');
+  setTab('preview',true);
   var steps=buildPlanSteps();
   stream.innerHTML='<span class="caps">Build · '+esc(S.brief.name)+'</span><div id="stepList"></div>';
   var list=$('#stepList');
@@ -3110,7 +3145,7 @@ function startBuild(){
       if(sub)row.querySelector('.sub').textContent=sub;
       row.querySelector('.ms').textContent=(Date.now()-a)+'ms';
       if(st.compose){
-        gen=G.generate(S.brief,S.depth);
+        gen=buildFiles();
         if(S.tab==='preview')renderMain();
       }
       if(st.file)emitFile(st.file);
@@ -3158,7 +3193,12 @@ function startBuild(){
         '<li>'+gen.files.length+' files, '+P.sections+' sections, '+secs+'s</li>'+
         '<li>'+(S.brief.__copy?'Copy written live by '+esc(AI.provider)+' · '+esc(AI.model):
           'Copy written by the local writer — '+esc(X.label().toLowerCase()))+'</li>'+
-        '<li>Preview is open on the right — switch pages and devices from the bar</li>'+
+        /* on a phone the pane is behind a tab, not beside the chat */
+        '<li>'+(innerWidth>980?'Preview is open on the right':'Tap <b>Preview</b> at the top to see it')+
+        ' — switch pages and devices from the bar</li>'+
+        (presetHome()?'<li>Home is the <b>'+esc(presetName())+'</b> preset itself, carrying your name, your '+
+          'one-liner and your accent. Its own header is the designer\u2019s, so the other pages open from the '+
+          'bar above the preview rather than from a link on it</li>':'')+
         '<li>Every file is readable under <b>Code</b>, and downloadable</li>'+
         (signedIn()?'<li>Signed in as '+esc(accountName())+' — <b>Publishing</b> can save it to your workspace and put it live</li>':
           '<li>Not signed in, so saving and publishing are off — the build itself is finished either way</li>')+
@@ -3245,6 +3285,23 @@ function parseEdit(text){
     b.variant=(b.variant||0)+1;delete b.__copy;S.__recopy=true;
     done.push('rewrote the copy with a fresh angle')}
 
+  /* Words on the preset's own page — the header pill, the button, a line of
+     type the designer wrote. Read last, and only believed when the preset
+     really says the thing being replaced, so it can never steal a colour or a
+     page edit from the rules above. */
+  if(!done.length&&presetHome()){
+    var q=text.match(/(?:change|replace|swap|make)\s+(?:the\s+)?["'\u2018\u201c]([^"'\u2019\u201d]{2,60})["'\u2019\u201d]\s*(?:to|with|into|say|read)\s*["'\u2018\u201c]?([^"'\u2019\u201d]{1,80}?)["'\u2019\u201d]?\s*$/i)
+         ||text.match(/(?:change|replace|swap)\s+(?:the\s+)?(.{2,44}?)\s+(?:to|with|into)\s+(.{1,80}?)\s*$/i);
+    if(q){
+      var was=presetSays(q[1]),now=String(q[2]).trim().replace(/[.]$/,'');
+      if(was&&now&&was!==now){
+        b.__words=(b.__words||[]).filter(function(pr){return pr[0]!==was});
+        b.__words.push([was,now]);
+        done.push('changed <b>'+esc(was)+'</b> to <b>'+esc(now)+'</b> on the '+esc(presetName())+' page');
+      }
+    }
+  }
+
   if(!done.length)return null;
   save();
   return done.length===1?C.titleCase(done[0].charAt(0))+done[0].slice(1):
@@ -3324,6 +3381,8 @@ function editHelp(t0){
     "<li><code>add bookings</code> · <code>remove the shop</code></li>"+
     "<li><code>more sections</code> · <code>calm the motion down</code></li>"+
     "<li><code>rename it to Ember &amp; Oak</code> · <code>rewrite the copy</code></li>"+
+    (presetHome()?"<li><code>change \"Download\" to \"Book a table\"</code> — any words the "+
+      esc(presetName())+" page says</li>":"")+
     "</ul>",Math.max(1,Math.round((Date.now()-t0)/1000)));
 }
 
@@ -3339,7 +3398,17 @@ function rebuildWithCopy(summary,t0){
 }
 
 function rebuild(reason,t0){
-  gen=G.generate(S.brief,S.depth);
+  /* Read from the last build rather than from the brief: the edit has already
+     been applied to the brief by the time this runs, so re-rendering the page
+     here would only ever compare it with itself. */
+  var homeBefore=builtHome;
+  gen=buildFiles();
+  /* The preset carries a name, a line, a colour and its own words. A change to
+     the sections, the pages or the style has nowhere to land on it, and saying
+     "the preview is live" without saying that reads as a preview that ignored
+     the request. */
+  var elsewhere=(homeBefore&&homeBefore===builtHome)?
+    '<br/><br/>The <b>'+esc(presetName())+'</b> page itself is unchanged — that one lands on the pages around it.':'';
   S.files=gen.files.map(function(f){return f.path});
   if(S.files.indexOf(S.file)<0)S.file=S.files[0];
   save();refreshTools();renderMain();
@@ -3348,7 +3417,7 @@ function rebuild(reason,t0){
     return N.saveVersion(String(reason).replace(/<[^>]+>/g,'').slice(0,80),S.brief,gen,S.depth)
   }).then(function(){if(S.tool==='publishing'&&S.tab==='tools')renderMain()},function(){});
   var P=planData();
-  agentSay(reason+'<br/><br/>Rebuilt — '+gen.files.length+' files, '+P.sections+' sections. The preview is live.',
+  agentSay(reason+elsewhere+'<br/><br/>Rebuilt — '+gen.files.length+' files, '+P.sections+' sections. The preview is live.',
     Math.max(1,Math.round((Date.now()-(t0||Date.now()-1400))/1000)));
   var list=$('#stepList');
   if(list){
@@ -3849,20 +3918,236 @@ PANE.skills=function(){
 };
 PANE.growth=PANE.monitoring;
 
+/* ============================================================
+   The preset behind a Customize
+   ------------------------------------------------------------
+   Pressing Customize on a preset used to hand over a brief and nothing else:
+   the studio opened on "Nothing to preview yet", and the build that followed
+   was the agent's own layout, so the page the customer had actually chosen
+   was never seen again. The preset is a real file, so it is fetched here —
+   shown in the preview from the first second, and kept as the home page of
+   the build. Everything the brief changes is a swap of something the preset
+   already says: its name, its opening line, its accent. Nothing is added and
+   no layout is touched, which is what keeps the design intact.
+   ============================================================ */
+var presetSrc='',presetState='';        /* '' | 'loading' | 'ready' | 'failed' */
+
+function presetFile(){return (S.preset&&S.preset.file)||''}
+function presetName(){return (S.preset&&S.preset.name)||'the preset'}
+
+function loadPreset(then){
+  var file=presetFile();
+  if(!file||presetState==='loading'||presetState==='ready')return;
+  presetState='loading';
+  /* a preset can be a folder with an index.html in it as easily as one file */
+  var tries=[file].concat(/\.html?$/i.test(file)?[]:[file.replace(/\/$/,'')+'/index.html']);
+  if(/\.html$/i.test(file))tries.push(file.replace(/\.html$/i,'/index.html'));
+  (function next(i){
+    if(i>=tries.length){presetState='failed';if(then)then();return}
+    fetch(tries[i],{cache:'no-store'}).then(function(r){
+      if(!r.ok)throw new Error(String(r.status));
+      return r.text();
+    }).then(function(txt){
+      if(!/<\/html>/i.test(txt))throw new Error('not a page');
+      presetSrc=txt;presetState='ready';S.preset.file=tries[i];save();
+      if(then)then();
+    },function(){next(i+1)});
+  })(0);
+}
+
+function rxEsc(x){return String(x).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+/* Tags become spaces, not nothing: a title split across two block spans has
+   no whitespace between them in the markup, and joining them would read as
+   one word that matches nothing. */
+function flat(html){return String(html==null?'':html)
+  .replace(/<[^>]*>/g,' ').replace(/[\s\u00a0]+/g,' ').trim()}
+function sameHex(a,b){return String(a||'').toLowerCase().replace('#','')===String(b||'').toLowerCase().replace('#','')}
+
+/* A preset whose accent is its black or its white is using it for text and
+   backgrounds, not as a colour — swapping that repaints the whole page. */
+function tintable(hex){
+  if(!/^#[0-9a-f]{6}$/i.test(hex||''))return false;
+  var c=C.hexToRgb(hex),mx=Math.max(c[0],c[1],c[2]),mn=Math.min(c[0],c[1],c[2]);
+  return (mx-mn)>40&&mx>40&&mn<236;
+}
+function recolour(src,from,to){
+  var f=C.hexToRgb(from),t=C.hexToRgb(to),six=from.replace('#','');
+  var out=src.replace(new RegExp(rxEsc(from),'gi'),to);
+  if(six.length===6&&six[0]===six[1]&&six[2]===six[3]&&six[4]===six[5])
+    out=out.replace(new RegExp('#'+six[0]+six[2]+six[4]+'\\b','gi'),to);
+  /* the glows and shadows are usually written as rgb(), not as the hex */
+  return out.replace(new RegExp('(rgba?\\()\\s*'+f[0]+'\\s*,\\s*'+f[1]+'\\s*,\\s*'+f[2],'g'),
+    '$1'+t[0]+','+t[1]+','+t[2]);
+}
+
+/* the brand, wherever the preset writes it in words — never in its script */
+function renameIn(doc,was,now){
+  var rx=new RegExp('\\b'+rxEsc(was)+'\\b','g');
+  var w=doc.createTreeWalker(doc.body,NodeFilter.SHOW_TEXT,null),n;
+  while((n=w.nextNode())){
+    var p=n.parentNode&&n.parentNode.nodeName;
+    if(p==='SCRIPT'||p==='STYLE')continue;
+    rx.lastIndex=0;
+    if(rx.test(n.nodeValue)){rx.lastIndex=0;n.nodeValue=n.nodeValue.replace(rx,now)}
+  }
+}
+/* New words into the element's existing text nodes rather than over its
+   markup. Presets animate their titles one line or one word at a time, and
+   replacing the innerHTML would throw away the spans those animations run on
+   — the line would arrive unstyled, or not arrive at all. */
+function fill(el,text){
+  var w=el.ownerDocument.createTreeWalker(el,NodeFilter.SHOW_TEXT,null),leaves=[],n;
+  while((n=w.nextNode()))if(n.nodeValue&&n.nodeValue.trim())leaves.push(n);
+  if(!leaves.length){el.textContent=text;return}
+  var words=String(text||'').trim().split(/\s+/),per=Math.ceil(words.length/leaves.length),at=0;
+  leaves.forEach(function(node,i){
+    var take=(i===leaves.length-1)?words.slice(at):words.slice(at,at+per);
+    at+=take.length;
+    node.nodeValue=take.join(' ');
+  });
+}
+/* Finds the element that carries a line the preset is known to open with —
+   the wording in the file is rarely identical to the wording in the gallery,
+   so the first few words decide it. */
+function swapLine(doc,was,now,sel){
+  var want=flat(was).toLowerCase();
+  if(!want||!String(now||'').trim())return false;
+  var key=want.split(' ').slice(0,4).join(' ');
+  var els=doc.querySelectorAll(sel),best=null,bestLen=1e9;
+  for(var i=0;i<els.length;i++){
+    var have=flat(els[i].innerHTML).toLowerCase();
+    if(!have||els[i].querySelector('img,video,svg,a,button'))continue;
+    /* the shorter-in-the-page case only counts when it is most of the line —
+       a two-word kicker is not the paragraph the gallery quoted */
+    var hit=have===want||have.indexOf(key)===0||
+      (want.indexOf(have)===0&&have.length>14&&have.length>=want.length*0.4);
+    /* A hero wrapper starts with its own title too, and matching it would
+       scatter the new words across every line in the section. The shortest
+       element that carries the line is the line. */
+    if(!hit||have.length>want.length*3||have.length>=bestLen)continue;
+    best=els[i];bestLen=have.length;
+  }
+  if(!best)return false;
+  fill(best,now);
+  return true;
+}
+
+/* What the preset actually says, so "change the Download button to Order now"
+   can be checked against the page before it is believed. Returns the phrase in
+   the preset's own casing, or '' when the page never says it. */
+function presetSays(phrase){
+  if(presetState!=='ready')return '';
+  var want=String(phrase||'').toLowerCase().replace(/[\s\u00a0]+/g,' ').trim()
+    .replace(/^(?:the|that)\s+/,'')
+    .replace(/\s+(?:button|link|label|text|word|words|wording|heading|title|line)$/,'')
+    .replace(/^["'\u201c\u2018]|["'\u201d\u2019]$/g,'').trim();
+  if(want.length<2||want.length>60)return '';
+  var doc=null;
+  try{doc=new DOMParser().parseFromString(presetSrc,'text/html')}catch(e){}
+  if(!doc||!doc.body)return '';
+  var w=doc.createTreeWalker(doc.body,NodeFilter.SHOW_TEXT,null),n;
+  while((n=w.nextNode())){
+    var host=n.parentNode&&n.parentNode.nodeName;
+    if(host==='SCRIPT'||host==='STYLE')continue;
+    var said=String(n.nodeValue).replace(/[\s\u00a0]+/g,' ').trim();
+    if(!said)continue;
+    if(said.toLowerCase()===want)return said;
+    /* a word inside a longer line still counts, as long as it is a whole word */
+    if(want.split(' ').length<=4&&new RegExp('(^|\\s)'+rxEsc(want)+'($|[\\s.,!?])','i').test(said)){
+      var m=said.match(new RegExp(rxEsc(want),'i'));
+      if(m)return m[0];
+    }
+  }
+  return '';
+}
+/* the swaps the customer asked for by name, kept on the brief so they survive
+   a rebuild and a reload */
+function replaceWords(doc,pairs){
+  pairs.forEach(function(pair){
+    var rx=new RegExp(rxEsc(pair[0]),'g');
+    var w=doc.createTreeWalker(doc.body,NodeFilter.SHOW_TEXT,null),n;
+    while((n=w.nextNode())){
+      var host=n.parentNode&&n.parentNode.nodeName;
+      if(host==='SCRIPT'||host==='STYLE')continue;
+      rx.lastIndex=0;
+      if(rx.test(n.nodeValue)){rx.lastIndex=0;n.nodeValue=n.nodeValue.replace(rx,pair[1])}
+    }
+  });
+}
+
+function presetPage(){
+  if(presetState!=='ready'||!S.preset)return '';
+  var P=S.preset,b=S.brief,src=presetSrc;
+  if(P.accent&&b.accent&&!sameHex(P.accent,b.accent)&&tintable(P.accent))
+    src=recolour(src,P.accent,b.accent);
+  var doc=null;
+  try{doc=new DOMParser().parseFromString(src,'text/html')}catch(e){}
+  if(!doc||!doc.body)return src;
+  var name=b.name||P.name;
+  /* Only what the customer has actually changed is overwritten. Until they
+     rename it, the preset keeps its own title and its own opening line —
+     which is the page they were shown in the gallery, exactly. */
+  if(name&&P.name&&name!==P.name){
+    var t=doc.querySelector('title');
+    if(t)t.textContent=name+(b.pitch?' — '+String(b.pitch).split(/[.—–]/)[0].trim().slice(0,60):'');
+    renameIn(doc,P.name,name);
+    if(P.title)swapLine(doc,P.title,name,'h1,h2,h3,.title,[class*=title],[class*=hero]');
+  }
+  if(b.pitch&&P.subtitle&&flat(b.pitch)!==flat(P.subtitle))
+    swapLine(doc,P.subtitle,b.pitch,'p,[class*=micro],[class*=sub],[class*=lead],[class*=copy]');
+  if(b.__words&&b.__words.length)replaceWords(doc,b.__words);
+  return '<!doctype html>\n'+doc.documentElement.outerHTML;
+}
+
+/* The build. When a preset was the starting point it stays the home page,
+   carrying the brief, and the agent's own pages are built around it. */
+var builtHome='';        /* the preset page as the current build has it */
+function buildFiles(){
+  var g=G.generate(S.brief,S.depth),home=presetPage();
+  builtHome=home;
+  if(home){
+    g.files.forEach(function(f){if(f.path==='site/index.html')f.body=home});
+    ((g.site&&g.site.pages)||[]).forEach(function(p){if(p.file==='site/index.html')p.html=home});
+  }
+  return g;
+}
+
+function presetHome(){return !!presetFile()&&presetState==='ready'}
+
+/* The preview follows the conversation: every answer that changes the name,
+   the line or the colour is repainted into the preset straight away. */
+var previewSig='';
+function briefSig(){var b=S.brief;return [b.name,b.pitch,b.accent].join('\u0000')}
+function syncPreview(){
+  if(gen||presetState!=='ready')return;
+  var sig=briefSig();
+  if(sig===previewSig)return;
+  previewSig=sig;
+  var f=$('#prevFrame');
+  if(f&&S.tab==='preview')f.srcdoc=currentDoc();
+}
+
 /* preview pane */
 function panesPreview(){
-  var b=S.brief;
-  if(!gen)return '<div class="empty"><div><div class="orb"></div><h2>Nothing to preview yet</h2>'+
-    '<p>Finish the questions in the chat and approve the plan. The built site opens here, page by page.</p></div></div>';
-  var pages=gen.files.filter(function(f){return f.page});
-  var appMode=S.previewKind==='app';
+  var b=S.brief,pre=!gen&&presetState==='ready'&&!!presetFile();
+  if(!gen&&!pre){
+    if(presetFile()&&presetState!=='failed')
+      return '<div class="empty"><div><div class="orb"></div><h2>Opening '+esc(presetName())+'…</h2>'+
+        '<p>The preset you pressed Customize on is loading. It is what you see while we talk, and it stays as the home page of the build.</p></div></div>';
+    return '<div class="empty"><div><div class="orb"></div><h2>Nothing to preview yet</h2>'+
+      '<p>Finish the questions in the chat and approve the plan. The built site opens here, page by page.</p></div></div>';
+  }
+  var pages=gen?gen.files.filter(function(f){return f.page}):[];
+  var appMode=!pre&&S.previewKind==='app';
   return '<div class="prev-shell"><div class="prev-bar">'+
-    ((b.kind==='app'||b.kind==='both')?
+    (pre?'<span class="pill">'+esc(presetName())+' preset</span>'+
+         '<span class="prev-note">it takes your answers as you give them</span>':
+      ((b.kind==='app'||b.kind==='both')?
       '<div class="seg"><button class="'+(appMode?'':'on')+'" data-pk="site">Website</button>'+
       '<button class="'+(appMode?'on':'')+'" data-pk="app">App</button></div>':'')+
     (appMode?'':'<select id="pageSel" class="btn" style="padding:6px 10px">'+pages.map(function(p){
       return '<option value="'+esc(p.path)+'"'+(S.file===p.path?' selected':'')+'>'+esc(p.page)+' — '+esc(p.path.replace('site/',''))+'</option>'
-    }).join('')+'</select>')+
+    }).join('')+'</select>'))+
     '<span class="grow"></span>'+
     (appMode?'<span class="pill">390 × 844</span>':
       '<div class="seg">'+['desktop','tablet','mobile'].map(function(d){
@@ -3876,7 +4161,7 @@ function panesPreview(){
     '</div></div>';
 }
 function currentDoc(){
-  if(!gen)return '';
+  if(!gen)return presetPage();
   if(S.previewKind==='app')return G.appPreviewDoc(S.brief);
   var file=S.file&&/^site\/.*\.html$/.test(S.file)?S.file:'site/index.html';
   return G.previewDoc(gen,file);
@@ -4092,10 +4377,22 @@ function heroImageFlow(t){
 /* ============================================================
    Chrome — tabs, modes, composer
    ============================================================ */
-function setTab(t){
+/* Under 980px the pane and the chat cannot both be on screen: the CSS swaps
+   them on body.pane-open, which nothing ever set — so Preview and Code did
+   nothing at all on a phone. S.pane is that switch, and 'chat' is the way
+   back. Above 980px the class does nothing and both are always visible.
+
+   `auto` marks a call the studio made for its own reasons rather than a tap.
+   Those pick the pane but never take a phone off the conversation. */
+function setTab(t,auto){
+  if(t==='chat'){S.pane=false;t=S.tab||'tools'}
+  else if(!(auto&&innerWidth<=980))S.pane=true;
   S.tab=t;save();
-  $$('.tab').forEach(function(b){b.classList.toggle('on',b.dataset.tab===t)});
+  var onChat=innerWidth<=980&&!S.pane;
+  $$('.tab').forEach(function(b){
+    b.classList.toggle('on',onChat?b.dataset.tab==='chat':b.dataset.tab===t)});
   $('#toolsCol').classList.toggle('hidden',t!=='tools');
+  document.body.classList.toggle('pane-open',!!S.pane);
   if(t==='preview')$('#prevBadge').classList.add('hidden');
   renderMain();
 }
@@ -4280,7 +4577,7 @@ $('#planBtn').addEventListener('click',function(){
 });
 
 /* tabs, modes, rail */
-$$('.tab').forEach(function(b){b.addEventListener('click',function(){setTab(b.dataset.tab)})});
+$$('.tab').forEach(function(b){b.addEventListener('click',function(){autoPreview=false;setTab(b.dataset.tab)})});
 $$('.seg [data-mode]').forEach(function(b){b.addEventListener('click',function(){setMode(b.dataset.mode)})});
 $('#toolsCol').addEventListener('click',function(e){
   /* The Simple/Advanced switch lives in this column too, and is not a panel. */
@@ -4370,7 +4667,7 @@ function restore(){
   body.innerHTML='';
   S.msgs.forEach(function(m){body.appendChild(nodeFor(m))});
   if(S.built&&S.brief.pages.length){
-    gen=G.generate(S.brief,S.depth);
+    gen=buildFiles();
     S.files=gen.files.map(function(f){return f.path});
     if(S.files.indexOf(S.file)<0)S.file=S.files[0];
     if(S.buildLog.length){
@@ -4385,7 +4682,7 @@ function restore(){
     S.phase==='review'?'Reply, or ask for a change…':'Message the agent…';
   $('#planBtn').classList.toggle('on',S.planFirst);
   if(S.brief.name){$('#projName').textContent=S.brief.name}
-  renderTools();setMode(S.mode==='build'&&S.phase==='building'?'design':S.mode);setTab(S.tab);
+  renderTools();setMode(S.mode==='build'&&S.phase==='building'?'design':S.mode);setTab(S.tab,true);
   if(S.phase==='interview'){
     var last=S.msgs[S.msgs.length-1];
     // the question is already in the transcript — only the answer box needs rebuilding
@@ -4400,8 +4697,36 @@ function resetState(){
   S.skip=[];S.seedLabel='';S.mode='design';S.tab='tools';S.tool='brief';S.file='';
   S.buildLog=[];S.files=[];S.built=false;S.atts=[];S.projectName='';
   S.queued=[];                     /* §37's hold-list, or it fires on the next build */
-  S.previewKind='site';S.device='desktop';
+  S.previewKind='site';S.device='desktop';S.preset=null;S.pane=false;
+  presetSrc='';presetState='';previewSig='';
   body.innerHTML='';stream.innerHTML='';gen=null;
+}
+
+/* The preset is a file, so it arrives after the page does. Whatever was drawn
+   without it — the empty preview, a build with the agent's own home page — is
+   redrawn once it lands. */
+var autoPreview=false;   /* true when the studio opened the pane, not the customer */
+function whenPreset(){
+  if(presetState!=='ready'){
+    /* the file never arrived — a preset with nothing behind it, or no network.
+       Nobody should be left looking at an empty pane they did not ask for. */
+    if(autoPreview&&S.tab==='preview'&&!gen)return setTab('tools',true);
+    if(S.tab==='preview')renderMain();
+    return;
+  }
+  previewSig=briefSig();
+  if(S.built&&S.brief.pages.length){
+    gen=buildFiles();
+    S.files=gen.files.map(function(f){return f.path});
+  }
+  renderMain();
+}
+function openPreset(){
+  /* a shared link still names the preset even when no seed was handed over */
+  if(!S.preset)S.preset=C.presetFromUrl();
+  if(!presetFile())return false;
+  loadPreset(whenPreset);
+  return true;
 }
 function boot(){
   setDepthLabel();setAiPill();setAcctPill();
@@ -4412,7 +4737,13 @@ function boot(){
   if(seed&&(!had||!S.msgs.length||S.seedLabel!==seed.label)){
     resetState();C.applySeed(seed);
     if(S.brief.name)$('#projName').textContent=S.brief.name;
-    renderTools();setMode('design');setPhasePill();setTab('tools');
+    renderTools();setMode('design');setPhasePill();
+    /* The preset is the thing they pressed Customize on, so it is what the
+       studio opens on — not a brief pane and not an empty preview. On a
+       phone the chat is the whole screen, and the pane is a tap away. */
+    var opening=openPreset();
+    autoPreview=opening&&innerWidth>980;
+    setTab(autoPreview?'preview':'tools',true);
     /* §5 — "Five questions and I build it" promised a form, and set the tone
        for everything after it. The agent asks what it still needs, which on a
        seeded brief is usually one thing. */
@@ -4422,9 +4753,13 @@ function boot(){
     save();setTimeout(function(){askCurrent(true)},760);
     return;
   }
-  if(had&&S.msgs.length)return restore();
-  S.tool='brief';S.tab='tools';S.mode='design';
-  renderTools();setMode('design');setPhasePill();setTab('tools');
+  if(had&&S.msgs.length){openPreset();return restore()}
+  /* No seed to read, but the address can still name a preset — a shared link,
+     or storage that was cleared between the gallery and here. */
+  autoPreview=openPreset()&&innerWidth>980;
+  S.tool='brief';S.mode='design';
+  renderTools();setMode('design');setPhasePill();
+  setTab(autoPreview?'preview':'tools',true);
   askCurrent(true);
 }
 boot();

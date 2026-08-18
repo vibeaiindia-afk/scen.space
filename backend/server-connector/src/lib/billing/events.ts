@@ -35,6 +35,19 @@ export async function handleCashfreeEvent(e:any){
     }
     return;
   }
+  // A plan bought as a one-off payment link, because Cashfree Subscriptions is
+  // not enabled on this account. There is no mandate and no renewal event ever
+  // follows, so this grant is the whole transaction: the plan's credits, once.
+  if(String(m.kind||'')==='plan_oneoff'&&m.plan_key){
+    const planKey=String(m.plan_key),cfg=(plans as any)[planKey];
+    const status=String(d?.link_status||d?.payment?.payment_status||d?.order?.order_status||'SUCCESS');
+    if(cfg&&paid(status)&&!partial(status)){
+      const ref=String(d?.payment?.cf_payment_id||d?.link_id||d?.order?.order_id||e?.event_time||'');
+      await grantCredits({workspaceId,units:Number(m.credits||cfg.credits),reason:`Cashfree ${planKey} plan (one-off)`,referenceKey:`cashfree:plan_oneoff:${ref}`,metadata:{linkId:d?.link_id,orderId:d?.order?.order_id,paymentId:d?.payment?.cf_payment_id,planKey}});
+      void sendBillingReceiptForWorkspace(workspaceId,`Scen ${planKey} plan`,String(cfg.amountMinor/100),undefined,`receipt:cashfree:plan_oneoff:${ref}`);
+    }
+    return;
+  }
   // One-off credit top-up (payment link or order)
   if(/PAYMENT_LINK|PAYMENT_SUCCESS|ORDER_PAID/i.test(t)&&String(m.kind||'topup')==='topup'){
     const key=String(m.topup_key||''),cfg=(availableTopups() as any)[key];

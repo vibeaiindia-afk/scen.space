@@ -49,6 +49,33 @@ export async function cashfreeTopupCheckout(input:{workspaceId:string;userId:str
   return {id:String(x.link_id||linkId),url:x.link_url||null,raw:x};
 }
 
+// A plan bought as a ONE-OFF payment link rather than a recurring mandate.
+// Cashfree Subscriptions is a separate product from the Payment Gateway and is
+// not enabled on this account — /pg/plans answers "Profile is inactive" — so a
+// mandate cannot be created at all. Payment Links are part of the PG that *is*
+// live, so this is the path that can actually take money today.
+//
+// The trade is real and deliberate: there is no auto-renew. The customer pays
+// once, the webhook grants that plan's credits once, and the next month needs
+// another payment. Do not describe this as a subscription anywhere a customer
+// can read it.
+export async function cashfreePlanLinkCheckout(input:{workspaceId:string;userId:string;planKey:string;credits:number;amountMinor:number;email?:string;phone?:string;name?:string}){
+  const phone=requirePhone(input.phone);
+  const linkId=`scen_plan_${input.planKey}_${crypto.randomUUID().replace(/-/g,'').slice(0,12)}`.slice(0,50);
+  const x=await cf('/pg/links',{
+    link_id:linkId,
+    link_amount:major(input.amountMinor),
+    link_currency:'INR',
+    link_purpose:`Scen ${input.planKey} plan — ${input.credits.toLocaleString()} credits`,
+    customer_details:{customer_email:input.email||undefined,customer_phone:phone,customer_name:input.name||undefined},
+    link_notify:{send_email:Boolean(input.email),send_sms:false},
+    link_auto_reminders:false,
+    link_meta:{return_url:returnUrl(),notify_url:notifyUrl()||undefined},
+    link_notes:tags({workspace_id:input.workspaceId,user_id:input.userId,plan_key:input.planKey,credits:String(input.credits),kind:'plan_oneoff'}),
+  },process.env.CASHFREE_API_VERSION||'2023-08-01');
+  return {id:String(x.link_id||linkId),url:x.link_url||null,raw:x};
+}
+
 // Storefront order payment. The amount always comes from a server-priced order
 // row; this function never accepts a client-supplied total.
 export async function cashfreeStoreCheckout(input:{workspaceId:string;orderId:string;orderNumber:string;amountMinor:number;email?:string;phone?:string;name?:string;returnUrl?:string}){

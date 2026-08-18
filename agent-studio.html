@@ -1842,9 +1842,17 @@ var SEC={
      between its feature blocks. */
   statement:function(b){
     /* A customer quote read as the page's own voice when it stood alone in
-       80px type. The closing heading is a statement; a testimonial is not. */
-    var P=pack(b),line=P.statement||(P.cta&&P.cta[0])||'';
-    if(!line)return '';
+       80px type, and the closing heading turned out to be a button label —
+       "Get in touch" in 80px is not a statement. Nothing worth saying at that
+       size, no section: an empty gesture is worse than the whitespace it
+       replaces. */
+    var P=pack(b),line=P.statement||'';
+    if(!line){
+      var sents=String(saneLine(b)||'').split(/(?<=[.!?])\s+/).filter(Boolean);
+      line=sents[1]||(P.services&&P.services[0]&&P.services[0][1])||'';
+    }
+    line=String(line).trim();
+    if(line.split(/\s+/).length<5)return '';
     return ['  <section class="statement">','    <div class="wrap">',
 '      <p data-reveal>'+esc(line)+'</p>','    </div>','  </section>'].join('\n');
   },
@@ -2679,7 +2687,8 @@ function previewDoc(gen,file){
 
 window.__SCEN_GEN={generate:generate,previewDoc:previewDoc,appPreviewDoc:appPreviewDoc,
   bridge:function(){return PREVIEW_BRIDGE},DIRS:DIRS,DIR_KEYS:DIR_KEYS,
-  tokens:tokens,pageFile:pageFile,sectionsFor:sectionsFor,pack:pack,has:has,appTabs:appTabs};
+  tokens:tokens,pageFile:pageFile,sectionsFor:sectionsFor,pack:pack,has:has,appTabs:appTabs,
+  saneLine:saneLine,heroClaim:heroClaim};
 })();
 </script>
 <script>
@@ -2860,7 +2869,12 @@ var VOICE=
     invented that a visitor could take as fact. See docs/BUILD-SKILL.md. */
  'Never invent proof: no customer counts, review quotes, names, ratings, awards, partnerships, '+
  'certifications or press mentions. If a number or a quote is not in the brief, leave the field '+
- 'empty rather than making one up.';
+ 'empty rather than making one up. '+
+ /* §7 and §8 of the standard, as they reach a writer: the first screen has to
+    say what this is, why it matters and what to do next, in the words of this
+    business rather than of websites in general. */
+ 'The headline says what this is and why it matters — in the words of this trade, not in the '+
+ 'words of marketing. It could not be moved to another business without breaking.';
 
 function copyPrompt(b,hist){
   return 'Write the copy for this business.\n\nBRIEF:\n'+briefSummary(b)+
@@ -2925,6 +2939,23 @@ var UI_FONTS={
   serif:'Georgia,"Times New Roman",serif',
   mono:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'
 };
+/* The client's standard, in the words an art director needs. Written into the
+   prompt because it is the model that decides these, and into the generator
+   below because a prompt cannot be trusted to be the only guard. See
+   docs/BUILD-SKILL.md. */
+var DIRECTION_RULES=
+  '\n\nWhat premium means here:\n'+
+  '- Not more gradients, glows, cards, glass, neon or 3D. Composition, typography, whitespace, '+
+  'hierarchy, art direction and restraint.\n'+
+  '- The design language must change with the business. An architecture studio is editorial, '+
+  'image-led, asymmetric; a kids school is warm, human, clear; a luxury salon is fashion-editorial '+
+  'with large photography; an AI product is precise and technical.\n'+
+  '- Never the generic AI page: centred heading, paragraph, two buttons, three equal cards, six icon '+
+  'boxes, every section the same width with the same spacing.\n'+
+  '- Two type families at most, with real hierarchy between eyebrow, display, section head, body and '+
+  'labels. Not everything the same size.\n'+
+  '- If the client names a site they admire, take its principles, not its layout.';
+
 function designPrompt(b,hist){
   return 'You are the art director for one website. Decide how it should look, then stop.\n\n'+
   'BRIEF:\n'+briefSummary(b)+
@@ -2934,15 +2965,21 @@ function designPrompt(b,hist){
   ' "bg":"#rrggbb","surface":"#rrggbb","ink":"#rrggbb","accent":"#rrggbb",\n'+
   ' "display":"geist|general|system|serif|mono","body":"geist|general|system|serif|mono",\n'+
   ' "radius":0-32,"heroAlign":"left|center","density":"airy|balanced|tight",\n'+
+  ' "hero":"editorial|split|full|statement|product",\n'+
+  ' "images":"cinematic|editorial|studio|documentary|architectural|lifestyle|macro|monochrome|none",\n'+
   ' "motion":"subtle|cinematic|full","caps":true|false}\n\n'+
   'Rules:\n'+
   '- Choose for this business, not for websites in general. A bakery, a law firm and a '+
   'gaming platform should not come out looking the same.\n'+
+  '- hero is the shape of the first screen and it is not always centred: editorial is an '+
+  'asymmetric magazine opening, split is two columns, full is one image filling the screen, '+
+  'statement is oversized type alone, product puts the thing itself first.\n'+
+  '- images is the photographic direction the whole page keeps to.\n'+
   '- ink must be readable on bg: keep a strong contrast between them.\n'+
   '- accent is used on buttons and small marks. It must be visible on bg and never equal to it.\n'+
   '- surface is one step from bg, for cards.\n'+
   '- Serif display with a sans body is a real choice; so is mono for something technical.\n'+
-  '- No explanation outside the JSON.';
+  '- No explanation outside the JSON.'+DIRECTION_RULES;
 }
 function readDesign(o){
   function hex(v){v=String(v||'').trim();return /^#([0-9a-f]{6})$/i.test(v)?v:''}
@@ -2956,6 +2993,8 @@ function readDesign(o){
     body:UI_FONTS[String(o.body||'').toLowerCase()]||UI_FONTS.geist,
     radius:Math.max(0,Math.min(32,Number(o.radius)||0)),
     heroAlign:o.heroAlign==='center'?'center':'left',
+    hero:['editorial','split','full','statement','product'].indexOf(o.hero)>=0?o.hero:'',
+    images:['cinematic','editorial','studio','documentary','architectural','lifestyle','macro','monochrome','none'].indexOf(o.images)>=0?o.images:'',
     density:['airy','balanced','tight'].indexOf(o.density)>=0?o.density:'balanced',
     motion:['subtle','cinematic','full'].indexOf(o.motion)>=0?o.motion:'cinematic',
     caps:!!o.caps
@@ -3296,6 +3335,12 @@ window.__SCEN_API={API:API,ensure:ensure,ensureAll:ensureAll,reset:reset,req:req
 var C=window.__SCEN_CORE,G=window.__SCEN_GEN,X=window.__SCEN_AI,AI=X.AI;
 var N=window.__SCEN_API,API=N.API;
 var S=C.S,FLOW=C.FLOW,INDUSTRIES=C.INDUSTRIES,STYLES=C.STYLES,FEATURES=C.FEATURES,GOALS=C.GOALS;
+/* The copy pack and the brief's own usable sentence live in the generator.
+   imagePrompts() has been calling pack() from here since it was written, and
+   this block does not have it — a ReferenceError on the first line of the
+   image run, every time, inside a setTimeout where nobody saw it. The build
+   went on with grey placeholders and never said why. */
+var pack=G.pack,saneLine=G.saneLine;
 var $=C.$,$$=C.$$,esc=C.esc,toast=C.toast,modal=C.modal,closeModal=C.closeModal;
 /* Every state change already ends in save(); the preview follows it rather
    than waiting for a rebuild, which is how a preset takes on the answers as
@@ -3766,6 +3811,13 @@ function settleIndustry(b){
 }
 function fillDefaults(b){
   settleIndustry(b);
+  /* The trade question used to load the page set and the feature list when it
+     was answered. Nobody answers it any more, and nothing else did it — so a
+     brief the word lists could not place built a site with no pages at all:
+     "Done — Dubai is live. 0 pages, 0 sections". */
+  var P0=INDUSTRIES[b.industry]||INDUSTRIES.other;
+  if(!(b.pages||[]).length)b.pages=P0.pages.slice();
+  if(!(b.features||[]).length)b.features=P0.feats.slice();
   /* §3 and §49 — the agent decides these, and says so in one line rather than
      leaving the brief to show "not answered yet" beside "enough to start".
      Returns what it chose so the conversation can mention it. */
@@ -4927,9 +4979,9 @@ function applyDesign(d){
 
 function buildPlanSteps(){
   var b=S.brief,pro=S.depth==='pro',P=planData(),out=[],live=X.usable();
-  out.push({l:'Setting up your pages',s:b.pages.length+' pages',ms:420});
+  out.push({l:L('Setting up your pages','Pages taiyaar kar raha hoon'),s:b.pages.length+' pages',ms:420});
 
-  if(live)out.push({l:'Laying out the sections',s:'',ms:560,
+  if(live)out.push({l:L('Laying out the page','Page ka layout bana raha hoon'),s:'',ms:560,
     run:function(){
       return X.writePlan(b,transcript()).then(function(r){
         if(!r){delete b.__plan;setAiPill();return 'gateway unavailable — used the local planner'}
@@ -4938,14 +4990,14 @@ function buildPlanSteps(){
       });
     }});
   else{delete b.__plan;
-    out.push({l:'Laying out the sections',s:P.sections+' sections across '+P.pages.length+' pages',ms:560})}
+    out.push({l:L('Laying out the page','Page ka layout bana raha hoon'),s:P.sections+' sections across '+P.pages.length+' pages',ms:560})}
 
   /* The design comes before the words, the way it would with a person: the
      model decides the palette, the type, the radius, the density and where the
      hero sits for this one business, and the rest of the build is written to
      match. Without a gateway the deterministic direction stands, which is what
      every build used to get. */
-  if(live)out.push({l:'Designing the interface',s:'',ms:520,
+  if(live)out.push({l:L('Creating the visual direction','Visual direction bana raha hoon'),s:'',ms:520,
     run:function(){
       return X.designUI(b,transcript()).then(function(r){
         if(!r){delete b.__ui;setAiPill();return 'gateway unavailable — used the built-in direction'}
@@ -4953,9 +5005,9 @@ function buildPlanSteps(){
         return (r.design.idea?String(r.design.idea).slice(0,90):(r.provider+' · '+r.model))+fellNote();
       });
     }});
-  else out.push({l:'Designing the interface',s:STYLES[b.style].l+' · '+b.accent,ms:520});
+  else out.push({l:L('Creating the visual direction','Visual direction bana raha hoon'),s:STYLES[b.style].l+' · '+b.accent,ms:520});
 
-  if(live)out.push({l:'Adding the content',s:'',ms:640,compose:true,
+  if(live)out.push({l:L('Writing the words','Words likh raha hoon'),s:'',ms:640,compose:true,
     run:function(){
       return X.writeCopy(b,transcript()).then(function(r){
         if(!r){delete b.__copy;setAiPill();return 'gateway unavailable — used the local writer'}
@@ -4964,22 +5016,22 @@ function buildPlanSteps(){
       });
     }});
   else{delete b.__copy;
-    out.push({l:'Adding the content',compose:true,
+    out.push({l:L('Writing the words','Words likh raha hoon'),compose:true,
       s:(b.content==='own'?'draft copy, marked for replacement':'headlines, sections, FAQs and buttons'),ms:640})}
   P.pages.forEach(function(p){
-    out.push({l:'Writing site/'+p.file,ms:300,file:'site/'+p.file,
+    out.push({l:L('Building the ','Bana raha hoon — ')+p.name+' page',ms:300,file:'site/'+p.file,
       s:p.secs.map(function(x){return SECLABEL[x]||x}).join(' · '),
       // read at write time, so a live plan that arrives mid-build is what gets logged
       subFn:function(){return G.sectionsFor(p.name,b,pro).map(function(x){return SECLABEL[x]||x}).join(' · ')}})});
-  out.push({l:'Compiling styles.css',s:'tokens, layout, responsive rules',ms:460,file:'site/styles.css'});
-  out.push({l:'Adding the interactions',s:'scrolling, menus and forms',ms:380,file:'site/app.js'});
-  b.features.forEach(function(f){out.push({l:'Wiring '+FEATURES[f].l,s:FEATURES[f].mod,ms:300})});
+  out.push({l:L('Applying the design system','Design system laga raha hoon'),s:L('type, spacing, colour, responsive rules','type, spacing, colour, responsive rules'),ms:460,file:'site/styles.css'});
+  out.push({l:L('Adding the interactions','Interactions daal raha hoon'),s:L('scrolling, menus and forms','scroll, menu aur forms'),ms:380,file:'site/app.js'});
+  b.features.forEach(function(f){out.push({l:L('Adding ','Jod raha hoon — ')+FEATURES[f].l,s:FEATURES[f].mod,ms:300})});
   if(b.kind==='app'||b.kind==='both'){
-    out.push({l:'Generating app/App.jsx',s:'screens, tab bar and shared tokens',ms:520,file:'app/App.jsx'});
-    out.push({l:'Generating app/theme.js',s:'one set of colours for the site and the app',ms:280,file:'app/theme.js'});
+    out.push({l:L('Building the app screens','App ki screens bana raha hoon'),s:L('screens, tab bar and shared tokens','screens, tab bar aur shared tokens'),ms:520,file:'app/App.jsx'});
+    out.push({l:L('Matching the app to the site','App ko site se milaa raha hoon'),s:L('one set of colours for both','dono ke liye ek hi colours'),ms:280,file:'app/theme.js'});
   }
-  out.push({l:'Writing brief.json + README',s:'so the build can be rerun from the same answers',ms:300,file:'brief.json'});
-  out.push({l:'Finishing the preview',s:'headings, links, contrast, mobile widths',ms:640});
+  out.push({l:L('Saving the project','Project save kar raha hoon'),s:L('so this build can be rerun exactly','taaki ye build dobara waisi hi ban sake'),ms:300,file:'brief.json'});
+  out.push({l:L('Checking mobile and contrast','Mobile aur contrast check kar raha hoon'),s:L('headings, links, tap targets, widths','headings, links, tap targets, widths'),ms:640});
   return out;
 }
 
@@ -5131,17 +5183,32 @@ function startBuild(){
 /* What a person would ask for next, offered as one tap. Every one of them is
    an ordinary sentence — the same thing typed by hand does the same work, so
    these are a shortcut, not a second way in. */
+/* What a person running this kind of business actually wants next. */
+var NEXT_BY_TRADE={
+  education:[L('Show student work','Students ka kaam dikhao'),L('Make admissions a clear step-by-step','Admissions ko step-by-step banao'),L('Add faculty profiles','Faculty profiles daalo')],
+  restaurant:[L('Feature the signature dishes','Signature dishes ko aage lao'),L('Add a reservation flow','Reservation flow daalo'),L('Make the menu a proper section','Menu ko poora section banao')],
+  realestate:[L('Turn the listings into case studies','Listings ko case studies banao'),L('Add filtering by area','Area se filter daalo'),L('Lead with photography','Photography ko aage lao')],
+  clinic:[L('Explain each treatment properly','Har treatment thik se samjhao'),L('Add appointment booking','Appointment booking daalo'),L('Introduce the practitioners','Practitioners ka parichay daalo')],
+  fitness:[L('Show the class timetable','Class timetable dikhao'),L('Add trial signup','Trial signup daalo'),L('Introduce the coaches','Coaches ka parichay daalo')],
+  fashion:[L('Make it a lookbook','Ise lookbook banao'),L('Add sizing and fabric detail','Size aur fabric detail daalo'),L('Lead with one campaign image','Ek campaign image se shuru karo')],
+  agency:[L('Add project case studies','Project case studies daalo'),L('Make the work image-led','Kaam ko image-led banao'),L('Say who the team is','Team kaun hai bata do')],
+  saas:[L('Show the product itself','Product khud dikhao'),L('Explain pricing plainly','Pricing saaf-saaf likho'),L('Add a real signup flow','Asli signup flow daalo')],
+  portfolio:[L('Put the work first','Kaam ko sabse pehle rakho'),L('Add a project page','Ek project page daalo'),L('Write a proper about','Thik se about likho')],
+  travel:[L('Show the place, not the offer','Jagah dikhao, offer nahi'),L('Add an itinerary section','Itinerary section daalo'),L('Add enquiry by date','Date se enquiry daalo')],
+  events:[L('Add the schedule','Schedule daalo'),L('Sell tickets properly','Tickets thik se becho'),L('Show last year','Pichhla saal dikhao')],
+  games:[L('Show gameplay first','Gameplay pehle dikhao'),L('Add a trailer moment','Trailer wala moment daalo'),L('List the platforms','Platforms likho')],
+  other:[L('Make the first screen stronger','Pehli screen aur strong karo'),L('Tell the story in one section','Kahani ek section mein kaho'),L('Make the contact step obvious','Contact karna aasan karo')]
+};
+
 function nextChips(){
   clearNextChips();
   var b=S.brief,out=[];
   function want(cond,label){if(cond&&out.length<5)out.push(label)}
-  want(b.features.indexOf('forms')<0,L('Add a contact form','Contact form daalo'));
-  want(b.pages.map(function(p){return p.toLowerCase()}).indexOf('pricing')<0,
-       L('Add a pricing page','Pricing page daalo'));
-  want(b.motion!=='full',L('Put a 3D object in the hero','Hero mein 3D object daalo'));
-  want(b.features.indexOf('gallery')<0,L('Add a gallery','Gallery daalo'));
-  want(true,L('Try another colour','Doosra colour dikhao'));
-  want(S.depth!=='pro',L('More sections','Aur sections'));
+  /* "Add a 3D object" and "Try another colour" are suggestions about websites.
+     A suggestion has to be about this business or it is noise — §20. */
+  (NEXT_BY_TRADE[b.industry]||NEXT_BY_TRADE.other).forEach(function(sg){want(true,sg)});
+  want(b.features.indexOf('forms')<0,L('Add an enquiry form','Enquiry form daalo'));
+  want(S.depth!=='pro',L('Tell the story in more depth','Kahani aur detail mein'));
   if(!out.length)return;
   var box=document.createElement('div');
   box.id='nextChips';box.className='msg agent';box.style.marginTop='-8px';
@@ -6815,19 +6882,91 @@ function revokeFlow(t){
    prompts come from the brief, never from the page's own words, so a gym does
    not get a picture of its own headline. */
 var IMG_COST=25;
-function imagePrompts(b,n){
-  var P=pack(b),trade=(INDUSTRIES[b.industry]||INDUSTRIES.other).l,look=(STYLES[b.style]||{}).l||'cinematic';
-  var mood=' Mood: '+look+', '+(STYLES[b.style]&&STYLES[b.style].dark?'low light, deep shadows':'bright, clean light')+
-    '. Photographic, no text, no logos, no watermark, no user interface.';
-  var out=[{aspect:'16:9',prompt:'Wide establishing photograph for the top of a '+trade+' website. '+(b.pitch||'')+mood}];
-  var subjects=(b.industry==='games'?['a lit gaming setup at night','an arcade cabinet close up','a controller on a desk','a screen glowing in a dark room']
-               :(P.gallery||[]).slice(0,4));
+/* An image plan, not four calls to the same prompt.
+
+   What was here asked for "a wide establishing photograph" and then three of
+   "a photograph of <gallery label>", in one aspect ratio each, with the mood
+   taken from the style name. Four pictures that had nothing to do with one
+   another arrived, and a page with a luxury hero, a cartoon second section and
+   a stock third is the thing the client's standard names as the failure.
+
+   So: one direction for the whole set, a subject and a ratio chosen for the
+   slot each image lands in, negative space put where the text will sit, and
+   the same lighting, palette and lens language named in every prompt so they
+   read as one shoot. §25–36 of docs/BUILD-SKILL.md. */
+var IMG_LOOK={
+  restaurant:{dir:'cinematic food photography',use:'real ingredients, macro detail, steam and texture, the room at service, warm directional light',
+    avoid:'artificial-looking food, unrelated stock dishes'},
+  education:{dir:'documentary editorial photography',use:'authentic learning, a workshop mid-session, students working, a teacher explaining something, daylight through windows',
+    avoid:'corporate office stock photography, posed groups facing the camera'},
+  fitness:{dir:'athletic documentary photography',use:'real movement, chalk and sweat, strong directional light, the actual room, energetic crops',
+    avoid:'generic bodybuilding stock, mirror selfies'},
+  clinic:{dir:'calm clinical editorial photography',use:'clean rooms, natural materials, soft even light, hands and detail rather than faces',
+    avoid:'stock smiling doctors, blue medical clip-art tones'},
+  fashion:{dir:'fashion editorial photography',use:'fabric texture, considered styling, studio or location light with intent, full-length and detail crops',
+    avoid:'catalogue cut-outs, cheap ecommerce lighting'},
+  realestate:{dir:'architectural photography',use:'strong geometry, natural materials, dramatic light, minimal compositions, editorial framing',
+    avoid:'fake futuristic renders, wide-angle distortion, generic office blocks'},
+  agency:{dir:'editorial studio photography',use:'work in progress, materials, hands, considered still life, controlled light',
+    avoid:'people pointing at whiteboards, handshake stock'},
+  saas:{dir:'restrained technical photography',use:'original product visuals, abstract spatial compositions, precise materials, controlled light',
+    avoid:'robots, glowing brains, neon circuitry, cliché AI imagery'},
+  portfolio:{dir:'quiet editorial photography',use:'the work itself, gallery light, generous negative space',avoid:'busy collages'},
+  travel:{dir:'cinematic travel photography',use:'place and light, early or late sun, wide environment and one human-scale detail',
+    avoid:'oversaturated postcard shots'},
+  events:{dir:'documentary event photography',use:'the room filling, stage light, crowd texture, motion held rather than frozen',
+    avoid:'confetti stock'},
+  games:{dir:'high-contrast product photography',use:'a lit setup at night, screen glow on real materials, controller detail',
+    avoid:'esports stock crowds'},
+  other:{dir:'editorial photography',use:'real environments, considered composition, natural directional light',
+    avoid:'generic business stock'}
+};
+/* The design step names a photographic direction; it leads when it is there. */
+var IMG_DIRS={cinematic:'cinematic photography, anamorphic feel, deep shadows',
+  editorial:'editorial magazine photography, 35mm, honest light',
+  studio:'studio photography, controlled light, seamless backdrop',
+  documentary:'documentary photography, available light, nothing posed',
+  architectural:'architectural photography, strong geometry, natural materials',
+  lifestyle:'lifestyle photography, warm natural light, real moments',
+  macro:'macro product photography, shallow depth of field, material detail',
+  monochrome:'monochrome photography, high contrast, grain'};
+
+function imagePlan(b,n){
+  n=n||4;
+  var P=pack(b),trade=(INDUSTRIES[b.industry]||INDUSTRIES.other).l;
+  var look=IMG_LOOK[b.industry]||IMG_LOOK.other;
+  var ui=b.__ui||{};
+  var dir=(ui.images&&IMG_DIRS[ui.images])||look.dir;
+  var dark=!!(STYLES[b.style]&&STYLES[b.style].dark);
+  /* One line repeated in every prompt — this is what makes four images read as
+     one campaign rather than four searches. */
+  var campaign=' Art direction: '+dir+'; '+look.use+'; '+
+    (dark?'low-key lighting, deep shadows, restrained palette':'clean daylight, soft shadows, restrained palette')+
+    '; realistic materials and skin tones; consistent lens language across the set.'+
+    ' Avoid: '+look.avoid+', text of any kind, logos, watermarks, user interface, borders.';
+  /* §28 — the subject sits away from the words. A centred hero keeps its
+     middle clear; a left-aligned one puts the subject right. */
+  var centred=(ui.heroAlign||'center')==='center';
+  var heroAspect=(ui.hero==='full')?'21:9':'16:9';
+  var out=[{slot:'hero',aspect:heroAspect,alt:'',
+    prompt:'Wide establishing photograph for the top of a '+trade+' website. Subject: '+
+      (saneLine(b)||P.pitch||trade)+'. Composition: '+
+      (centred?'subject centred and low in the frame, clean uncluttered space across the top third for a headline'
+             :'subject weighted to the right, generous clean negative space on the left for a headline')+
+      '.'+campaign}];
+  /* the panels beside the copy, in the ratio the layout actually uses */
+  var subjects=(P.gallery||[]).slice(0,4).filter(Boolean);
+  if(!subjects.length)subjects=(P.services||[]).map(function(x){return x[0]}).slice(0,4);
   for(var i=0;out.length<n;i++){
-    var sub=subjects[i%Math.max(1,subjects.length)]||('detail from a '+trade);
-    out.push({aspect:'4:3',prompt:'Photograph of '+sub+' for a '+trade+' website.'+mood});
+    var sub=subjects[i%Math.max(1,subjects.length)]||('a detail from a '+trade);
+    out.push({slot:'feature',aspect:(i%2?'4:5':'4:3'),alt:String(sub),
+      prompt:'Photograph of '+sub+', for a '+trade+' website, same shoot as the others. '+
+        'Composition: one clear subject, room around it, nothing centred by default.'+campaign});
   }
   return out.slice(0,n);
 }
+/* kept: everything downstream asks for prompts, not for a plan */
+function imagePrompts(b,n){return imagePlan(b,n)}
 function imageFlow(n){
   n=n||4;
   if(!signedIn()){
@@ -6835,7 +6974,16 @@ function imageFlow(n){
                'Pehle sign in karo — image gateway ko aapka workspace chahiye.'));
     return;
   }
-  var list=imagePrompts(S.brief,n),made=[],hero='';
+  var list;
+  try{list=imagePrompts(S.brief,n)}
+  catch(e){
+    agentSay(L('I could not put the image plan together — '+esc(String((e&&e.message)||e)).slice(0,120)+
+               '. The build keeps its placeholders.',
+               'Image plan nahi ban paaya — '+esc(String((e&&e.message)||e)).slice(0,120)+
+               '. Build placeholders ke saath rahega.'));
+    return;
+  }
+  var made=[],hero='';
   thinking(L('Making image 1 of '+n+'…','Image bana raha hoon 1/'+n+'…'));
   (function next(i){
     if(i>=list.length){

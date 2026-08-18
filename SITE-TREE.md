@@ -770,8 +770,12 @@ New backend route: `GET /api/capabilities` (`requireUser`, booleans only).
 
 ### 10.1 Sidebar
 
-80 links in 11 groups → **12 links in 3 groups**, with an Advanced toggle that
-restores the full technical set as 4 extra groups.
+80 links in 11 groups → **12 links in 3 groups**. The sidebar no longer changes
+with the mode: as of 2026-08-19 the Advanced toggle was taken out of the column
+(it emptied all 41 technical routes into it) and the mode now only decides
+whether headings read in the customer's words or the technical ones. It is
+switched from the Advanced Tools page, which is where every technical route
+lives — searchable, grouped, one click from the foot of the bar.
 
 ```
 Main              Home · Projects

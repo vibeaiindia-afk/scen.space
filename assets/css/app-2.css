@@ -820,3 +820,24 @@ body{background:#07070a}
              linear-gradient(180deg,rgba(5,5,8,.82),rgba(5,5,8,.3) 34%,rgba(5,5,8,.94))}
 @media(max-width:760px){.hero-film video{opacity:.5}}
 @media(prefers-reduced-motion:reduce){.hero-film video{transform:scale(1.02)}}
+
+
+/* ── Advanced Tools page ───────────────────────────────────────────────────
+   The forty technical routes left the sidebar on 2026-08-19 and live here, so
+   this page carries the weight the column used to: a filter, a count per
+   group, and a description under every name instead of only a title tooltip.
+   .sx-hide is !important on purpose — applyAdminUI() hides staff-only tools
+   with an inline display:none, and the filter must never out-rank it. ── */
+.sx-hide{display:none!important}
+.sx-advfind{display:flex;align-items:center;gap:11px;margin-top:16px}
+.sx-advfind input{flex:1;min-width:0;max-width:420px;padding:10px 13px;border:1px solid var(--line);
+  border-radius:11px;background:#0a0a0e;color:#fff;font:inherit;font-size:13px}
+.sx-advfind input::placeholder{color:#5e5e6a}
+.sx-advfind input:focus{outline:none;border-color:#33333f}
+.sx-sect>h3 .sx-cnt{margin-left:7px;color:#4e4e59;letter-spacing:0;font-weight:600}
+.sx-tool-2{align-items:flex-start;padding:12px 13px;text-align:left}
+.sx-tool-2>.sx-i{margin-top:2px}
+.sx-tool-2 .sx-tw{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sx-tool-2 .sx-tw b{font-size:13px;color:#e6e6ec;font-weight:600}
+.sx-tool-2:hover .sx-tw b{color:#fff}
+.sx-tool-2 .sx-tw i{font-style:normal;font-size:11.5px;line-height:1.45;color:#75757f}

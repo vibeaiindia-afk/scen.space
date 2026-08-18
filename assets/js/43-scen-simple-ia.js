@@ -25,13 +25,13 @@ var ROUTES={
   /* Generated files and version history are builder panels, not routes, so they
      are not listed as tools here — the note under the group says where they are
      rather than offering a link that would land somewhere else. */
-  build:{label:'Build',note:'Generated files and version history live in the builder’s Ship panel.',items:[
+  build:{label:'Build',icon:'code',note:'Generated files and version history live in the builder’s Ship panel.',items:[
     ['customcode','Code','Snippets, embeds and custom CSS'],
     ['activity','Build Activity','Publishing, orders, team and system events'],
     ['recovery','Autosave & Recovery','Local-first protection for every change'],
     ['backups','Backups','Portable project snapshots']
   ]},
-  design:{label:'Design',items:[
+  design:{label:'Design',icon:'spark',items:[
     ['designtokens','Design Tokens','Colour, radius, spacing, type, depth'],
     ['variants','Components & Variants','Reusable visual states'],
     ['breakpoints','Breakpoints','Exact responsive widths'],
@@ -45,7 +45,7 @@ var ROUTES={
     ['interactions','Interaction & Lighting','Cursor behaviour, magnetics, lighting'],
     ['sequencer','Cinematic Sequencer','Chapters, camera moves, transitions']
   ]},
-  developer:{label:'Developer',items:[
+  developer:{label:'Developer',icon:'plug',items:[
     ['integrations','Integrations & API Keys','Providers and server-side secrets'],
     ['aigateway','AI Gateway','Provider routing and model configuration'],
     ['imagegateway','Image Gateway','Image generation providers'],
@@ -55,7 +55,7 @@ var ROUTES={
     ['authemail','Authentication & Email','Identity and transactional email control plane'],
     ['handoff','Export & Handoff','Package a project for engineering']
   ]},
-  operations:{label:'Operations',items:[
+  operations:{label:'Operations',icon:'gear',items:[
     ['performance','Performance','Payload, LCP, media preparation'],
     ['monitoring','Error Monitor','Broken routes and runtime warnings'],
     ['auditlogs','Audit Logs','Publishing, admin, team, billing, security'],
@@ -93,7 +93,7 @@ function setMode(m){
   document.body.classList.toggle('sx-advanced',m==='advanced');
   buildSidebar();
   if(typeof state!=='undefined'&&state.route)try{render(state.route)}catch(e){}
-  toast(m==='advanced'?'Advanced tools shown':'Simple mode — advanced tools are one click away');
+  toast(m==='advanced'?'Technical names on — the sidebar stays as it is':'Plain names on — Advanced Tools is still at the foot of the sidebar');
 }
 window.scenUiMode=mode;
 
@@ -129,7 +129,14 @@ window.scenIcon=ic;
 /* ── 4. Sidebar ────────────────────────────────────────────────────────────
    Rebuilt from scratch each time so mode changes are a single source of truth.
    Every entry navigates through the existing router, so nothing about routing,
-   gating or state changes — only what is listed. ── */
+   gating or state changes — only what is listed.
+
+   The sidebar carries the customer's job and nothing else: the work of making,
+   filling and publishing a website. Every technical tool lives on the Advanced
+   Tools page, one click away at the foot of the bar. Advanced Mode used to
+   empty all forty of them into this column, which is what made the bar
+   unreadable; it now only decides whether headings read in the customer's
+   words or the technical ones, and it is switched from that page. ── */
 var SIMPLE=[
   {label:'Main',items:[['dashboard','Home','home'],['projects','Projects','grid']]},
   {label:'Current project',items:[
@@ -149,27 +156,13 @@ function link(route,label,icon,cls){
 function buildSidebar(){
   var bar=document.querySelector('.app-sidebar');
   if(!bar)return;
-  var adv=mode()==='advanced';
   var html='<button class="new-project" data-nav="create">＋ New project</button>';
-  html+='<div class="sx-mode-row" role="tablist" aria-label="Interface complexity">'+
-    '<button role="tab" aria-selected="'+(!adv)+'" class="'+(adv?'':'on')+'" data-sx="mode" data-mode="simple">Simple</button>'+
-    '<button role="tab" aria-selected="'+adv+'" class="'+(adv?'on':'')+'" data-sx="mode" data-mode="advanced">Advanced</button>'+
-  '</div>';
 
   SIMPLE.forEach(function(g){
     html+='<div class="nav-group"><div class="nav-label">'+g.label+'</div>';
     g.items.forEach(function(it){html+=link(it[0],it[1],it[2])});
     html+='</div>';
   });
-
-  if(adv){
-    Object.keys(ROUTES).forEach(function(k){
-      var g=ROUTES[k];
-      html+='<div class="nav-group"><div class="nav-label">'+g.label+'</div>';
-      g.items.forEach(function(it){html+=link(it[0],it[1],'dots')});
-      html+='</div>';
-    });
-  }
 
   html+='<div class="sx-sidefoot">'+
     link('settings','Settings','gear')+
@@ -473,20 +466,60 @@ document.addEventListener('click',function(e){
    The index that makes hiding tools safe: every technical route in the
    product, grouped, one click away, with nothing removed. ── */
 views.advanced=function(){
-  var h=viewHead('Advanced Tools','Every technical capability in Scen. Nothing here is required to build and publish a website.',
-    '<button class="btn '+(mode()==='advanced'?'primary':'')+'" data-sx="mode" data-mode="'+(mode()==='advanced'?'simple':'advanced')+'">'+
-      (mode()==='advanced'?'Back to simple sidebar':'Keep these in the sidebar')+'</button>');
-  Object.keys(ROUTES).forEach(function(k){
+  var adv=mode()==='advanced';
+  var groups=Object.keys(ROUTES);
+  var total=groups.reduce(function(n,k){return n+ROUTES[k].items.length},0);
+  var h=viewHead('Advanced Tools',
+    'Every technical capability in Scen, '+total+' in all. None of it is needed to build, fill or publish a website — the sidebar already carries that work.',
+    '<button class="btn'+(adv?' primary':'')+'" data-sx="mode" data-mode="'+(adv?'simple':'advanced')+'">'+
+      (adv?'Using technical names':'Use technical names')+'</button>');
+
+  /* Forty entries is more than anyone scans. The filter is the index. */
+  h+='<div class="sx-advfind"><input id="sxAdvQ" type="search" placeholder="Search tools — payments, backups, redirects…" '+
+     'aria-label="Search advanced tools" autocomplete="off"/>'+
+     '<span class="tiny muted" id="sxAdvCount"></span></div>';
+
+  groups.forEach(function(k){
     var g=ROUTES[k];
-    h+='<div class="sx-sect"><h3>'+g.label+'</h3>'+
+    h+='<div class="sx-sect"><h3>'+escV(g.label)+' <span class="sx-cnt">'+g.items.length+'</span></h3>'+
       (g.note?'<p class="sx-sub">'+g.note+'</p>':'')+
       '<div class="sx-advgrid">'+
       g.items.map(function(it){
-        return '<button class="sx-tool" data-nav="'+it[0]+'" title="'+escV(it[2])+'">'+ic('dots')+escV(it[1])+'</button>';
+        return '<button class="sx-tool sx-tool-2" data-nav="'+it[0]+'" data-find="'+escV((it[1]+' '+it[2]).toLowerCase())+'">'+
+          ic(g.icon||'dots')+'<span class="sx-tw"><b>'+escV(it[1])+'</b><i>'+escV(it[2])+'</i></span></button>';
       }).join('')+'</div></div>';
   });
   return h;
 };
+
+/* The filter hides with a class, never with style.display: staff-only tools are
+   hidden by applyAdminUI() writing display:none inline, and clearing that on a
+   search would show a customer the admin routes. */
+function filterAdvanced(q){
+  q=String(q||'').trim().toLowerCase();
+  var tools=document.querySelectorAll('#appMain .sx-tool-2'),shownAll=0;
+  for(var i=0;i<tools.length;i++){
+    var hit=!q||(tools[i].getAttribute('data-find')||'').indexOf(q)>=0;
+    tools[i].classList.toggle('sx-hide',!hit);
+    if(hit&&tools[i].style.display!=='none')shownAll++;
+  }
+  var secs=document.querySelectorAll('#appMain .sx-sect');
+  for(var j=0;j<secs.length;j++){
+    var list=secs[j].querySelectorAll('.sx-tool-2');
+    if(!list.length)continue;
+    var shown=0;
+    for(var m=0;m<list.length;m++)
+      if(!list[m].classList.contains('sx-hide')&&list[m].style.display!=='none')shown++;
+    secs[j].classList.toggle('sx-hide',!shown);
+  }
+  var c=document.getElementById('sxAdvCount');
+  if(c)c.textContent=q?(shownAll?shownAll+' match'+(shownAll===1?'':'es'):'No tool matches “'+q+'”'):'';
+}
+
+document.addEventListener('input',function(e){
+  if(!e.target||e.target.id!=='sxAdvQ')return;
+  filterAdvanced(e.target.value);
+},false);
 
 /* ── 12. Help ── one place, instead of Support / Docs / Tour / Legal ── */
 views.help=function(){

@@ -5411,8 +5411,8 @@ function startBuild(){
       var f=document.querySelector('#previewFrame')||document.querySelector('iframe');
       var doc=null;try{doc=f&&f.contentDocument}catch(e){}
       if(!doc||!doc.documentElement)return resolve('');
-      var w=Math.min(1280,doc.documentElement.clientWidth||1280);
-      var h=Math.min(1600,Math.max(700,doc.documentElement.clientHeight||900));
+      var w=Math.min(1100,doc.documentElement.clientWidth||1100);
+      var h=Math.min(1300,Math.max(680,doc.documentElement.clientHeight||860));
       var html;
       try{
         var clone=doc.documentElement.cloneNode(true);
@@ -5443,11 +5443,11 @@ function startBuild(){
         if(settled)return;settled=true;clearTimeout(give);
         try{
           var cv=document.createElement('canvas');
-          cv.width=Math.round(w*0.8);cv.height=Math.round(h*0.8);
+          cv.width=Math.round(w*0.62);cv.height=Math.round(h*0.62);
           var cx=cv.getContext('2d');
           cx.fillStyle='#0b0b0f';cx.fillRect(0,0,cv.width,cv.height);
           cx.drawImage(img,0,0,cv.width,cv.height);
-          resolve(cv.toDataURL('image/jpeg',0.72));
+          resolve(cv.toDataURL('image/jpeg',0.62));
         }catch(e){resolve('')}
       };
       img.onerror=function(){if(!settled){settled=true;clearTimeout(give);resolve('')}};
@@ -5592,41 +5592,136 @@ function startBuild(){
 /* What a person would ask for next, offered as one tap. Every one of them is
    an ordinary sentence — the same thing typed by hand does the same work, so
    these are a shortcut, not a second way in. */
+/* A suggestion has to do something when it is pressed.
+
+   These were sentences — "Make the first screen stronger" — handed to the edit
+   reader, which could not place them and answered "I did not catch a change in
+   that", offering the client a menu instead. A suggestion the studio cannot
+   carry out is not a suggestion. Each one now names an action it can perform,
+   and the label is only what the client reads. */
+var NEXT_ACTS={
+  strongerHero:function(b){
+    var u=b.__ui||(b.__ui={}),order=['editorial','split','full','statement','product'];
+    u.hero=order[(order.indexOf(u.hero||'statement')+1)%order.length];
+    u.density='airy';
+    return L('Reshaped the first screen — '+u.hero+', with more air around it.',
+             'Pehli screen ka shape badla — '+u.hero+', aur zyada khula.');
+  },
+  storySection:function(b){
+    if(b.pages.indexOf('About')<0)b.pages.push('About');
+    S.depth='pro';setDepthLabel();
+    return L('Added the story — an About page and more sections on the way through.',
+             'Kahani jod di — About page aur beech mein aur sections.');
+  },
+  clearContact:function(b){
+    if(b.features.indexOf('forms')<0)b.features.push('forms');
+    if(b.pages.indexOf('Contact')<0)b.pages.push('Contact');
+    b.goal='lead';
+    return L('Made getting in touch the obvious next step, on every page.',
+             'Har page par contact karna saaf-saaf pehla kaam bana diya.');
+  },
+  gallery:function(b){
+    if(b.features.indexOf('gallery')<0)b.features.push('gallery');
+    if(b.pages.indexOf('Gallery')<0)b.pages.push('Gallery');
+    return L('Added a gallery and gave the work its own page.','Gallery aur uska apna page jod diya.');
+  },
+  bookings:function(b){
+    if(b.features.indexOf('bookings')<0)b.features.push('bookings');
+    b.goal='book';
+    return L('Added booking — the slot picker sits above the fold on a phone.',
+             'Booking jod di — phone par slot picker sabse upar.');
+  },
+  store:function(b){
+    if(b.features.indexOf('store')<0)b.features.push('store');
+    b.goal='sell';
+    return L('Added the shop, and pointed every button at it.','Shop jod di, aur har button usi par.');
+  },
+  pricing:function(b){
+    if(b.pages.indexOf('Pricing')<0)b.pages.push('Pricing');
+    return L('Added a pricing page, written plainly.','Pricing page jod diya, saaf-saaf.');
+  },
+  team:function(b){
+    if(b.pages.indexOf('Team')<0)b.pages.push('Team');
+    return L('Added the people behind it.','Peeche ke logon ko jod diya.');
+  },
+  deeper:function(b){
+    S.depth='pro';setDepthLabel();
+    return L('Told it in more depth — more sections on every page.','Aur detail mein — har page par zyada sections.');
+  },
+  photos:function(b){
+    delete b.__art;delete b.__heroImage;delete b.__imagesRun;
+    setTimeout(function(){imageFlow(4)},300);
+    return L('Reshooting the pictures now.','Photos abhi dobara bana raha hoon.');
+  }
+};
+
 /* What a person running this kind of business actually wants next. */
 var NEXT_BY_TRADE={
-  education:[L('Show student work','Students ka kaam dikhao'),L('Make admissions a clear step-by-step','Admissions ko step-by-step banao'),L('Add faculty profiles','Faculty profiles daalo')],
-  restaurant:[L('Feature the signature dishes','Signature dishes ko aage lao'),L('Add a reservation flow','Reservation flow daalo'),L('Make the menu a proper section','Menu ko poora section banao')],
-  realestate:[L('Turn the listings into case studies','Listings ko case studies banao'),L('Add filtering by area','Area se filter daalo'),L('Lead with photography','Photography ko aage lao')],
-  clinic:[L('Explain each treatment properly','Har treatment thik se samjhao'),L('Add appointment booking','Appointment booking daalo'),L('Introduce the practitioners','Practitioners ka parichay daalo')],
-  fitness:[L('Show the class timetable','Class timetable dikhao'),L('Add trial signup','Trial signup daalo'),L('Introduce the coaches','Coaches ka parichay daalo')],
-  fashion:[L('Make it a lookbook','Ise lookbook banao'),L('Add sizing and fabric detail','Size aur fabric detail daalo'),L('Lead with one campaign image','Ek campaign image se shuru karo')],
-  agency:[L('Add project case studies','Project case studies daalo'),L('Make the work image-led','Kaam ko image-led banao'),L('Say who the team is','Team kaun hai bata do')],
-  saas:[L('Show the product itself','Product khud dikhao'),L('Explain pricing plainly','Pricing saaf-saaf likho'),L('Add a real signup flow','Asli signup flow daalo')],
-  portfolio:[L('Put the work first','Kaam ko sabse pehle rakho'),L('Add a project page','Ek project page daalo'),L('Write a proper about','Thik se about likho')],
-  travel:[L('Show the place, not the offer','Jagah dikhao, offer nahi'),L('Add an itinerary section','Itinerary section daalo'),L('Add enquiry by date','Date se enquiry daalo')],
-  events:[L('Add the schedule','Schedule daalo'),L('Sell tickets properly','Tickets thik se becho'),L('Show last year','Pichhla saal dikhao')],
-  games:[L('Show gameplay first','Gameplay pehle dikhao'),L('Add a trailer moment','Trailer wala moment daalo'),L('List the platforms','Platforms likho')],
-  other:[L('Make the first screen stronger','Pehli screen aur strong karo'),L('Tell the story in one section','Kahani ek section mein kaho'),L('Make the contact step obvious','Contact karna aasan karo')]
+  education:[['gallery',L('Show student work','Students ka kaam dikhao')],
+             ['clearContact',L('Make admissions one clear step','Admissions ek saaf step banao')],
+             ['team',L('Add faculty profiles','Faculty profiles daalo')]],
+  restaurant:[['gallery',L('Feature the signature dishes','Signature dishes aage lao')],
+              ['bookings',L('Add a reservation flow','Reservation flow daalo')],
+              ['deeper',L('Give the menu its own section','Menu ko poora section do')]],
+  realestate:[['gallery',L('Lead with the photography','Photography ko aage lao')],
+              ['deeper',L('Turn listings into case studies','Listings ko case studies banao')],
+              ['clearContact',L('Make enquiries obvious','Enquiry karna aasan karo')]],
+  clinic:[['bookings',L('Add appointment booking','Appointment booking daalo')],
+          ['deeper',L('Explain each treatment properly','Har treatment thik se samjhao')],
+          ['team',L('Introduce the practitioners','Practitioners ka parichay daalo')]],
+  fitness:[['deeper',L('Show the class timetable','Class timetable dikhao')],
+           ['bookings',L('Add trial signup','Trial signup daalo')],
+           ['team',L('Introduce the coaches','Coaches ka parichay daalo')]],
+  fashion:[['gallery',L('Make it a lookbook','Ise lookbook banao')],
+           ['store',L('Sell it properly','Thik se becho')],
+           ['strongerHero',L('Lead with one campaign image','Ek campaign image se shuru karo')]],
+  agency:[['gallery',L('Make the work image-led','Kaam ko image-led banao')],
+          ['deeper',L('Add project case studies','Project case studies daalo')],
+          ['team',L('Say who the team is','Team kaun hai bata do')]],
+  saas:[['strongerHero',L('Show the product itself','Product khud dikhao')],
+        ['pricing',L('Explain pricing plainly','Pricing saaf-saaf likho')],
+        ['clearContact',L('Make signup the one step','Signup ko ek hi step banao')]],
+  portfolio:[['gallery',L('Put the work first','Kaam ko sabse pehle rakho')],
+             ['deeper',L('Write a proper about','Thik se about likho')],
+             ['clearContact',L('Make contact simple','Contact aasan karo')]],
+  travel:[['gallery',L('Show the place, not the offer','Jagah dikhao, offer nahi')],
+          ['deeper',L('Add an itinerary section','Itinerary section daalo')],
+          ['bookings',L('Take enquiries by date','Date se enquiry lo')]],
+  events:[['deeper',L('Add the schedule','Schedule daalo')],
+          ['store',L('Sell tickets properly','Tickets thik se becho')],
+          ['gallery',L('Show last year','Pichhla saal dikhao')]],
+  games:[['strongerHero',L('Show gameplay first','Gameplay pehle dikhao')],
+         ['gallery',L('Add a trailer moment','Trailer wala moment daalo')],
+         ['deeper',L('List the platforms','Platforms likho')]],
+  other:[['strongerHero',L('Make the first screen stronger','Pehli screen aur strong karo')],
+         ['storySection',L('Tell the story properly','Kahani thik se kaho')],
+         ['clearContact',L('Make the contact step obvious','Contact karna aasan karo')]]
 };
 
 function nextChips(){
   clearNextChips();
   var b=S.brief,out=[];
-  function want(cond,label){if(cond&&out.length<5)out.push(label)}
   /* "Add a 3D object" and "Try another colour" are suggestions about websites.
      A suggestion has to be about this business or it is noise — §20. */
-  (NEXT_BY_TRADE[b.industry]||NEXT_BY_TRADE.other).forEach(function(sg){want(true,sg)});
-  want(b.features.indexOf('forms')<0,L('Add an enquiry form','Enquiry form daalo'));
-  want(S.depth!=='pro',L('Tell the story in more depth','Kahani aur detail mein'));
+  (NEXT_BY_TRADE[b.industry]||NEXT_BY_TRADE.other).forEach(function(sg){
+    if(out.length<4)out.push(sg)});
+  if(out.length<4&&!b.__art)out.push(['photos',L('Reshoot the pictures','Photos dobara banao')]);
+  if(out.length<4&&S.depth!=='pro')out.push(['deeper',L('More depth on every page','Har page par aur detail')]);
   if(!out.length)return;
   var box=document.createElement('div');
   box.id='nextChips';box.className='msg agent';box.style.marginTop='-8px';
-  box.innerHTML='<div class="chips">'+out.slice(0,4).map(function(l){
-    return '<button data-say="'+esc(l)+'">'+esc(l)+'</button>'}).join('')+'</div>';
+  box.innerHTML='<div class="chips">'+out.slice(0,4).map(function(sg){
+    return '<button data-act="'+esc(sg[0])+'">'+esc(sg[1])+'</button>'}).join('')+'</div>';
   box.addEventListener('click',function(e){
-    var t=e.target.closest('button[data-say]');if(!t)return;
-    var say=t.dataset.say;
-    clearNextChips();userSay(say);applyEdit(say);
+    var t=e.target.closest('button[data-act]');if(!t)return;
+    var fn=NEXT_ACTS[t.dataset.act];
+    clearNextChips();userSay(t.textContent.trim());
+    if(!fn)return;
+    var said=fn(S.brief);
+    save();
+    /* one of them only starts an image run; the rest change the site */
+    if(t.dataset.act==='photos'){agentSay(said);return}
+    rebuild(said);
   });
   body.appendChild(box);scrollChat();
 }
@@ -7386,56 +7481,47 @@ function buildImages(n){
   try{list=imagePlan(S.brief,n)}
   catch(e){return Promise.resolve(L('could not plan the images — kept the placeholders',
                                     'image plan nahi bana — placeholders rakhe'))}
-  var made=[],hero='',stop=Date.now()+55000,reason='';
-  return new Promise(function(resolve){
-    (function next(i){
-      if(i>=list.length||Date.now()>stop){
-        S.brief.__imagesRun=true;
-        if(hero)S.brief.__heroImage=hero;
-        if(made.length)S.brief.__art=made;
-        if(hero||made.length){save();N.ensure('credits',true);setAcctPill()}
-        var count=made.length+(hero?1:0);
-        return resolve(count?(count+L(' photographs, art-directed as one set',' photos, ek hi set ki tarah')+
-                              (reason?' · '+reason:''))
-                            :(reason||L('no images came back — kept the placeholders',
-                                        'koi image nahi aayi — placeholders rakhe')));
-      }
-      thinkingSay(L('Making picture '+(i+1)+' of '+list.length+'…','Photo bana raha hoon '+(i+1)+'/'+list.length+'…'));
-      N.heroImage(list[i].prompt,list[i].aspect).then(function(img){
-        /* §38 — a picture that arrived is not the same as a picture that can
-           be published. The hero is looked at properly and reshot once if it
-           comes back with text in it, broken hands or a subject sitting where
-           the headline goes; the rest are kept, because four vision calls per
-           build costs more time than it saves. */
-        var check=(list[i].slot==='hero'&&Date.now()<stop-20000)
-          ? X.reviewPhoto(img.url) : Promise.resolve(null);
-        check.then(function(v){
-          if(v&&v.usable===false&&v.reshoot&&Date.now()<stop-12000){
-            thinkingSay(L('That one was not usable — reshooting…','Wo theek nahi thi — dobara bana raha hoon…'));
-            reason=L('reshot the hero: '+(v.faults[0]||'not usable'),'hero dobara: '+(v.faults[0]||'theek nahi thi'));
-            return N.heroImage(v.reshoot+' Photographic, no text, no logos, no interface.',list[i].aspect)
-              .then(function(img2){
-                if(list[i].slot==='hero'&&!hero)hero=img2.url;else made.push(img2.url);
-                next(i+1);
-              },function(){
-                if(list[i].slot==='hero'&&!hero)hero=img.url;else made.push(img.url);
-                next(i+1);
-              });
-          }
-          if(list[i].slot==='hero'&&!hero)hero=img.url;else made.push(img.url);
-          next(i+1);
-        },function(){
-          if(list[i].slot==='hero'&&!hero)hero=img.url;else made.push(img.url);
-          next(i+1);
-        });
-      },function(e){
-        if(e&&(e.status===402||/credit/i.test(String(e.message||'')))){
-          reason=L('ran out of credits','credits khatam');
-          return next(list.length);
+  /* Four images, one after another, took most of a two-minute build. The
+     gateway charges per image either way, and they do not depend on each
+     other, so they are asked for at once and whatever has arrived when the
+     budget runs out is what gets used. */
+  var done=0,reason='';
+  thinkingSay(L('Making '+list.length+' pictures…','Photos bana raha hoon — '+list.length+'…'));
+  function one(slot){
+    return N.heroImage(slot.prompt,slot.aspect).then(function(img){
+      done++;thinkingSay(L('Made '+done+' of '+list.length+'…',done+'/'+list.length+' ban gayin…'));
+      /* §38 — the hero is the one anybody looks at, so it is the one that is
+         checked, and reshot once from the reviewer's own description. */
+      if(slot.slot!=='hero')return{slot:slot,url:img.url};
+      return X.reviewPhoto(img.url).then(function(v){
+        if(v&&v.usable===false&&v.reshoot){
+          reason=L('reshot the hero: '+(v.faults[0]||'not usable'),
+                   'hero dobara: '+(v.faults[0]||'theek nahi thi'));
+          return N.heroImage(v.reshoot+' Photographic, no text, no logos, no interface.',slot.aspect)
+            .then(function(img2){return{slot:slot,url:img2.url}},
+                  function(){return{slot:slot,url:img.url}});
         }
-        next(i+1);
-      });
-    })(0);
+        return{slot:slot,url:img.url};
+      },function(){return{slot:slot,url:img.url}});
+    },function(e){
+      if(e&&(e.status===402||/credit/i.test(String(e.message||''))))reason=L('ran out of credits','credits khatam');
+      return null;
+    });
+  }
+  var budget=new Promise(function(res){setTimeout(function(){res('__timeout')},70000)});
+  return Promise.race([Promise.all(list.map(one)),budget]).then(function(results){
+    var got=(results==='__timeout')?[]:results.filter(Boolean);
+    var hero='',made=[];
+    got.forEach(function(g){if(g.slot.slot==='hero'&&!hero)hero=g.url;else made.push(g.url)});
+    S.brief.__imagesRun=true;
+    if(hero)S.brief.__heroImage=hero;
+    if(made.length)S.brief.__art=made;
+    if(hero||made.length){save();N.ensure('credits',true);setAcctPill()}
+    var count=made.length+(hero?1:0);
+    if(results==='__timeout'&&!count)return L('the pictures did not arrive in time — kept the placeholders',
+                                              'photos time par nahi aayin — placeholders rakhe');
+    return count?(count+L(' photographs, art-directed as one set',' photos, ek hi set ki tarah')+(reason?' · '+reason:''))
+                :(reason||L('no images came back — kept the placeholders','koi image nahi aayi — placeholders rakhe'));
   });
 }
 

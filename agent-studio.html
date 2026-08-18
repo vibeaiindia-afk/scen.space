@@ -267,6 +267,8 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
 /* preview */
 .prev-shell{height:calc(100vh - var(--topbar));display:flex;flex-direction:column}
 .prev-bar{height:46px;flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid var(--line);background:#08080b}
+.thinkline{margin-left:10px;font-size:12.5px;color:#7d7d88;vertical-align:2px;animation:thinkfade .35s ease}
+@keyframes thinkfade{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:none}}
 .prev-note{font-size:11.5px;color:#7d7d88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .prev-stage{flex:1;min-height:0;display:grid;place-items:center;padding:22px;overflow:auto;
   background:radial-gradient(circle at 20% 0%,rgba(125,108,255,.09),transparent 42%),radial-gradient(circle at 85% 90%,rgba(123,238,255,.06),transparent 40%)}
@@ -816,7 +818,7 @@ var S={
   v:1,phase:'interview',step:0,brief:freshBrief(),msgs:[],pending:null,skip:[],seedLabel:'',
   depth:'lite',planFirst:true,mode:'design',tab:'tools',tool:'brief',
   file:'',device:'desktop',previewKind:'site',buildLog:[],files:[],built:false,
-  atts:[],projectName:'',preset:null,pane:false
+  atts:[],projectName:'',preset:null,pane:false,lang:''
 };
 
 function save(){try{
@@ -1025,6 +1027,20 @@ var INDUSTRIES=C.INDUSTRIES,STYLES=C.STYLES,FEATURES=C.FEATURES;
 
 function tokens(b){
   var st=STYLES[b.style]||STYLES.cinematic, a=b.accent||'#dfff45';
+  /* "background red kr do" used to land on the accent, because the page's own
+     background was only ever a property of the style. It is a field now, and
+     the rest of the palette follows it: ink, panels and hairlines are derived
+     from whether the colour asked for is light or dark. */
+  if(b.__bg&&/^#[0-9a-f]{6}$/i.test(b.__bg)){
+    var light=inkOn(b.__bg)==='#0b0b0d';
+    st=JSON.parse(JSON.stringify(st));
+    st.bg=b.__bg;
+    st.ink=light?'#0d0d11':'#f6f6f2';
+    st.sub=light?'rgba(0,0,0,.62)':'rgba(255,255,255,.66)';
+    st.panel=mix(b.__bg,light?'#000000':'#ffffff',.06);
+    st.line=light?'rgba(0,0,0,.12)':'rgba(255,255,255,.13)';
+    st.dark=light?0:1;
+  }
   return{st:st,a:a,aink:inkOn(a),
     soft:mix(a,st.bg,.86),line2:mix(a,st.bg,.62),
     bg2:st.dark?mix(st.bg,'#ffffff',.05):mix(st.bg,'#000000',.028),
@@ -2474,7 +2490,8 @@ function editPrompt(text,b,hist){
   '{"name":"","pitch":"","accent":"#rrggbb","style":"cinematic|minimal|editorial|luxury|playful",'+
   '"motion":"subtle|cinematic|full","depth":"lite|pro","addPages":[],"dropPages":[],'+
   '"addFeatures":[],"dropFeatures":[],"rewriteCopy":false,'+
-  '"reply":"one short sentence, past tense, describing what you changed"}\n'+
+  '"reply":"one short sentence, past tense, describing what you changed, in the client\'s own '+
+  'language — Hinglish in Roman script if that is how they wrote"}\n'+
   'Feature names must come from: '+Object.keys(FEATURES).join(', ')+'. '+
   'If the client asked a question rather than requesting a change, answer it '+
   'in "reply" and return no other keys. '+
@@ -2505,7 +2522,8 @@ function turnPrompt(text,b,hist){
   '- Once a kind, a trade and a name (or a workable placeholder) are known, set ready_to_build '+
   'true and should_ask_question false. A strong first version beats a complete form.\n'+
   '- Feature names must come from: '+Object.keys(FEATURES).join(', ')+'.\n'+
-  '- Match the client\'s language, including Hinglish. Be brief and decisive. '+
+  '- Answer in the client\'s own language. If they write Hinglish, answer in Hinglish '+
+  '(Roman script, not Devanagari). Be brief and decisive. '+
   'Do not restate everything they said.';
 }
 function readTurn(text,b,hist){
@@ -2725,6 +2743,19 @@ var gen=null;               // current generated file set
    ============================================================ */
 var body=$('#chatBody'),stream=$('#streamBody'),input=$('#input'),sendBtn=$('#sendBtn');
 
+/* The studio answered in English however it was spoken to, so a client writing
+   Hinglish got "The site is already built — just tell me what you want
+   changed." Every line the studio writes itself now goes through L(), and the
+   gateway is told which language to answer in. Roman Hindi, not Devanagari:
+   it is what the clients type. */
+var HINGLISH=/\b(kr|kar|kro|karo|karna|krna|do|dena|de ?do|chahiye|nhi|nahi|nahin|hai|hain|ho|hoga|hona|rha|raha|rhi|rahi|mujhe|mera|meri|apna|apni|thoda|zyada|jyada|bhai|acha|achha|theek|thik|badal|badlo|dikha|dikhe|dekho|bna|bana|banao|lga|laga|lagao|hata|hatao|wala|wali|ye|yeh|is|iska|isko|uska|kaise|kyu|kyun|kitna|kitne|abhi|phir|fir|bhi|sab|matlab)\b/i;
+function noteLang(text){
+  var t=String(text||'');
+  if(/[\u0900-\u097F]/.test(t)||HINGLISH.test(t)){if(S.lang!=='hi'){S.lang='hi';save()}}
+  else if(!S.lang&&t.trim()){S.lang='en';save()}
+}
+function L(en,hi){return (S.lang==='hi'&&hi)?hi:en}
+
 function scrollChat(){requestAnimationFrame(function(){body.scrollTop=body.scrollHeight})}
 
 function nodeFor(m){
@@ -2761,16 +2792,36 @@ function pushMsg(m,animate){
   return n;
 }
 function agentSay(html,worked){return pushMsg({who:'agent',html:html,worked:worked||null},true)}
-function userSay(text,atts){return pushMsg({who:'user',text:text,atts:atts||[]},true)}
+function userSay(text,atts){noteLang(text);return pushMsg({who:'user',text:text,atts:atts||[]},true)}
 
-function thinking(){
+/* Three dots on their own say "wait" and nothing else. A line that changes
+   while it waits says what is being done, which is the difference between a
+   pause and a stall — and it says it in the client's language. */
+var THINK_EN=['Reading that…','Working it out…','Choosing the words…','Almost there…'],
+    THINK_HI=['Padh raha hoon…','Soch raha hoon…','Words chun raha hoon…','Bas ho hi gaya…'],
+    thinkTimer=0;
+function thinking(label){
+  clearThinking();
   var d=document.createElement('div');
   d.className='msg agent';d.id='thinkNode';
   d.innerHTML='<div class="who"><span class="avatar thinking"></span><b>Scen Agent</b></div>'+
-    '<div class="text"><span class="typing"><i></i><i></i><i></i></span></div>';
-  body.appendChild(d);scrollChat();return d;
+    '<div class="text"><span class="typing"><i></i><i></i><i></i></span>'+
+    '<span class="thinkline" id="thinkLine"></span></div>';
+  body.appendChild(d);scrollChat();
+  var list=label?[label]:(S.lang==='hi'?THINK_HI:THINK_EN),i=0;
+  var line=$('#thinkLine');
+  if(line)line.textContent=list[0];
+  clearInterval(thinkTimer);
+  if(list.length>1)thinkTimer=setInterval(function(){
+    var el=$('#thinkLine');
+    if(!el)return clearInterval(thinkTimer);
+    i=(i+1)%list.length;el.textContent=list[i];
+  },2600);
+  return d;
 }
-function clearThinking(){var t=$('#thinkNode');if(t)t.remove()}
+/* while the build runs, the same line carries the file being written */
+function thinkingSay(text){var el=$('#thinkLine');if(el){clearInterval(thinkTimer);el.textContent=text}}
+function clearThinking(){clearInterval(thinkTimer);var t=$('#thinkNode');if(t)t.remove()}
 
 function clearAnswerBox(){var a=$('#answerBox');if(a)a.remove()}
 
@@ -3469,8 +3520,8 @@ function handleText(text){
         userSay(text,atts);S.atts=[];renderAtts();
         save();
         var now=presetHome()?presetPage():'';
-        agentSay(did+(was&&now&&was!==now?'<br/><br/>It is in the preview.':
-          presetHome()?'<br/><br/>That one shows up when the site is built.':''));
+        agentSay(did+(was&&now&&was!==now?'<br/><br/>'+L('It is in the preview.','Preview mein aa gaya.'):
+          presetHome()?'<br/><br/>'+L('That one shows up when the site is built.','Ye site banne par dikhega.'):''));
         return askCurrent(true);            /* back to the open question */
       }
       if(isEdit&&X.usable()){
@@ -3579,8 +3630,8 @@ function handleText(text){
          things they can change afterwards. */
       if(haveEnough(S.brief)){
         var chose2=fillDefaults(S.brief);
-        agentSay((got.length?'Read that as the brief. I took '+got.join(' · ')+'.<br/><br/>':'')+
-                 'That is enough to start.'+saidDefaults(chose2));
+        agentSay((got.length?L('Read that as the brief. I took ','Ise brief maan liya. Maine liya — ')+got.join(' · ')+'.<br/><br/>':'')+
+                 L('That is enough to start.','Itna shuru karne ke liye kaafi hai.')+saidDefaults(chose2));
         S.skip=(S.skip||[]).concat(FLOW.map(function(f){return f.id}));
         S.step=0;save();
         return askCurrent(true);        /* walks past everything to finishInterview() */
@@ -3653,7 +3704,7 @@ function finishInterview(){
   S.phase='review';save();setPhasePill();
   input.placeholder='Reply, or ask for a change…';
   var b=S.brief,P=planData();
-  var lines=['Here is what I have.','',
+  var lines=[L('Here is what I have.','Ye mere paas hai.'),'',
     '<b>'+esc(b.name)+'</b> — '+esc(b.pitch),'',
     '<ul>',
     '<li>'+P.pages.length+' pages · '+P.sections+' sections</li>',
@@ -3668,13 +3719,14 @@ function finishInterview(){
     agentSay(lines,Math.max(2,Math.round((Date.now()-t0)/1000)));
     S.tool='plan';renderTools();renderMain();
     if(S.planFirst){
-      agentSay('The full plan is open on the right — every page with the sections I will write into it. Approve it and I start writing files.');
+      agentSay(L('The full plan is open on the right — every page with the sections I will write into it. Approve it and I start writing files.',
+        'Poora plan daayin taraf khula hai — har page aur usme jo sections likhunga. Approve karo, main files likhna shuru karta hoon.'));
       var box=document.createElement('div');
       box.id='answerBox';box.className='msg agent';box.style.marginTop='-8px';
       box.innerHTML='<div class="chips">'+
-        '<button data-go="build">✦  Approve &amp; build</button>'+
-        '<button data-go="change">Change something</button>'+
-        '<button data-go="depth">'+(S.depth==='pro'?'Build fewer sections':'Build more sections')+'</button>'+
+        '<button data-go="build">✦  '+L('Approve &amp; build','Approve karke bana do')+'</button>'+
+        '<button data-go="change">'+L('Change something','Kuch badalna hai')+'</button>'+
+        '<button data-go="depth">'+(S.depth==='pro'?L('Build fewer sections','Kam sections'):L('Build more sections','Aur sections'))+'</button>'+
         '</div>';
       box.addEventListener('click',function(e){
         var t=e.target.closest('button[data-go]');if(!t)return;
@@ -3684,7 +3736,8 @@ function finishInterview(){
           S.depth=S.depth==='pro'?'lite':'pro';setDepthLabel();save();
           clearAnswerBox();userSay(S.depth==='pro'?'Build more sections':'Build fewer sections');
           var p=planData();
-          agentSay('Switched to <b>'+(S.depth==='pro'?'Pro':'Lite')+'</b> — '+p.sections+' sections across '+p.pages.length+' pages now.');
+          agentSay(L('Switched to <b>'+(S.depth==='pro'?'Pro':'Lite')+'</b> — '+p.sections+' sections across '+p.pages.length+' pages now.',
+            '<b>'+(S.depth==='pro'?'Pro':'Lite')+'</b> kar diya — ab '+p.sections+' sections, '+p.pages.length+' pages.'));
           renderMain();finishReviewButtons();
         }
       });
@@ -3818,6 +3871,10 @@ function startBuild(){
   S.phase='building';S.built=false;S.files=[];S.buildLog=[];save();
   setPhasePill();setMode('build');
   setTab('preview',true);
+  /* The build stream is a different pane, so from the chat the studio looked
+     frozen for a minute. One line, in the conversation, saying what is being
+     written right now. */
+  thinking(L('Writing the code…','Code likh raha hoon…'));
   var steps=buildPlanSteps();
   stream.innerHTML='<span class="caps">Build · '+esc(S.brief.name)+'</span><div id="stepList"></div>';
   var list=$('#stepList');
@@ -3854,7 +3911,10 @@ function startBuild(){
         }
         if(S.tab==='preview')renderMain();
       }
-      if(st.file)emitFile(st.file);
+      if(st.file){
+        emitFile(st.file);
+        thinkingSay(L('Writing ','Likh raha hoon ')+st.file.replace(/^site\//,''));
+      }
       S.buildLog.push({l:st.l,s:sub||st.s,ms:Date.now()-a});
       i++;run();
     }
@@ -3891,17 +3951,18 @@ function startBuild(){
     row.innerHTML='<span class="mark">✓</span><span><b style="color:#e9e9ef">Build complete</b>'+
       '<span class="sub">'+gen.files.length+' files · '+secs+'s</span></span>';
     list.appendChild(row);
-    refreshTools();renderMain();
+    refreshTools();renderMain();clearThinking();
     setTimeout(function(){
       setMode('design');
       var P=planData();
-      agentSay('Done — <b>'+esc(S.brief.name)+'</b> is built.<ul>'+
+      agentSay(L('Done — <b>'+esc(S.brief.name)+'</b> is built.','Ho gaya — <b>'+esc(S.brief.name)+'</b> ban gayi.')+'<ul>'+
         '<li>'+gen.files.length+' files, '+P.sections+' sections, '+secs+'s</li>'+
         '<li>'+(S.brief.__copy?'Copy written live by '+esc(AI.provider)+' · '+esc(AI.model):
           'Copy written by the local writer — '+esc(X.label().toLowerCase()))+'</li>'+
         /* on a phone the pane is behind a tab, not beside the chat */
-        '<li>'+(innerWidth>980?'Preview is open on the right':'Tap <b>Preview</b> at the top to see it')+
-        ' — switch pages and devices from the bar</li>'+
+        '<li>'+(innerWidth>980?L('Preview is open on the right','Preview daayin taraf khula hai')
+                              :L('Tap <b>Preview</b> at the top to see it','Upar <b>Preview</b> dabao'))+
+        L(' — switch pages and devices from the bar',' — bar se page aur device badal sakte ho')+'</li>'+
         (presetHome()?'<li>Home is the <b>'+esc(presetName())+'</b> preset itself, carrying your name, your '+
           'one-liner and your accent. Its own header is the designer\u2019s, so the other pages open from the '+
           'bar above the preview rather than from a link on it</li>':'')+
@@ -4058,9 +4119,19 @@ function parseEdit(text){
   var tag=text.match(/(?:tagline|one[- ]liner|headline|strapline)\s*[:—-]\s*(.+)/i);
   if(tag){b.pitch=tag[1].trim().slice(0,180);done.push('rewrote the one-liner')}
 
+  /* The page's background, when that is what was named. Read before the
+     accent rule, or "background ka color red kr do" comes back as an accent —
+     which is what the client saw, and it is not what they asked for. */
+  var bgWord=/\b(background|backgound|backgournd|back ?ground|bg|page colou?r|site colou?r|canvas|pichhe|peeche)\b/i.test(text);
   var col=findColor(text);
-  if(col&&/colour|color|accent|make it|switch to|palette|teal|gold|green|blue|red|violet|purple|pink|orange|amber|cyan|lime|coral|mint|rose|magenta|indigo|emerald|crimson|bronze|peach|sky/.test(t)){
-    b.accent=col;done.push('accent is now <code>'+esc(col)+'</code>')}
+  if(bgWord&&col){
+    b.__bg=col;
+    done.push(L('the background is now <code>'+esc(col)+'</code>',
+                'background ab <code>'+esc(col)+'</code> hai'));
+  }
+  else if(col&&/colour|color|accent|make it|switch to|palette|teal|gold|green|blue|red|violet|purple|pink|orange|amber|cyan|lime|coral|mint|rose|magenta|indigo|emerald|crimson|bronze|peach|sky/.test(t)){
+    b.accent=col;done.push(L('accent is now <code>'+esc(col)+'</code>',
+                             'accent ab <code>'+esc(col)+'</code> hai'))}
 
   var aboutMotion=/\bmotion|parallax|animat/.test(t);
   Object.keys(STYLES).forEach(function(k){
@@ -4074,6 +4145,9 @@ function parseEdit(text){
     if(S.depth!=='pro'){S.depth='pro';setDepthLabel();done.push('turned on the deeper build — stats, testimonials, FAQ and a marquee')}}
   if(/\b(fewer|less|simpler|shorter|lite|trim)\b/.test(t)&&/(section|page|build)/.test(t)){
     if(S.depth!=='lite'){S.depth='lite';setDepthLabel();done.push('trimmed back to the core sections')}}
+
+  if(b.__bg&&/\b(reset|default|original|purana|wapas|revert)\b/.test(t)&&bgWord){
+    delete b.__bg;done.push(L('put the background back','background wapas pehle jaisa'))}
 
   if(/\b(no|less|subtle|calm|still)\b.*motion|\bcalm it down\b/.test(t)){b.motion='subtle';done.push('dialled the motion back')}
   /* "3d object daal do" is an object, not a request for more parallax */
@@ -4249,7 +4323,8 @@ function applyEdit(text){
 }
 
 function editHelp(t0){
-  agentSay("I did not catch a change in that. I can do these right now:<ul>"+
+  agentSay(L("I did not catch a change in that. I can do these right now:",
+             "Ye change samajh nahi aaya. Ye abhi kar sakta hoon:")+"<ul>"+
     "<li><code>make it deep teal</code> — any colour name or hex</li>"+
     "<li><code>switch to minimal light</code> — cinematic, minimal, editorial, luxury or playful</li>"+
     "<li><code>add a pricing page</code> · <code>drop the blog</code></li>"+
@@ -4298,7 +4373,8 @@ function rebuild(reason,t0){
     return N.saveVersion(String(reason).replace(/<[^>]+>/g,'').slice(0,80),S.brief,gen,S.depth)
   }).then(function(){if(S.tool==='publishing'&&S.tab==='tools')renderMain()},function(){});
   var P=planData();
-  agentSay(reason+elsewhere+'<br/><br/>Rebuilt — '+gen.files.length+' files, '+P.sections+' sections. The preview is live.',
+  agentSay(reason+elsewhere+'<br/><br/>'+L('Rebuilt — '+gen.files.length+' files, '+P.sections+' sections. The preview is live.',
+    'Dobara bana diya — '+gen.files.length+' files, '+P.sections+' sections. Preview live hai.'),
     Math.max(1,Math.round((Date.now()-(t0||Date.now()-1400))/1000)));
   var list=$('#stepList');
   if(list){
@@ -5748,8 +5824,8 @@ function restore(){
     }
   }
   setPhasePill();setDepthLabel();
-  input.placeholder=S.phase==='built'?'Tell me what to change…':
-    S.phase==='review'?'Reply, or ask for a change…':'Message the agent…';
+  input.placeholder=S.phase==='built'?L('Tell me what to change…','Kya badalna hai, bolo…'):
+    S.phase==='review'?L('Reply, or ask for a change…','Jawab do, ya koi change bolo…'):L('Message the agent…','Agent se baat karo…');
   $('#planBtn').classList.toggle('on',S.planFirst);
   if(S.brief.name){$('#projName').textContent=S.brief.name}
   renderTools();setMode(S.mode==='build'&&S.phase==='building'?'design':S.mode);setTab(S.tab,true);

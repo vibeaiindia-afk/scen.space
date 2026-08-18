@@ -22,6 +22,13 @@ var FILMS=[
   /* Two product-launch presets, added 2026-08-18: one light, one dark. Both
      are standalone pages like the films above, so Customize hands the whole
      page to the studio and the client edits it by talking. */
+  {name:'Nova',file:'/templates/nova.html',category:'Product',
+   tag:'Cinematic product launch — sticky scroll scenes, colour picker, 17 sections',
+   palette:{accent:'#0071e3',accent2:'#f5f5f7'},
+   heroTitle:'Hello, future.',
+   heroSubtitle:'Powerful. Beautiful. A cinematic product launch page with sticky scroll scenes, a live colour picker and a camera, chip and battery story.',
+   components:['Home','Design','Camera','Performance','Buy']},
+
   {name:'Halo',file:'/templates/halo.html',category:'Product',
    tag:'Product launch page — light, type-led, one long scroll',
    palette:{accent:'#0071e3',accent2:'#f5f5f7'},

@@ -816,7 +816,7 @@ function applySeed(seed){
 
 var S={
   v:1,phase:'interview',step:0,brief:freshBrief(),msgs:[],pending:null,skip:[],seedLabel:'',
-  depth:'lite',planFirst:true,mode:'design',tab:'tools',tool:'brief',
+  depth:'lite',planFirst:false,mode:'design',tab:'tools',tool:'brief',
   file:'',device:'desktop',previewKind:'site',buildLog:[],files:[],built:false,
   atts:[],projectName:'',preset:null,pane:false,lang:''
 };
@@ -2809,7 +2809,7 @@ var $=C.$,$$=C.$$,esc=C.esc,toast=C.toast,modal=C.modal,closeModal=C.closeModal;
 /* Every state change already ends in save(); the preview follows it rather
    than waiting for a rebuild, which is how a preset takes on the answers as
    they are given. syncPreview() is a no-op once there is a build to show. */
-function save(){C.save();syncPreview()}
+function save(){C.save();syncPreview();maybeDraft()}
 var slug=C.slug,wait=C.wait,bytes=C.bytes,findColor=C.findColor;
 var gen=null;               // current generated file set
 
@@ -3595,6 +3595,38 @@ function handleText(text){
      reader that knows what to do with one. */
   var pasted=text.length>320||text.split(/\n/).length>4;
 
+  /* A second brief pasted into a finished project used to be read as an edit
+     of the first one, so an iPhone concept inherited the games platform that
+     was already in the brief — its trade, its pages, its whole catalogue. A
+     brief that arrives on top of a built project is a decision, and it is the
+     client's to make. */
+  if(pasted&&(S.built||S.phase==='review')&&!S.__newAsked){
+    userSay(text,atts);S.atts=[];renderAtts();
+    S.__newAsked=text;save();
+    agentSay(L('That reads like a new brief. The project open here is <b>'+esc(S.brief.name||'untitled')+
+        '</b> — should I start fresh, or fold this into it?',
+      'Ye naya brief lag raha hai. Abhi <b>'+esc(S.brief.name||'untitled')+
+        '</b> khula hai — naya shuru karun ya isi mein jodun?'));
+    var pick=document.createElement('div');
+    pick.id='answerBox';pick.className='msg agent';pick.style.marginTop='-8px';
+    pick.innerHTML='<div class="chips">'+
+      '<button data-new="1">'+L('Start a new project','Naya project banao')+'</button>'+
+      '<button data-new="0">'+L('Change this one','Isi mein badlo')+'</button></div>';
+    pick.addEventListener('click',function(e){
+      var t=e.target.closest('button[data-new]');if(!t)return;
+      var again=S.__newAsked;clearAnswerBox();
+      if(t.dataset.new==='1'){
+        resetState();S.__newAsked=again;
+        renderTools();setMode('design');setPhasePill();setTab('tools',true);
+        agentSay(L('Fresh project. Reading your brief.','Naya project. Aapka brief padh raha hoon.'));
+      }else agentSay(L('Folding it into this one.','Isi mein jod raha hoon.'));
+      setTimeout(function(){handleText(again)},220);
+    });
+    body.appendChild(pick);scrollChat();
+    return;
+  }
+  S.__newAsked='';
+
   /* Asking about the studio itself — credits, files, who am I — is answered
      here rather than treated as a design change. */
   var about=pasted?null:answerAbout(text);
@@ -3872,7 +3904,11 @@ function finishInterview(){
         }
       });
       body.appendChild(box);scrollChat();
-    }else startBuild();
+    }else{
+      agentSay(L('Building it now — the preview fills in as it goes. Say the word any time and I will change it.',
+        'Abhi bana raha hoon — preview saath-saath bharega. Kuch bhi badalna ho, bas bol dena.'));
+      setTimeout(startBuild,420);
+    }
   },900);
 }
 function finishReviewButtons(){
@@ -5381,6 +5417,27 @@ function buildFiles(){
 }
 
 function presetHome(){return !!presetFile()&&presetState==='ready'}
+
+/* The site starts drawing while the questions are still going. Once the brief
+   carries enough to compose something, every answer redraws it in the preview —
+   so a client watches the site appear instead of waiting for a button. */
+var draftSig='';
+function maybeDraft(){
+  if(S.built||S.phase==='building')return;
+  if(!haveEnough(S.brief))return;
+  var b=S.brief;
+  var sig=[b.name,b.industry,b.style,b.accent,b.motion,S.depth,b.__bg,(b.pages||[]).join(),(b.features||[]).join(),(b.__onepage||[]).join()].join('\u0000');
+  if(sig===draftSig)return;
+  draftSig=sig;
+  try{
+    gen=buildFiles();
+    S.files=gen.files.map(function(f){return f.path});
+    if(S.files.indexOf(S.file)<0)S.file=S.files[0];
+    if(S.tab==='preview')renderMain();
+    else if(!S.__draftSeen){$('#prevBadge').classList.remove('hidden')}
+    S.__draftSeen=true;
+  }catch(e){}
+}
 
 /* The preview follows the conversation: every answer that changes the name,
    the line or the colour is repainted into the preset straight away. */

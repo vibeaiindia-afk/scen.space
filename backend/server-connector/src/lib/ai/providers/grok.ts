@@ -26,9 +26,14 @@ function bestGrok(ids:string[]):string{
   const grok=ids.filter(id=>/^grok/i.test(id)&&!/image|vision-beta/i.test(id));
   if(!grok.length)return '';
   const version=(id:string)=>{const m=id.match(/grok-(\d+(?:\.\d+)?)/i);return m?parseFloat(m[1]):0};
-  /* highest version, and among equals the plain one — "grok-4" over
-     "grok-4-fast-non-reasoning" */
-  return grok.sort((a,b)=>version(b)-version(a)||a.length-b.length)[0];
+  /* Highest version — but among equals, the fast one.
+     The plain model answers a page plan in sixteen seconds and does not finish
+     the copy inside its share of a sixty-second function, so every build paid
+     twenty-five seconds to fall through to another provider. A launch page is
+     not reasoning work; speed is what it needs. An explicit SCEN_GROK_MODEL
+     still overrides all of this. */
+  const speed=(id:string)=>(/fast|mini|turbo|flash/i.test(id)?1:0);
+  return grok.sort((a,b)=>version(b)-version(a)||speed(b)-speed(a)||a.length-b.length)[0];
 }
 
 async function discoverModel(apiKey:string):Promise<string>{

@@ -3387,7 +3387,13 @@ function saidDefaults(chose){
    inferred, so anything present here simply overwrites. Pages and features go
    through the same add/drop the edit reader already uses. */
 function applyTurn(o){
-  var b=S.brief,u=o&&o.brief_updates;if(!u)return;
+  var b=S.brief,u=o&&o.brief_updates;
+  /* The check against the brief's own words used to live at the end of this
+     function, so a turn that carried no updates — a plain question, a model
+     that answered with only a reply — returned before any of it ran. That is
+     how a games trade left over from an earlier project survived an iPhone
+     brief: nothing ever re-read the words. */
+  if(!u){if(o&&o.__text)groundTurn(o.__text);return}
   /* Every field here is written straight into the brief the generator reads,
      so a trade the studio has never heard of — "gaming", "entertainment" —
      used to land in b.industry and the build then threw on
@@ -4004,7 +4010,11 @@ function handleText(text){
           S.skip=(S.skip||[]).concat(FLOW.map(function(f){return f.id}));
           S.step=0;save();return askCurrent(true);
         }
-        if(o.should_ask_question&&o.next_question){
+        var said=String(o.reply||'').replace(/\s+/g,' ').trim().toLowerCase();
+        var asks=String(o.next_question||'').replace(/\s+/g,' ').trim().toLowerCase();
+        /* the model often puts the same sentence in both; asking it twice in a
+           row is what made the studio look like it had lost the thread */
+        if(o.should_ask_question&&o.next_question&&asks!==said){
           agentSay(esc(String(o.next_question).slice(0,240)));
           S.awaitingFree=true;save();return;
         }
@@ -5830,6 +5840,11 @@ function withBridge(html){
   return html.replace(/<\/body>/i,G.bridge()+'</body>');
 }
 function currentDoc(){
+  /* A preset stays on screen until the build is real. Drawing the draft over
+     it took away the whole point of pressing Customize: the page they chose
+     disappeared a second after it arrived, replaced by a rough version of the
+     same home page. The draft still exists for the other pages and the files. */
+  if(!S.built&&presetHome()&&(!S.file||S.file==='site/index.html'))return withBridge(presetPage());
   if(!gen)return withBridge(presetPage());
   if(S.previewKind==='app')return G.appPreviewDoc(S.brief);
   var file=S.file&&/^site\/.*\.html$/.test(S.file)?S.file:'site/index.html';

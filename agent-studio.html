@@ -2667,18 +2667,27 @@ function turnPrompt(text,b,hist){
   '(Roman script, not Devanagari). Be brief and decisive. '+
   'Do not restate everything they said.';
 }
+/* A timeout is worth one more try with less to read: the same turn, no
+   history, half the brief. Anything else fails straight to the local path. */
+function retryable(e){return e&&(e.status===504||e.code==='timeout'||/in time/i.test(String(e.message||'')))}
 function readTurn(text,b,hist){
   var t0=Date.now();
-  return post('analysis',turnPrompt(text,b,hist),
-    'You read a client message and reply with one JSON object and nothing else.',
-    {maxOutputTokens:700,temperature:.3})
-    .then(function(d){
-      record(d,Date.now()-t0);
-      var o=jsonFrom(d.text);
-      if(!o)throw Object.assign(new Error('The model did not return usable JSON'),{status:502});
-      return o;
-    })
-    .catch(function(e){failed(e);return null});
+  function ask(msg,history){
+    return post('analysis',turnPrompt(msg,b,history),
+      'You read a client message and reply with one JSON object and nothing else.',
+      {maxOutputTokens:700,temperature:.3})
+      .then(function(d){
+        record(d,Date.now()-t0);
+        var o=jsonFrom(d.text);
+        if(!o)throw Object.assign(new Error('The model did not return usable JSON'),{status:502});
+        return o;
+      });
+  }
+  return ask(text,hist).catch(function(e){
+    /* one more try with less to read — a long brief is what ran the clock out */
+    if(!retryable(e))throw e;
+    return ask(String(text).slice(0,1200),[]);
+  }).catch(function(e){failed(e);return null});
 }
 
 function readEdit(text,b,hist){
@@ -2916,13 +2925,16 @@ function nodeFor(m){
 }
 /* Last few turns as plain text. Tags out, entities back, length capped so a
    long build log cannot crowd out the actual request. */
+/* Ten turns of a conversation that began with a two-thousand-word brief is a
+   request big enough to time the gateway out — which is what "The gateway did
+   not answer in time" was. Six turns, and each one clipped. */
 function transcript(n){
-  return (S.msgs||[]).slice(-(n||10)).map(function(m){
+  return (S.msgs||[]).slice(-(n||6)).map(function(m){
     var t=String(m.html||'').replace(/<br\s*\/?>/gi,' ').replace(/<[^>]+>/g,' ')
            .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
            .replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\s+/g,' ').trim();
     if(!t)return '';
-    return (m.who==='agent'?'Agent: ':'Client: ')+t.slice(0,300);
+    return (m.who==='agent'?'Agent: ':'Client: ')+t.slice(0,220);
   }).filter(Boolean);
 }
 function pushMsg(m,animate){

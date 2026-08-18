@@ -4,6 +4,10 @@ import { generateWithRouting } from '@/lib/ai/router';
 import type { AIFeature, AIProviderId } from '@/lib/ai/types';
 
 export const dynamic='force-dynamic';
+/* The gateway gives a provider 45 seconds; a function that Vercel stops at its
+   default cuts that off long before, and the studio reports a timeout it could
+   not have avoided. The two limits have to agree. */
+export const maxDuration=60;
 const features:AIFeature[]=['chat','code','planning','analysis'];
 /* The caller may ask for one; the router decides whether it can be honoured. */
 const providers:AIProviderId[]=['openai','anthropic','gemini','grok'];

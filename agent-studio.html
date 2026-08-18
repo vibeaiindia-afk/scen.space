@@ -1548,6 +1548,17 @@ function proof(b,i){
   if(real)return real[i%real.length];
   return [['—','your number here'],['—','years, clients, or work'],['—','one figure you can stand behind']][i%3];
 }
+/* A generated photograph when the client paid for one, the drawn placeholder
+   when they did not. Everything that shows art asks here, so one switch turns
+   a whole build from swatches into pictures. */
+function artFor(b,t,i,extra){
+  var list=(b&&b.__art)||[];
+  if(list.length){
+    var u=list[i%list.length];
+    if(u)return 'style="background:linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.42)),url(\''+esc(u)+'\') center/cover no-repeat'+(extra||'')+'"';
+  }
+  return ph(t,i,extra);
+}
 function ph(t,i,extra){ /* placeholder art block */
   return 'style="background:linear-gradient('+(120+i*26)+'deg,'+tint(t,i,.68)+','+t.bg3+' 62%,'+t.st.bg+')'+(extra||'')+'"';
 }
@@ -1640,7 +1651,7 @@ var SEC={
     return ['  <section id="gallery">','    <div class="wrap">',
 '      <div class="sec-head" data-reveal><h2>A look around</h2><p>Swap these for your own photographs — the layout holds any aspect ratio.</p></div>',
 '      <div class="grid4">'+P.gallery.map(function(g,i){
-        return '\n        <div class="tile" data-reveal '+ph(t,i)+'><b>'+esc(g)+'</b></div>'}).join('')+'\n      </div>',
+        return '\n        <div class="tile" data-reveal '+artFor(b,t,i)+'><b>'+esc(g)+'</b></div>'}).join('')+'\n      </div>',
 '    </div>','  </section>'].join('\n');
   },
   stats:function(b){
@@ -1880,12 +1891,15 @@ function gmShot(cat,i){
     'radial-gradient(90% 80% at 88% 92%,hsl('+h2+' 88% 50%/.45),transparent 58%),'+
     'linear-gradient(158deg,hsl('+h+' 38% 16%),hsl('+h2+' 32% 8%))';
 }
-function gmCards(list,wideFirst){
+function gmCards(list,wideFirst,b){
+  var art=(b&&b.__art)||[];
   return list.map(function(g,i){
     var name=g[0],cat=g[1],sl=slug(name),big=wideFirst&&i===0;
+    var shot=art.length?('linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.5)),url(\''+esc(art[i%art.length])+'\') center/cover no-repeat')
+                       :gmShot(cat,i);
     return '      <a class="gm-card'+(big?' wide':'')+'" href="game.html?g='+esc(sl)+
       '" data-slug="'+esc(sl)+'" data-game="'+esc(name.toLowerCase()+' '+cat.toLowerCase())+'">\n'+
-'        <div class="gm-shot" style="background:'+gmShot(cat,i)+'">\n'+
+'        <div class="gm-shot" style="background:'+shot+'">\n'+
 '          <span class="gm-chip">'+esc(cat)+'</span>\n'+
 '          <div class="gm-play"><b>▶</b></div>\n'+
 (big?'          <div class="gm-over"><b>'+esc(name)+'</b><span>'+esc(cat)+'</span></div>\n':'')+
@@ -1895,11 +1909,11 @@ function gmCards(list,wideFirst){
 '      </a>';
   }).join('\n');
 }
-function gmRow(title,list,href,wide){
+function gmRow(title,list,href,wide,b){
   if(!list.length)return '';
   return '    <section class="gm-row" data-row>\n      <div class="gm-rowhead"><h2>'+esc(title)+'</h2>'+
     (href?'<a href="'+href+'">View all →</a>':'')+'</div>\n      <div class="gm-grid'+(wide?' feat':'')+'">\n'+
-    gmCards(list,wide)+'\n      </div>\n    </section>';
+    gmCards(list,wide,b)+'\n      </div>\n    </section>';
 }
 function gmPick(cat,all,n,off){
   var hit=all.filter(function(g){return g[1].toLowerCase()===String(cat).toLowerCase()});
@@ -1933,20 +1947,22 @@ function makeGamePage(b,page,pro,t){
 '        <div class="gm-hero-stats">'+[0,1,2].map(function(i){var st=proof(b,i);
         return '<span><b>'+esc(st[0])+'</b>'+esc(st[1])+'</span>'}).join('')+'</div>\n'+
 '      </div>\n'+
-'      <div class="gm-hero-art" style="background:'+gmShot(lead[1],0)+'"><span class="gm-chip">'+esc(lead[1])+'</span></div>\n'+
+'      <div class="gm-hero-art" style="background:'+((b.__heroImage)?
+        ('linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.45)),url(\''+esc(b.__heroImage)+'\') center/cover no-repeat')
+        :gmShot(lead[1],0))+'"><span class="gm-chip">'+esc(lead[1])+'</span></div>\n'+
 '    </section>';
-    rows=[hero,gmRow('Featured',all.slice(0,5),'',true),
-      gmRow('Trending now',all.slice(5,13),pageFile(b.pages[1]||'Home')),
-      gmRow('Popular',all.slice(9,17),''),
-      gmRow('New games',all.slice(13,21),''),
-      gmRow('Multiplayer',gmPick('Multiplayer',all,6,0),'')].filter(Boolean).join('\n\n');
+    rows=[hero,gmRow('Featured',all.slice(0,5),'',true,b),
+      gmRow('Trending now',all.slice(5,13),pageFile(b.pages[1]||'Home'),false,b),
+      gmRow('Popular',all.slice(9,17),'',false,b),
+      gmRow('New games',all.slice(13,21),'',false,b),
+      gmRow('Multiplayer',gmPick('Multiplayer',all,6,0),'',false,b)].filter(Boolean).join('\n\n');
   }else if(/contact|about/.test(n)){
     rows='    <section class="gm-row"><div class="gm-rowhead"><h2>'+esc(page)+'</h2></div>\n'+
       '      <p style="color:var(--sub);max-width:62ch;line-height:1.7">'+esc(P.pitch)+'</p>\n'+
       '      <p style="margin-top:14px"><a class="btn" href="mailto:hello@'+slug(b.name)+'.com">'+esc(P.cta[0])+'</a></p>\n    </section>';
   }else{
     var key=n.replace(/\s*games?$/,'').trim();
-    rows=gmRow(page,gmPick(key,all,12,3),'');
+    rows=gmRow(page,gmPick(key,all,12,3),'',false,b);
   }
 
   var title=n==='home'?b.name+' — '+P.kicker.replace(/ · /g,', '):page+' · '+b.name;
@@ -2058,7 +2074,7 @@ function chapterBlock(b,t,name,i){
 '        <p>'+esc(copy)+'</p>',
 '        <a class="btn ghost" href="#'+slug(lastPage(b))+'">'+esc(P.cta[2])+'</a>',
 '      </div>',
-'      <div class="ch-art" '+ph(t,i+2)+'><span>'+esc(title)+'</span></div>',
+'      <div class="ch-art" '+artFor(b,t,i+1)+'><span>'+esc(title)+'</span></div>',
 '    </div>',
 '  </section>'].join('\n');
 }
@@ -4214,7 +4230,7 @@ function startBuild(){
         '<li>Every file is readable under <b>Code</b>, and downloadable</li>'+
         (signedIn()?'<li>Signed in as '+esc(accountName())+' — <b>Publishing</b> can save it to your workspace and put it live</li>':
           '<li>Not signed in, so saving and publishing are off — the build itself is finished either way</li>')+
-        '</ul><br/>Tell me what to change and I rebuild it: <code>make it deep teal</code>, '+
+        '</ul>'+offerImages()+'<br/><br/>Tell me what to change and I rebuild it: <code>make it deep teal</code>, '+
         '<code>add a pricing page</code>, <code>drop the blog</code>, <code>rename it to Ember &amp; Oak</code>, '+
         '<code>more sections</code>.');
       $('#prevBadge').classList.remove('hidden');
@@ -4363,6 +4379,16 @@ function parseEdit(text){
 
   var tag=text.match(/(?:tagline|one[- ]liner|headline|strapline)\s*[:—-]\s*(.+)/i);
   if(tag){b.pitch=tag[1].trim().slice(0,180);done.push('rewrote the one-liner')}
+
+  /* "images bana do" — the only edit that spends credits, so it never runs
+     from a guess: the words have to name images and ask for them. */
+  if(/\b(image|images|photo|photos|picture|pictures|tasveer|photograph)\b/i.test(text)&&
+     /\b(generate|make|banao|bana ?do|bna ?do|add|real|asli|daal|lga|lagao|chahiye)\b/i.test(text)&&
+     !HREF_RE.test(text)){
+    setTimeout(function(){imageFlow(4)},60);
+    return L('Making them now — 4 images, '+(4*IMG_COST)+' credits.',
+             'Abhi bana raha hoon — 4 images, '+(4*IMG_COST)+' credits.');
+  }
 
   /* The page's background, when that is what was named. Read before the
      accent rule, or "background ka color red kr do" comes back as an accent —
@@ -5770,6 +5796,77 @@ function revokeFlow(t){
   N.revokeOtherSessions().then(function(d){
     undo();renderMain();toast('Signed out '+(d.revoked||0)+' other session(s)');
   },function(e){undo();toast(N.msg(e))});
+}
+
+/* Real photographs for a build. Each one is 25 credits on the image gateway,
+   so the number is said before anything is spent and the client decides. The
+   prompts come from the brief, never from the page's own words, so a gym does
+   not get a picture of its own headline. */
+var IMG_COST=25;
+function imagePrompts(b,n){
+  var P=pack(b),trade=(INDUSTRIES[b.industry]||INDUSTRIES.other).l,look=(STYLES[b.style]||{}).l||'cinematic';
+  var mood=' Mood: '+look+', '+(STYLES[b.style]&&STYLES[b.style].dark?'low light, deep shadows':'bright, clean light')+
+    '. Photographic, no text, no logos, no watermark, no user interface.';
+  var out=[{aspect:'16:9',prompt:'Wide establishing photograph for the top of a '+trade+' website. '+(b.pitch||'')+mood}];
+  var subjects=(b.industry==='games'?['a lit gaming setup at night','an arcade cabinet close up','a controller on a desk','a screen glowing in a dark room']
+               :(P.gallery||[]).slice(0,4));
+  for(var i=0;out.length<n;i++){
+    var sub=subjects[i%Math.max(1,subjects.length)]||('detail from a '+trade);
+    out.push({aspect:'4:3',prompt:'Photograph of '+sub+' for a '+trade+' website.'+mood});
+  }
+  return out.slice(0,n);
+}
+function imageFlow(n){
+  n=n||4;
+  if(!signedIn()){
+    agentSay(L('Sign in first — the image gateway needs your workspace.',
+               'Pehle sign in karo — image gateway ko aapka workspace chahiye.'));
+    return;
+  }
+  var list=imagePrompts(S.brief,n),made=[],hero='';
+  thinking(L('Making image 1 of '+n+'…','Image bana raha hoon 1/'+n+'…'));
+  (function next(i){
+    if(i>=list.length){
+      clearThinking();
+      if(!made.length&&!hero){
+        agentSay(L('No images came back — nothing was charged for the ones that failed.',
+                   'Koi image nahi aayi — jo fail hui unka kuch nahi kata.'));
+        return;
+      }
+      if(hero)S.brief.__heroImage=hero;
+      if(made.length)S.brief.__art=made;
+      save();
+      rebuild(L('Put '+(made.length+(hero?1:0))+' generated photographs into the build.',
+                (made.length+(hero?1:0))+' generated photos build mein daal diye.'));
+      N.ensure('credits',true);setAcctPill();
+      return;
+    }
+    thinkingSay(L('Making image '+(i+1)+' of '+n+'…','Image bana raha hoon '+(i+1)+'/'+n+'…'));
+    N.heroImage(list[i].prompt,list[i].aspect).then(function(img){
+      if(i===0)hero=img.url;else made.push(img.url);
+      next(i+1);
+    },function(e){
+      /* 402 is the only one worth stopping for: nothing else will succeed */
+      if(e&&(e.status===402||/credit/i.test(String(e.message||'')))){
+        clearThinking();
+        agentSay(L('Not enough credits for the rest — '+(made.length+(hero?1:0))+' were made. Top up and say "images" again.',
+          'Baaki ke liye credits kam pad gaye — '+(made.length+(hero?1:0))+' ban gayin. Credits daal ke phir "images" bol dena.'));
+        if(hero)S.brief.__heroImage=hero;
+        if(made.length){S.brief.__art=made;save();rebuild(L('Used the images that were made.','Jo images bani wo laga di.'))}
+        return;
+      }
+      next(i+1);
+    });
+  })(0);
+}
+/* the offer, once there is a build to put them in */
+function offerImages(){
+  if(!signedIn()||S.brief.__art)return '';
+  var n=4;
+  return '<br/><br/>'+L('The pictures are placeholders. I can generate real ones for the hero and the tiles — '+
+      n+' images, '+(n*IMG_COST)+' credits. Say <code>images</code> and I will.',
+    'Tasveerein abhi placeholder hain. Hero aur tiles ke liye asli bana sakta hoon — '+
+      n+' images, '+(n*IMG_COST)+' credits. <code>images</code> likh do, bana deta hoon.');
 }
 
 function heroImageFlow(t){

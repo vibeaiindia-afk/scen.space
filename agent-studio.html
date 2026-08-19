@@ -170,6 +170,19 @@ button.pill:hover{border-color:rgba(255,255,255,.28);color:#fff}
 .send:hover{transform:translateY(-1px)}
 .note{font-size:11px;color:#5b5b66;text-align:center;padding:9px 6px 0;line-height:1.5}
 
+/* what changed, and what is worth doing next */
+.filelist{margin-top:12px;border:1px solid #1e1e26;border-radius:12px;overflow:hidden}
+.fileline{display:flex;gap:10px;align-items:center;padding:8px 12px;font-size:12.5px;border-top:1px solid #17171e}
+.fileline:first-child{border-top:0}
+.fileline b{color:#8f8f9b;font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;flex:0 0 58px}
+.fileline code{color:#cfcfd6;background:none;border:0;padding:0;font-size:12.5px}
+.fileline.more{color:#6a6a76;justify-content:center}
+.nextlist{margin-top:14px}
+.nextlist>b{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#6f6f7b;margin-bottom:7px}
+.nextline{display:flex;gap:9px;align-items:baseline;font-size:13.2px;color:#c6c6cf;padding:3px 0}
+.nextline i{font-style:normal;font-size:10.5px;font-weight:700;color:var(--acid);flex:0 0 auto;
+  border:1px solid rgba(223,255,69,.3);border-radius:5px;padding:1px 5px}
+
 /* the build, inside the conversation */
 .workcard{padding:0;background:none;border:0}
 .work{border:1px solid #22222b;border-radius:16px;background:#0d0d12;padding:14px 16px 8px}
@@ -6506,12 +6519,64 @@ function rebuildWithCopy(summary,t0){
   });
 }
 
+/* What is worth doing next, and why — the thing the client's other tool ends
+   every turn with. Read off the state of this build rather than invented: a
+   site with no form cannot take an enquiry, a site with placeholder art has
+   not been photographed, a site nobody published is not online. Two at most,
+   because a list of eight is a list nobody reads. */
+function nextItems(){
+  var b=S.brief,out=[];
+  if(!signedIn())out.push(['P1',L('Sign in to publish — the build is finished either way, and every file downloads under Code.',
+                                  'Publish ke liye sign in — build to poori ho chuki hai, aur Code se saari files download ho jaati hain.')]);
+  else if(!API.published)out.push(['P1',L('Publish it — nobody can see this until it has an address.',
+                                          'Publish kar dijiye — jab tak address nahi, ise koi dekh nahi sakta.')]);
+  if(!b.__art&&signedIn())out.push(['P1',L('Make the photographs — the art is placeholder gradients until then.',
+                                           'Photos bana lijiye — tab tak art sirf gradient hai.')]);
+  if(b.features.indexOf('forms')<0)out.push(['P2',L('Add an enquiry form so the site can collect something.',
+                                                    'Enquiry form daal dijiye taaki site kuch le bhi sake.')]);
+  else if(!b.domain)out.push(['P2',L('Point your own domain at it when you have one.',
+                                     'Apna domain ho to usko is par laga dijiye.')]);
+  if(!out.length)return '';
+  return '<div class="nextlist"><b>Next</b>'+out.slice(0,2).map(function(x){
+    return '<div class="nextline"><i>'+x[0]+'</i>'+esc(x[1])+'</div>'}).join('')+'</div>';
+}
+
+/* Which files this change actually touched.
+
+   A rebuild says "12 files, 24 sections" — a number, not an answer. The client
+   asked for the shape the tools they use have: a row per file that changed, so
+   "make it warmer" is visibly a stylesheet change and "add a pricing page" is
+   visibly a new page. We regenerate rather than patch, so the diff is taken
+   between the two builds. */
+function fileMap(g){
+  var m={};(g&&g.files||[]).forEach(function(f){m[f.path]=String(f.body||'')});return m;
+}
+function changedFiles(before,after){
+  var out=[];
+  Object.keys(after).forEach(function(k){
+    if(!(k in before))out.push(['Created',k]);
+    else if(before[k]!==after[k])out.push(['Edited',k]);
+  });
+  Object.keys(before).forEach(function(k){if(!(k in after))out.push(['Removed',k])});
+  /* pages first, then the stylesheet, then the rest — the order someone reads */
+  var rank=function(p){return /index\.html$/.test(p)?0:/\.html$/.test(p)?1:/\.css$/.test(p)?2:3};
+  return out.sort(function(a,b){return rank(a[1])-rank(b[1])});
+}
+function fileRows(list){
+  if(!list.length)return '';
+  return '<div class="filelist">'+list.slice(0,10).map(function(x){
+    return '<div class="fileline"><b>'+esc(x[0])+'</b><code>'+esc(x[1])+'</code></div>'
+  }).join('')+(list.length>10?'<div class="fileline more">+'+(list.length-10)+' more</div>':'')+'</div>';
+}
+
 function rebuild(reason,t0){
   /* Read from the last build rather than from the brief: the edit has already
      been applied to the brief by the time this runs, so re-rendering the page
      here would only ever compare it with itself. */
   var homeBefore=builtHome;
+  var before=fileMap(gen);
   gen=buildFiles();
+  var touched=changedFiles(before,fileMap(gen));
   /* The preset carries a name, a line, a colour and its own words. A change to
      the sections, the pages or the style has nowhere to land on it, and saying
      "the preview is live" without saying that reads as a preview that ignored
@@ -6525,9 +6590,7 @@ function rebuild(reason,t0){
   if(API.projectId)N.saveProject(S.brief,gen,S.depth).then(function(){
     return N.saveVersion(String(reason).replace(/<[^>]+>/g,'').slice(0,80),S.brief,gen,S.depth)
   }).then(function(){if(S.tool==='publishing'&&S.tab==='tools')renderMain()},function(){});
-  var P=planData();
-  agentSay(reason+elsewhere+'<br/><br/>'+L('Rebuilt — '+gen.files.length+' files, '+P.sections+' sections. The preview is live.',
-    'Dobara bana diya — '+gen.files.length+' files, '+P.sections+' sections. Preview live hai.'),
+  agentSay(reason+elsewhere+fileRows(touched)+nextItems(),
     Math.max(1,Math.round((Date.now()-(t0||Date.now()-1400))/1000)));
   var list=$('#stepList');
   if(list){

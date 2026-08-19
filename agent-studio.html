@@ -1175,8 +1175,20 @@ function heroClaim(b){
 }
 /* The line under the headline used to be the same sentence again, because both
    came from the one line the brief had. */
+/* The industry packs exist so a build without a gateway still reads like
+   English. They are not copy for anyone's site, so where a written line exists
+   the canned one never wins. */
+function cannedPitch(b){
+  var mine=(INDUSTRIES[b.industry]||{}).pitch||'';
+  var t=String(saneLine(b)||'').trim();
+  return !!t&&(t===String(mine).trim()||t===String(INDUSTRIES.other.pitch).trim());
+}
 function heroLead(b,head){
   var P=pack(b),line=saneLine(b);
+  if(cannedPitch(b)){
+    var better=P.statement||(P.services&&P.services[0]&&P.services[0][1])||'';
+    if(better&&String(better).split(/\s+/).length>=5)line=better;
+  }
   var h=String(head||'').toLowerCase().replace(/[.!?]+$/,'');
   if(h&&line.toLowerCase().indexOf(h)===0){
     var rest=line.slice(h.length).replace(/^[\s,.;:\u2014-]+/,'');
@@ -1880,7 +1892,7 @@ var SEC={
        the client has ever pointed at does, and what the writer is now asked
        for. Without a live writer the claim is built from the brief rather
        than borrowed from the name. */
-    var head=P.headline||heroClaim(b),lead=P.headline?saneLine(b):heroLead(b,head);
+    var head=P.headline||heroClaim(b),lead=heroLead(b,head);
     /* Five openings, not one. The art director picks the shape for this
        business — a centred claim is right for a product and wrong for an
        architecture studio, and shipping one shape for everything is how every
@@ -3033,9 +3045,13 @@ function coerceCopy(o,b){
 }
 function writeCopy(b,hist){
   var t0=Date.now();
-  /* Fourteen hundred tokens of copy is more than any of these fields need, and
-     on a slow model it is the difference between an answer and a timeout. */
-  return post('chat',copyPrompt(b,hist),VOICE,{maxOutputTokens:950,temperature:.78})
+  /* This was cut to 950 while a slow primary was timing out. Racing solved the
+     timeout, and the cut did not: eleven fields of copy do not fit, the JSON
+     comes back short, and every missing field silently becomes the canned
+     industry sentence — which is how "A small team doing careful work for
+     people who notice the difference" ended up under a headline the model had
+     written itself. */
+  return post('chat',copyPrompt(b,hist),VOICE,{maxOutputTokens:1500,temperature:.78})
     .then(function(d){
       record(d,Date.now()-t0);
       var o=jsonFrom(d.text);

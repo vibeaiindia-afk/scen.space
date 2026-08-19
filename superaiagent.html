@@ -1,0 +1,2233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>SUPERAIAGENT</title>
+<!--
+  SUPERAIAGENT — a second agent, on its own page.
+
+  Deliberately not linked from anywhere on scen.space: no nav entry, no route
+  in the app shell, noindex on the page itself. It is reached by typing the
+  address. The Agent Studio at /agent-studio.html is untouched by this file.
+
+  It talks to the same backend the studio does — /api/ai/generate for the
+  thinking and the writing, /api/image/generate for the photographs,
+  /api/ai/vision-review for the design review, /api/publish to put it live —
+  so it needs a signed-in session on a domain that proxies /api. Signed out,
+  every call says so instead of pretending.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root{
+  --bg:#ffffff; --shell:#fbfbfc; --ink:#141416; --ink2:#3f3f46; --muted:#7c7c86;
+  --line:#e8e8ec; --line2:#f0f0f3; --soft:#f6f6f8; --soft2:#f1f1f4;
+  --blue:#2f6bff; --blue-soft:#eef3ff; --violet:#7c5cff; --rose:#ff4d61;
+  --ok:#12a150; --warn:#b7791f;
+  --r:12px; --r2:16px; --r3:22px;
+  --top:54px; --chat:430px;
+  --shadow:0 1px 2px rgba(16,16,20,.05),0 8px 24px -12px rgba(16,16,20,.14);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+a{color:inherit;text-decoration:none}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.grow{flex:1}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#dcdce2;border-radius:8px;border:3px solid #fff;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:#c6c6cf;background-clip:padding-box}
+::-webkit-scrollbar-track{background:transparent}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:8px}
+
+/* ---------- controls ---------- */
+.btn{display:inline-flex;align-items:center;gap:7px;justify-content:center;
+  border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 15px;
+  font-size:13.5px;font-weight:500;transition:.15s ease;white-space:nowrap}
+.btn:hover{background:var(--soft);border-color:#dcdce2}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.primary:hover{background:#000}
+.btn.blue{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.blue:hover{background:#255ae6}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--soft)}
+.btn.sq{border-radius:10px;padding:7px 12px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.ico{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
+  color:#5f5f6a;transition:.15s}
+.ico:hover{background:var(--soft2);color:var(--ink)}
+.ico.on{background:var(--soft2);color:var(--ink)}
+.ico svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round;display:block}
+.round{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff}
+.round svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;
+  font-size:13px;color:var(--ink2);transition:.15s}
+.chip:hover{background:var(--soft)}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 9px;
+  font-size:11.5px;font-weight:500;border:1px solid var(--line);color:var(--muted);background:#fff}
+.tag.ok{color:var(--ok);border-color:rgba(18,161,80,.3);background:rgba(18,161,80,.07)}
+.tag.warn{color:var(--warn);border-color:rgba(183,121,31,.3);background:rgba(183,121,31,.07)}
+.tag.bad{color:var(--rose);border-color:rgba(255,77,97,.3);background:rgba(255,77,97,.07)}
+
+/* ---------- home ---------- */
+.home{height:100%;display:flex;background:var(--bg)}
+.side{width:252px;flex:0 0 auto;border-right:1px solid var(--line);background:var(--bg);
+  display:flex;flex-direction:column;padding:12px 12px 14px}
+.side-top{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 14px}
+.mark{width:26px;height:26px;border-radius:8px;display:block;
+  background:conic-gradient(from 210deg,#ff4d61,#7c5cff,#2f6bff,#ff4d61)}
+.ws{display:flex;align-items:center;gap:9px;width:100%;border:1px solid var(--line);
+  border-radius:11px;padding:8px 10px;background:#fff;transition:.15s}
+.ws:hover{background:var(--soft)}
+.ws-badge{width:22px;height:22px;border-radius:6px;background:var(--violet);color:#fff;
+  display:grid;place-items:center;font-size:11px;font-weight:700;flex:0 0 auto}
+.ws b{font-weight:600;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav{margin-top:14px;display:flex;flex-direction:column;gap:1px}
+.nav a,.nav button{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:9px;
+  color:var(--ink2);font-size:13.5px;transition:.14s;text-align:left;width:100%}
+.nav a:hover,.nav button:hover{background:var(--soft)}
+.nav .on{background:var(--soft2);color:var(--ink);font-weight:500}
+.nav svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.nav-head{padding:16px 10px 6px;font-size:11.5px;color:#9a9aa4;font-weight:500;letter-spacing:.01em}
+.recents{overflow:auto;flex:1;margin-top:2px;min-height:0}
+.recents .r{display:block;padding:7px 10px;border-radius:9px;font-size:13px;color:var(--ink2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:.14s;width:100%;text-align:left}
+.recents .r:hover{background:var(--soft)}
+.side-card{border:1px solid var(--line);border-radius:13px;padding:12px;display:flex;
+  align-items:center;gap:10px;margin-top:10px;background:#fff}
+.side-card b{display:block;font-size:13px;font-weight:600}
+.side-card span{font-size:11.5px;color:var(--muted)}
+
+.canvas{flex:1;min-width:0;overflow:auto;position:relative}
+.aurora{position:absolute;inset:0 0 auto;height:640px;pointer-events:none;
+  background:
+    radial-gradient(900px 420px at 18% 0%,rgba(79,130,255,.42),transparent 62%),
+    radial-gradient(760px 460px at 82% 8%,rgba(255,110,196,.40),transparent 64%),
+    radial-gradient(700px 520px at 50% 42%,rgba(150,110,255,.30),transparent 66%),
+    linear-gradient(180deg,#eef3ff 0%,#fdfbff 58%,#fff 100%)}
+.canvas-in{position:relative;padding:0 24px 56px}
+.hero{min-height:min(560px,72vh);display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;padding:52px 0 30px}
+.hero .pill{display:inline-flex;align-items:center;gap:9px;background:#fff;border-radius:999px;
+  padding:9px 17px;box-shadow:var(--shadow);font-size:13.5px;font-weight:500;margin-bottom:34px}
+.hero .pill .dots{display:flex;gap:-4px}
+.hero .pill i{width:16px;height:16px;border-radius:4px;display:inline-block;margin-right:-4px}
+.hero h1{font-size:clamp(28px,4.4vw,46px);letter-spacing:-.035em;font-weight:700;margin:0 0 26px}
+.ask{width:min(720px,100%);background:#fff;border-radius:var(--r3);box-shadow:var(--shadow);
+  border:1px solid rgba(20,20,25,.06);padding:16px 16px 10px;text-align:left}
+.ask textarea{width:100%;border:0;resize:none;outline:0;background:transparent;
+  font-size:15.5px;line-height:1.5;min-height:52px;max-height:200px}
+.ask textarea::placeholder{color:#a3a3ad}
+.ask-row{display:flex;align-items:center;gap:8px;padding-top:6px}
+.dropdown{position:relative}
+.dd-menu{position:absolute;z-index:60;min-width:210px;background:#fff;border:1px solid var(--line);
+  border-radius:13px;box-shadow:0 10px 40px -8px rgba(16,16,20,.22);padding:5px;display:none}
+.dd-menu.open{display:block}
+.dd-menu button{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:9px;font-size:13.5px}
+.dd-menu button:hover{background:var(--soft)}
+.dd-menu button small{display:block;color:var(--muted);font-size:11.5px}
+.dd-menu .sep{height:1px;background:var(--line2);margin:5px 2px}
+.gallery{width:min(1120px,100%);margin:14px auto 0;background:#fff;border:1px solid var(--line);
+  border-radius:22px;box-shadow:var(--shadow);padding:14px 16px 20px}
+.gal-tabs{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:4px 2px 14px}
+.gal-search{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;
+  color:var(--muted);font-size:13px}
+.gal-search input{border:0;outline:0;background:transparent;width:150px;font-size:13px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:14px}
+.card{border:1px solid var(--line);border-radius:15px;overflow:hidden;background:#fff;
+  transition:.16s;text-align:left;display:block;width:100%}
+.card:hover{border-color:#d8d8e0;transform:translateY(-2px);box-shadow:var(--shadow)}
+.card .thumb{height:132px;background:var(--soft);position:relative;overflow:hidden}
+.card .thumb iframe{width:1280px;height:820px;border:0;transform:scale(.181);
+  transform-origin:0 0;pointer-events:none;background:#fff}
+.card .meta{padding:10px 12px 12px}
+.card .meta b{display:block;font-size:13.5px;font-weight:600;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.card .meta span{font-size:11.5px;color:var(--muted)}
+.card .star{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:8px;
+  background:rgba(255,255,255,.9);display:grid;place-items:center;color:#9a9aa4}
+.card .star.on{color:#f5a623}
+.empty{padding:34px 8px;text-align:center;color:var(--muted);font-size:13.5px}
+
+/* ---------- project shell ---------- */
+.work{height:100%;display:flex;flex-direction:column;background:var(--shell)}
+.topbar{height:var(--top);flex:0 0 auto;display:flex;align-items:center;gap:8px;
+  padding:0 12px;background:var(--bg);border-bottom:1px solid var(--line);position:relative;z-index:40}
+.tb-left,.tb-right{display:flex;align-items:center;gap:6px;min-width:0}
+.tb-right{margin-left:auto}
+.tb-mid{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:4px}
+.proj-name{display:flex;flex-direction:column;line-height:1.15;min-width:0;padding:0 4px}
+.proj-name button{display:flex;align-items:center;gap:5px;font-weight:600;font-size:14.5px;
+  max-width:230px;overflow:hidden}
+.proj-name button b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj-name small{font-size:11.5px;color:var(--muted);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;max-width:250px}
+.seg{display:flex;align-items:center;gap:2px;background:var(--blue-soft);border-radius:999px;padding:3px}
+.seg button{display:flex;align-items:center;gap:6px;border-radius:999px;padding:5px 13px;
+  font-size:13.5px;font-weight:500;color:#4b6bbf;transition:.15s}
+.seg button.on{background:#fff;color:var(--blue);box-shadow:0 1px 3px rgba(16,16,20,.1)}
+.seg svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
+.pagesel{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:10px;
+  padding:6px 11px;font-size:13px;min-width:170px;justify-content:space-between;background:#fff}
+.pagesel:hover{background:var(--soft)}
+.pagesel span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pagesel svg{flex:0 0 auto}
+.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(140deg,#7c5cff,#2f6bff);
+  color:#fff;display:grid;place-items:center;font-size:11.5px;font-weight:700}
+
+.stage{flex:1;min-height:0;display:flex;gap:0}
+/* chat */
+.chatcol{width:var(--chat);flex:0 0 auto;display:flex;flex-direction:column;min-width:0;
+  background:var(--shell)}
+.chatcol.collapsed{display:none}
+.thread{flex:1;overflow:auto;padding:22px 22px 8px;display:flex;flex-direction:column;gap:16px}
+.msg{max-width:100%}
+.msg.you{align-self:flex-end;max-width:82%}
+.msg.you .bubble{background:#fff;border:1px solid var(--line);border-radius:20px;
+  padding:11px 17px;font-size:14px;box-shadow:0 1px 2px rgba(16,16,20,.04);white-space:pre-wrap;
+  word-break:break-word}
+.msg.bot{font-size:14px;color:var(--ink2);white-space:pre-wrap;word-break:break-word}
+.msg.bot b{color:var(--ink);font-weight:600}
+.msg.step{color:var(--muted);font-size:14px;display:flex;align-items:center;gap:9px}
+.msg.step.live{color:var(--ink2)}
+.msg.step .tick{width:15px;height:15px;flex:0 0 auto;color:var(--ok)}
+.msg.step .tick svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round}
+.shim{background:linear-gradient(90deg,#a6a6b0 12%,#141416 38%,#a6a6b0 64%);
+  background-size:240% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:shim 1.9s linear infinite}
+@keyframes shim{to{background-position:-240% 0}}
+.filelist{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff;margin-top:2px}
+.filelist .f{display:flex;align-items:center;gap:9px;padding:8px 12px;font-size:13px;
+  border-bottom:1px solid var(--line2);width:100%;text-align:left;transition:.14s}
+.filelist .f:last-child{border-bottom:0}
+.filelist .f:hover{background:var(--soft)}
+.filelist .f code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+.filelist .f .kind{margin-left:auto;font-size:11px;color:var(--muted)}
+.filelist .f .kind.new{color:var(--ok)}
+.nextup{border-left:2px solid var(--line);padding:2px 0 2px 12px;display:flex;
+  flex-direction:column;gap:6px;margin-top:4px}
+.nextup button{text-align:left;font-size:13px;color:var(--ink2);transition:.14s}
+.nextup button:hover{color:var(--blue)}
+.scorebar{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.scorebar .s{font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:3px 8px;
+  background:#fff;color:var(--muted)}
+.scorebar .s b{color:var(--ink);font-weight:600}
+.scorebar .s.low{border-color:rgba(255,77,97,.35);background:rgba(255,77,97,.05)}
+
+/* composer */
+.composer{flex:0 0 auto;padding:10px 18px 18px}
+.composer-in{background:#fff;border:1px solid var(--line);border-radius:var(--r3);
+  box-shadow:var(--shadow);padding:13px 14px 9px}
+.composer textarea{width:100%;border:0;outline:0;resize:none;background:transparent;
+  font-size:14.5px;line-height:1.5;min-height:44px;max-height:190px}
+.composer textarea::placeholder{color:#a3a3ad}
+.composer-row{display:flex;align-items:center;gap:7px;padding-top:4px}
+.stop{width:32px;height:32px;border-radius:10px;background:var(--ink);display:grid;place-items:center}
+.stop i{width:11px;height:11px;background:#fff;border-radius:2px;display:block}
+.switch{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)}
+.switch input{appearance:none;width:30px;height:18px;border-radius:999px;background:#dcdce2;
+  position:relative;transition:.16s;cursor:pointer}
+.switch input:checked{background:var(--blue)}
+.switch input::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;
+  border-radius:50%;background:#fff;transition:.16s}
+.switch input:checked::after{transform:translateX(12px)}
+
+/* preview */
+.viewcol{flex:1;min-width:0;padding:10px 12px 12px 0;display:flex;flex-direction:column}
+.frame{flex:1;min-height:0;background:#fff;border:1px solid var(--line);border-radius:var(--r2);
+  overflow:hidden;position:relative;display:flex;flex-direction:column}
+.frame iframe{flex:1;width:100%;border:0;background:#fff}
+.frame.tablet iframe,.frame.mobile iframe{margin:0 auto;box-shadow:0 0 0 1px var(--line2)}
+.frame.tablet iframe{width:820px;max-width:100%}
+.frame.mobile iframe{width:400px;max-width:100%}
+.frame-blank{position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+  padding:30px;color:var(--muted);font-size:13.5px}
+.codewrap{flex:1;min-height:0;display:flex;background:#fff;border:1px solid var(--line);
+  border-radius:var(--r2);overflow:hidden}
+.codenav{width:196px;flex:0 0 auto;border-right:1px solid var(--line);overflow:auto;padding:8px}
+.codenav button{display:block;width:100%;text-align:left;padding:7px 10px;border-radius:8px;
+  font-size:12.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink2)}
+.codenav button:hover{background:var(--soft)}
+.codenav button.on{background:var(--soft2);color:var(--ink)}
+.codebody{flex:1;min-width:0;overflow:auto;padding:14px 16px;margin:0;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.65;
+  white-space:pre;tab-size:2}
+
+/* overlays */
+.pop{position:fixed;z-index:120;background:#fff;border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 18px 60px -14px rgba(16,16,20,.3);padding:6px;min-width:230px;max-width:340px;display:none}
+.pop.open{display:block}
+.pop h5{margin:6px 10px;font-size:11.5px;color:var(--muted);font-weight:500}
+.pop button{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:9px;font-size:13.5px}
+.pop button:hover{background:var(--soft)}
+.pop button.bad:hover{background:rgba(255,77,97,.08);color:var(--rose)}
+.pop .sep{height:1px;background:var(--line2);margin:5px 2px}
+.pop .row{padding:8px 10px;font-size:12.5px;color:var(--muted);display:flex;
+  justify-content:space-between;gap:12px}
+.pop .row b{color:var(--ink);font-weight:600}
+.scrim{position:fixed;inset:0;background:rgba(18,18,22,.32);z-index:110;display:none;
+  align-items:center;justify-content:center;padding:22px}
+.scrim.open{display:flex}
+.modal{background:#fff;border-radius:20px;box-shadow:0 30px 80px -20px rgba(16,16,20,.4);
+  width:min(460px,100%);padding:22px}
+.modal h3{margin:0 0 6px;font-size:17px;letter-spacing:-.02em}
+.modal p{margin:0 0 16px;font-size:13.5px;color:var(--muted)}
+.field{display:block;margin-bottom:14px}
+.field span{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.field input{width:100%;border:1px solid var(--line);border-radius:11px;padding:10px 12px;
+  font-size:14px;outline:0}
+.field input:focus{border-color:var(--blue)}
+.modal-row{display:flex;gap:8px;justify-content:flex-end}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(14px);z-index:200;
+  background:var(--ink);color:#fff;border-radius:12px;padding:10px 16px;font-size:13.5px;
+  opacity:0;pointer-events:none;transition:.2s;max-width:min(520px,92vw)}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.banner{background:#fff7ed;border-bottom:1px solid #fde2c4;color:#8a5a12;font-size:13px;
+  padding:8px 14px;display:flex;align-items:center;gap:10px}
+.banner button{text-decoration:underline;font-weight:500}
+
+@media (max-width:1120px){:root{--chat:380px}}
+@media (max-width:900px){
+  .side{display:none}
+  .stage{flex-direction:column}
+  .chatcol{width:100%;flex:1 1 auto}
+  .viewcol{display:none;padding:0 10px 10px}
+  .work.showpreview .chatcol{display:none}
+  .work.showpreview .viewcol{display:flex;flex:1 1 auto}
+  .tb-mid{position:static;transform:none;margin-left:auto}
+  .canvas-in{padding:0 14px 40px}
+  /* one screen, so only the controls that still mean something here */
+  .proj-name small{display:none}
+  .proj-name button{max-width:130px}
+  /* the page picker and the account chip move into the ⋮ menu down here —
+     eight controls in 375px is not a toolbar, it is a pile */
+  .topbar [data-act="history"],.topbar [data-act="device"],.topbar [data-act="refresh"],
+  .topbar [data-act="openTab"],.topbar [data-act="review"],.topbar [data-act="pageMenu"],
+  .topbar [data-act="newProject"],.topbar #avatar{display:none}
+  .tb-mid{gap:2px}
+  .seg button{padding:5px 10px}
+  .thread{padding:16px 14px 6px}
+  .composer{padding:8px 12px 14px}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<!-- ============================ HOME ============================ -->
+<div class="home" id="home">
+  <aside class="side">
+    <div class="side-top">
+      <a class="mark" href="#" data-act="home" aria-label="SUPERAIAGENT"></a>
+      <button class="ico" data-act="newProject" title="New project">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    </div>
+    <button class="ws" data-act="account">
+      <span class="ws-badge" id="wsBadge">S</span>
+      <b id="wsName">Your workspace</b>
+      <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;margin-left:auto"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <nav class="nav">
+      <button class="on" data-filter="all" data-act="filter">
+        <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z"/></svg>Dashboard</button>
+      <button data-act="focusSearch">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>Search</button>
+      <button data-act="openStudio">
+        <svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg>Agent Studio</button>
+      <button data-act="connections">
+        <svg viewBox="0 0 24 24"><path d="M9 7H7a5 5 0 0 0 0 10h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></svg>Connections</button>
+      <div class="nav-head">Projects</div>
+      <button data-filter="all" data-act="filter">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>All projects</button>
+      <button data-filter="starred" data-act="filter">
+        <svg viewBox="0 0 24 24"><path d="m12 4 2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"/></svg>Starred</button>
+      <button data-filter="published" data-act="filter">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>Published</button>
+      <div class="nav-head">Recents</div>
+    </nav>
+    <div class="recents" id="recents"></div>
+    <div class="side-card">
+      <div>
+        <b>SUPERAIAGENT</b>
+        <span id="sideNote">Internal · unlisted</span>
+      </div>
+      <button class="ico" data-act="account" style="margin-left:auto" title="Account">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg></button>
+    </div>
+  </aside>
+
+  <main class="canvas">
+    <div class="aurora"></div>
+    <div class="canvas-in">
+      <section class="hero">
+        <div class="pill">
+          <span class="dots"><i style="background:#ff4d61"></i><i style="background:#7c5cff"></i><i style="background:#2f6bff"></i></span>
+          <span id="heroPill">Design direction, photographs and a live page — from one line</span>
+        </div>
+        <h1 id="heroTitle">What are we building?</h1>
+        <div class="ask">
+          <textarea id="ask" rows="2" placeholder="Describe the business — e.g. Jaipur mein ek luxury salon ki website"></textarea>
+          <div class="ask-row">
+            <button class="ico" data-act="attach" title="Attach a reference image">
+              <svg viewBox="0 0 24 24"><path d="M20 11.5 12.4 19a4.6 4.6 0 0 1-6.5-6.5l7.9-7.9a3.1 3.1 0 0 1 4.4 4.4l-7.9 7.9a1.6 1.6 0 0 1-2.2-2.2l7.2-7.2"/></svg></button>
+            <span class="grow"></span>
+            <label class="switch" title="Generate original photography for the build — 25 credits an image">
+              <input type="checkbox" id="askPhotos" checked><span>Photography</span></label>
+            <div class="dropdown">
+              <button class="btn sq" id="askMode" data-act="modeMenu">Build
+                <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8"><path d="m6 9 6 6 6-6"/></svg></button>
+            </div>
+            <button class="round" style="background:var(--ink)" data-act="startBuild" title="Start">
+              <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="gallery">
+        <div class="gal-tabs">
+          <div class="gal-search">
+            <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+            <input id="search" placeholder="Search" autocomplete="off">
+          </div>
+          <button class="chip on" data-filter="all" data-act="filter">My projects</button>
+          <button class="chip" data-filter="recent" data-act="filter">Recently viewed</button>
+          <button class="chip" data-filter="starred" data-act="filter">Starred</button>
+          <button class="chip" data-filter="published" data-act="filter">Published</button>
+          <span class="grow"></span>
+          <span class="tag" id="sessionTag">checking session…</span>
+        </div>
+        <div class="cards" id="cards"></div>
+        <div class="empty hidden" id="cardsEmpty"></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- ============================ PROJECT ============================ -->
+<div class="work hidden" id="work">
+  <div class="banner hidden" id="banner"></div>
+  <header class="topbar">
+    <div class="tb-left">
+      <a class="mark" href="#" data-act="home" aria-label="Back to projects"></a>
+      <div class="proj-name">
+        <button data-act="projMenu"><b id="projName">Untitled</b>
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8"><path d="m6 9 6 6 6-6"/></svg></button>
+        <small id="projNote">Ready</small>
+      </div>
+    </div>
+    <div class="tb-mid">
+      <button class="ico" data-act="history" title="Version history">
+        <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 4v4h4"/><path d="M12 8v4.5l3 1.8"/></svg></button>
+      <button class="ico" data-act="toggleChat" title="Hide the conversation">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M10 4v16"/></svg></button>
+      <div class="seg">
+        <button class="on" data-tab="preview" data-act="tab">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>Preview</button>
+        <button data-tab="code" data-act="tab">
+          <svg viewBox="0 0 24 24"><path d="m9 8-4 4 4 4M15 8l4 4-4 4"/></svg>Code</button>
+      </div>
+      <button class="ico" data-act="moreMenu" title="More">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.3" fill="currentColor" stroke="none"/></svg></button>
+    </div>
+    <div class="tb-right">
+      <button class="ico wide" data-act="device" title="Desktop, tablet, phone" id="deviceBtn">
+        <svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 20h8"/></svg></button>
+      <button class="ico wide" data-act="refresh" title="Reload the preview">
+        <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg></button>
+      <button class="pagesel wide" data-act="pageMenu"><span id="pageLabel">Homepage</span>
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8"><path d="m6 9 6 6 6-6"/></svg></button>
+      <button class="ico wide" data-act="openTab" title="Open the preview in a new tab">
+        <svg viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4 10 14"/><path d="M18 14v5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 19V8a1.5 1.5 0 0 1 1.5-1.5H10"/></svg></button>
+      <button class="avatar" data-act="account" id="avatar">S</button>
+      <button class="ico" data-act="newProject" title="New project">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="round" style="background:var(--violet)" data-act="review" title="Design review">
+        <svg viewBox="0 0 24 24"><path d="M13 3 5 14h6l-1 7 8-11h-6z"/></svg></button>
+      <button class="round" style="background:var(--blue)" data-act="publish" title="Publish">
+        <svg viewBox="0 0 24 24"><path d="M12 16V5M8 9l4-4 4 4"/><path d="M5 15v3a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 18v-3"/></svg></button>
+    </div>
+  </header>
+
+  <div class="stage">
+    <section class="chatcol" id="chatcol">
+      <div class="thread" id="thread"></div>
+      <div class="composer">
+        <div class="composer-in">
+          <textarea id="say" rows="1" placeholder="Queue follow-up…"></textarea>
+          <div class="composer-row">
+            <button class="ico" data-act="attach" title="Attach a reference image">
+              <svg viewBox="0 0 24 24"><path d="M20 11.5 12.4 19a4.6 4.6 0 0 1-6.5-6.5l7.9-7.9a3.1 3.1 0 0 1 4.4 4.4l-7.9 7.9a1.6 1.6 0 0 1-2.2-2.2l7.2-7.2"/></svg></button>
+            <span class="grow"></span>
+            <label class="switch" title="Generate original photography — 25 credits an image">
+              <input type="checkbox" id="sayPhotos" checked><span>Photography</span></label>
+            <div class="dropdown">
+              <button class="btn sq" id="sayMode" data-act="modeMenu">Build
+                <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8"><path d="m6 9 6 6 6-6"/></svg></button>
+            </div>
+            <button class="round" style="background:var(--ink)" id="sendBtn" data-act="send" title="Send">
+              <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+            <button class="stop hidden" id="stopBtn" data-act="stop" title="Stop"><i></i></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="viewcol" id="viewcol">
+      <div class="frame" id="frame">
+        <!-- allow-same-origin is here on purpose: the design review takes a picture of
+             this frame by reading its own document, which an opaque origin forbids. With
+             allow-scripts beside it the sandbox stops being a security boundary, but it
+             still withholds top-level navigation, so a generated page cannot steer the
+             studio away from itself. -->
+        <iframe id="preview" title="Live preview" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+        <div class="frame-blank" id="frameBlank">Nothing built yet. Describe the business in the box on the left.</div>
+      </div>
+      <div class="codewrap hidden" id="codewrap">
+        <div class="codenav" id="codenav"></div>
+        <pre class="codebody" id="codebody"></pre>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="pop" id="pop"></div>
+<div class="scrim" id="scrim"><div class="modal" id="modal"></div></div>
+<div id="toast"></div>
+<input type="file" id="filePick" accept="image/*" class="hidden">
+
+<script>
+/* ============================================================
+   SUPERAIAGENT — the standing instruction.
+
+   This is the whole brief the client wrote, kept as one block and sent as the
+   `system` string on every call to /api/ai/generate. Each step of the pipeline
+   adds its own task on top of it in `input`; none of them restate the rules,
+   so there is exactly one place where the agent's standards live.
+   ============================================================ */
+"use strict";
+var SUPER_PROMPT = [
+"You are SUPERAIAGENT, an elite AI website and app builder inside Scen.",
+"You are not a coding assistant. You think and work like one person who is at once a Creative Director, a Senior UI/UX Designer, a Brand Designer, a Product Designer, a Frontend Engineer and a Visual QA Reviewer.",
+"Your job is to turn a short request into a premium, production-ready site or app. A technically working website is NOT enough. The result must feel intentionally designed for that specific business.",
+"",
+"1. UNDERSTAND THE USER FIRST. Classify every request as one of: normal_chat, create_website, create_app, edit_existing_project, visual_upgrade, add_feature, fix_bug, content_change, deploy_or_publish. 'Hi' is normal_chat. 'Salon ki website bana do' is create_website. 'Button red kar do' is edit_existing_project. 'Premium karo' and 'Apple level bana do' are visual_upgrade. 'Login add karo' is add_feature. 'Mobile mein broken hai' is fix_bug. Never start building for ordinary conversation.",
+"",
+"2. DO NOT INTERROGATE. Make intelligent creative decisions yourself. Ask only when the missing fact genuinely prevents a useful build, and then at most one to three questions. 'Gym website bana do' is enough to begin.",
+"",
+"3. THINK LIKE A CREATIVE DIRECTOR BEFORE CODING. Silently decide: business type, audience, brand personality, visual mood, typography direction, colour strategy, image direction, layout system, spacing system, section rhythm, interaction language, motion style, conversion goal. Do not narrate this planning unless it is useful to the person.",
+"",
+"4. EVERY BUILD NEEDS A VISUAL CONCEPT. Never reach for a generic template. An architecture studio is editorial, image-led, restrained, asymmetric. A kids' school is friendly, controlled colour, human photography, soft shapes, playful micro-interaction. A luxury salon is fashion-editorial, large photography, elegant type, warm premium palette. An AI startup is modern, technical, precise, purposeful motion. The design language must change with the business.",
+"",
+"5. PREMIUM IS NOT MORE EFFECTS. Not more gradients, glows, cards, animation, 3D, glassmorphism or neon. Premium is better composition, stronger typography, intentional whitespace, high-quality imagery, brand-specific art direction, excellent hierarchy, polished navigation, thoughtful interaction, sophisticated motion, consistent spacing and real storytelling.",
+"",
+"6. AVOID GENERIC AI PATTERNS. Do not default to a centred heading hero, heading plus paragraph plus two buttons, three equal feature cards, six icon boxes, repeated rounded rectangles, random gradients, a generic SaaS layout, pills everywhere, glass cards everywhere, every section inside the same container, or identical spacing between every section. Use those only when they genuinely fit. Every page needs composition variety.",
+"",
+"7. THE HERO IS CRITICAL. The first screen must be memorable. Choose deliberately between an asymmetric editorial layout, a full-screen visual, a split screen, oversized typography, a product-first showcase, an interactive visual, a cinematic image, a layered composition, a magazine grid or a minimal statement. It must say what the brand is, why it matters, and what to do next.",
+"",
+"8. TYPOGRAPHY MUST FEEL DESIGNED. Build a real hierarchy across eyebrow, display headline, section headline, body, label, navigation and metadata. Do not make everything a similar size. No more than two families without a strong reason. Break headlines on purpose.",
+"",
+"9. SECTION RHYTHM. Do not repeat one layout down the page. Mix full-width, split, editorial, visual, text-heavy, whitespace and interactive moments — for example hero, short brand statement, large visual, split content, featured work, full-width storytelling, proof, conversion, footer.",
+"",
+"10. IMAGE DIRECTION. Images are part of the design system, not decoration. Decide one direction — cinematic, editorial, studio, documentary, architectural, lifestyle, product macro, high contrast, soft natural, monochrome — and hold it. If no image is available, use a considered placeholder that still looks finished.",
+"",
+"11. MOTION. Subtle reveals, smooth hover, staggered text where it helps, image masks, restrained parallax, responsive micro-interaction. Never animation overload, never harder to use for the sake of looking impressive, and always respect prefers-reduced-motion.",
+"",
+"12. RESPONSIVE IS NOT AN AFTERTHOUGHT. Design desktop, tablet and phone deliberately; do not just shrink. On phones restructure the hero if needed, keep the hierarchy, keep comfortable padding, drop unnecessary complexity, never overflow horizontally, keep navigation usable, make targets thumb-sized, keep type readable and keep the premium feel.",
+"",
+"13. 'MAKE IT PREMIUM'. Premium karo, aur acha karo, design weak hai, Apple level, high-end karo, basic lag raha hai, professional karo, improve UI, redesign this, make it beautiful — all of these are visual_upgrade. Do not make random cosmetic changes. Re-judge hero composition, typography, hierarchy, spacing, imagery, colour balance, layout variety, navigation, CTA hierarchy, interaction, mobile quality and brand differentiation, then rebuild the weak sections while keeping the content and features that work.",
+"",
+"14. EXISTING PROJECT EDITS. Understand the current structure first. Do not rewrite the whole app for a small change. Preserve working features, data flows, APIs, authentication, payments and deployment. Inspect, understand dependencies, identify what is affected, change only that, and verify.",
+"",
+"15. BUILD QUALITY. Clean, responsive, reusable, maintainable, accessible, production-oriented. No duplicate CSS, no unnecessary dependencies, no broken placeholders, no fake functionality, no console errors, no dead buttons, no horizontal overflow, no inaccessible forms.",
+"",
+"16. VISUAL QA AFTER EVERY MAJOR BUILD. Score the result 0-10 on visual hierarchy, typography, composition, originality, brand fit, imagery, spacing, responsiveness, interaction polish and premium perception. A working site with weak visual quality is not finished. Target 8 or higher on everything that matters; below 8, fix the highest-impact problems.",
+"",
+"17. REVIEW QUESTIONS. Does this look like a generic AI template? Could it belong to ten unrelated businesses? Is the hero memorable? Does the type have personality? Is there enough contrast? Too many cards? Is every section the same layout? Is the accent overused? Is the whitespace intentional? Do the images tell the story? Does the phone layout feel designed? Would a professional call this polished? Where the answer exposes a weakness, fix it.",
+"",
+"18. THE IMPROVEMENT LOOP. Build, run, look, review, fix the high-impact problems, run again, final check, deliver. At most two major automatic passes unless something is critically broken. Do not regenerate endlessly.",
+"",
+"19. PROGRESS IN HUMAN WORDS. Never expose internal tasks like wiring JSON, writing README, running the component mapper or generating configuration. Say things like 'Creating the visual direction', 'Building your experience', 'Refining the design', 'Checking mobile layouts', 'Polishing the final details', 'Ready.'",
+"",
+"20. SUGGESTIONS MUST BE CONTEXTUAL. Never suggest 'add a 3D object' or 'change colours' at random. For an academy: show student work, improve course storytelling, make the hero editorial, add faculty. For a restaurant: signature dishes, reservations, an immersive menu, better mobile ordering. For an architecture studio: case studies, image-led navigation, portfolio storytelling, filtering.",
+"",
+"21. REFERENCE REQUESTS. 'Apple jaisa', 'Linear jaisa', 'Stripe jaisa', 'Awwwards style' — never copy the referenced site. Extract its principles (Apple: whitespace, restraint, product-focused visuals, precise typography, sophisticated motion) and apply them to this brand as an original design.",
+"",
+"22. TALK LIKE A CREATIVE PARTNER, not a workflow machine. Not 'I will execute Step 1 Planner followed by Step 2 Copywriter' but 'I have got the direction — this one is more editorial, stronger typography, a far more visual hero, and I am keeping the admissions flow simple.' Be concise and talk about the result.",
+"",
+"23. NEVER CLAIM SOMETHING IS DONE WITHOUT VERIFYING IT. Do not say fixed, done or working unless it was actually built and checked. If it cannot be verified, say so plainly.",
+"",
+"24. FINAL STANDARD. Every build should feel like it came from a strong digital design studio, not a template generator. Functional is the minimum. The target is distinctive, beautiful, usable, responsive, brand-specific and production-ready.",
+"",
+"25. IMAGES ARE PART OF THE BUILD, not a separate feature. Generate original imagery whenever custom pictures materially improve the result — hero imagery, cinematic backgrounds, product scenes, lifestyle and editorial photography, architecture, interiors, food, fashion, fitness, education, abstract brand visuals, 3D objects, illustration, texture, section backgrounds, campaign visuals. Never fill space for the sake of it.",
+"",
+"26. PLAN IMAGES BEFORE BUILDING. Decide style, photographic direction, subject, composition, lighting, camera perspective, colour treatment, aspect ratio, placement and the phone crop at the same time as the layout — never build the layout and drop pictures in afterwards.",
+"",
+"27. WRITE AN IMAGE PLAN. Name each asset, its ratio, its subject, its composition and its purpose on the page, and make every asset belong to one brand world.",
+"",
+"28. GENERATE FOR THE LAYOUT. If the headline sits left, weight the subject right and leave clean negative space left, and the reverse. For a full-bleed background keep the important subject away from the navigation, the headline and the call to action. Consider the desktop, tablet and phone crops, the focal point, the safe areas and text readability.",
+"",
+"29. ASPECT RATIOS. Hero 16:9, 21:9 or 3:2. Portrait editorial 4:5 or 3:4. Phone hero 9:16 or 4:5. Cards 4:3, 1:1 or 3:2. Full-width cinematic 21:9. Do not force everything into one ratio.",
+"",
+"30. VISUAL CONSISTENCY. Every image in one site must look like it came from the same shoot: same lighting, palette, contrast, realism, lens language, mood, styling, grain and composition philosophy.",
+"",
+"31. IMAGE DIRECTION IS BUSINESS-SPECIFIC. Luxury salon: premium beauty editorial, realistic skin and hair, elegant interiors, controlled studio light, warm sophisticated tone — never cheap beauty stock or pink gradients. Architecture: geometry, natural materials, dramatic light, minimal editorial framing. Restaurant: cinematic food, real ingredients, macro detail, warm directional light. Fitness: authentic movement, directional light, real gyms. School: real learning, workshops, students working, teachers with students, documentary framing — never corporate stock. Technology: original product visuals, abstract spatial composition, sophisticated 3D, restrained futurism — never robots, glowing brains or neon circuitry.",
+"",
+"32. NEVER BAKE WEBSITE TEXT INTO A GENERATED IMAGE. No navigation, headlines, buttons, prices, paragraphs or logos inside the picture. Website text stays real HTML so it is responsive, editable, accessible, searchable and sharp.",
+"",
+"33. LOGOS. Never invent a replacement for a logo the client supplied, and never place an invented logo inside a generated photograph.",
+"",
+"34. CLIENT IMAGES. If the client uploads pictures, use them rather than ignoring them, and decide per image whether to use it directly, crop it, enhance it, remove its background, extend it, recolour it, compose with it or treat it as a reference. Never distort real faces, products or brand details where fidelity matters.",
+"",
+"35. GENERATE A SET, NOT SINGLES. Hero, detail, lifestyle, wide environment, closing visual — one campaign with one visual DNA.",
+"",
+"36. IMAGE PROMPTS MUST BE SPECIFIC about subject, environment, composition, framing, lighting, lens feeling, materials, mood, colour treatment, negative space, ratio and the purpose on the page. 'Luxury salon image' is not a prompt.",
+"",
+"37. NEVER GENERATE AN IMAGE TO SHOW OFF. Ask whether it improves the story, reinforces the brand, improves the composition and makes the page memorable, and whether it beats whitespace or typography here. Premium design often uses fewer, stronger visuals.",
+"",
+"38. REVIEW THE IMAGERY. Check realism, anatomy, subject consistency, perspective, lighting, crop, resolution, artifacts, brand fit, text contrast and the phone crop. If a picture looks obviously AI-generated or cheapens the page, replace it. Do not keep weak imagery merely because it generated.",
+"",
+"39. IMAGE PERFORMANCE. Modern formats, sensible compression, correct dimensions, lazy-load below the fold, preload only the critical hero, responsive sizes, and never ship desktop-sized pictures to a phone.",
+"",
+"40. IMAGE ACCESSIBILITY. Meaningful images get real alt text describing content and purpose. Decorative images stay silent to a screen reader.",
+"",
+"41. FALLBACK. If image generation is unavailable, do not block the build. Keep the visual direction, use properly sized considered placeholders, and hold the image instructions so the assets can be dropped in later. Never downgrade the art direction because generation failed.",
+"",
+"42. THE WORKFLOW IS ONE THING. Brief, understand the business, creative direction, design system, image direction, asset plan, generate images, build, insert assets, run, look, review, check the image and layout together, regenerate weak visuals, refine, check desktop, check phone, deliver.",
+"",
+"43. FINAL IMAGE STANDARD. Never settle for 'an image exists'. The standard is that the picture looks art-directed for this exact brand and this exact section, and that design, typography, motion and imagery read as though they were made together."
+].join("\n");
+</script>
+
+<script>
+/* ============================================================
+   Runtime — storage, the gateway, and the small helpers everything uses.
+   ============================================================ */
+(function(){
+"use strict";
+
+/* ---------- tiny DOM ---------- */
+function $(s,r){return (r||document).querySelector(s)}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function el(tag,cls,html){var n=document.createElement(tag);if(cls)n.className=cls;
+  if(html!=null)n.innerHTML=html;return n}
+var toastTimer=0;
+function toast(text,ms){
+  var t=$('#toast');t.textContent=String(text||'');t.classList.add('on');
+  clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove('on')},ms||3400);
+}
+
+/* ---------- language ----------
+   The client types Roman Hindi. Answering in English however you are spoken to
+   reads as a machine that was not listening, so every line this page writes
+   goes through L(), and the gateway is told which language to answer in. */
+var HINGLISH=/\b(kr|kar|kro|karo|karna|krna|krdo|dena|de ?do|chahiye|chaiye|nhi|nahi|nahin|hai|hain|ho|hoga|hona|rha|raha|rhi|rahi|mujhe|mera|meri|apna|apni|thoda|zyada|jyada|bhai|acha|achha|theek|thik|badal|badlo|dikha|dikhe|dekho|bna|bana|banao|lga|laga|lagao|hata|hatao|wala|wali|yeh|iska|isko|uska|kaise|kyu|kyun|kitna|kitne|abhi|phir|fir|matlab|mein|ka|ke|ki|aur|liye|jaisa|jaise|saath|sath|kuch|sirf|chalega|banado)\b/i;
+function sniffLang(text){
+  var t=String(text||'');
+  if(!t.trim())return '';
+  if(/[ऀ-ॿ]/.test(t))return 'hi';
+  if(HINGLISH.test(t))return 'hi';
+  return 'en';
+}
+
+/* ---------- storage ---------- */
+var KEY='scen.superaiagent.v1';
+var DB={projects:[],activeId:''};
+function load(){
+  try{var raw=localStorage.getItem(KEY);if(raw){var d=JSON.parse(raw);
+    if(d&&Array.isArray(d.projects)){DB.projects=d.projects;DB.activeId=d.activeId||''}}}
+  catch(e){}
+}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(DB))}
+  catch(e){
+    /* A build with three generated photographs is small — the pictures live at
+       /api/assets/<id>/content, not in here — but a long history of versions
+       is not. Drop the oldest snapshots rather than losing the project. */
+    var trimmed=false;
+    DB.projects.forEach(function(p){if(p.versions&&p.versions.length>3){p.versions=p.versions.slice(-3);trimmed=true}});
+    try{localStorage.setItem(KEY,JSON.stringify(DB));if(trimmed)return}
+    catch(e2){toast('This browser is out of storage — the project is open but not saved.')}
+  }
+}
+function uid(){return 'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function project(id){for(var i=0;i<DB.projects.length;i++)if(DB.projects[i].id===id)return DB.projects[i];return null}
+function active(){return project(DB.activeId)}
+function newProject(brief){
+  var p={id:uid(),name:'Untitled',brief:String(brief||''),lang:sniffLang(brief),
+    createdAt:Date.now(),updatedAt:Date.now(),openedAt:Date.now(),starred:false,
+    direction:null,files:[],images:{},messages:[],page:'index.html',
+    published:null,qa:null,versions:[],dbId:'',photos:true};
+  DB.projects.unshift(p);DB.activeId=p.id;save();return p;
+}
+function touch(p){if(!p)return;p.updatedAt=Date.now();save()}
+
+/* ---------- the gateway ---------- */
+var SESSION={state:'unknown',name:'',email:'',credits:null,providers:[]};
+
+function req(path,opts){
+  opts=opts||{};
+  var ctl=(typeof AbortController!=='undefined')?new AbortController():null;
+  var died=setTimeout(function(){try{ctl&&ctl.abort()}catch(e){}},opts.timeout||115000);
+  return fetch(path,{
+    method:opts.method||'GET',credentials:'same-origin',
+    signal:ctl?ctl.signal:undefined,
+    headers:{'Content-Type':'application/json'},
+    body:opts.body?JSON.stringify(opts.body):undefined
+  }).then(function(r){
+    clearTimeout(died);
+    return r.text().then(function(t){
+      var d={};
+      try{d=t?JSON.parse(t):{}}
+      catch(e){
+        /* Not every failure comes back as JSON. A proxy, a dev server or a
+           gateway answers with an HTML error page, and using that as the
+           message printed a whole <!DOCTYPE html> into the chat. */
+        d={error:/^\s*<(?:!doctype|html|\?xml)/i.test(t)
+            ? ('The server answered with a page instead of an answer (HTTP '+r.status+')')
+            : (String(t||'').replace(/\s+/g,' ').trim().slice(0,240)||('HTTP '+r.status))};
+      }
+      if(!r.ok){var e2=new Error(d.error||('Request failed ('+r.status+')'));
+        e2.status=r.status;e2.code=d.code;e2.attempts=d.attempts;throw e2}
+      return d;
+    });
+  },function(e){
+    clearTimeout(died);
+    if(e&&(e.name==='AbortError'||/aborted/i.test(String(e.message||'')))){
+      var t2=new Error('The gateway did not answer in time');t2.status=504;t2.code='timeout';throw t2}
+    throw e;
+  });
+}
+/* Whatever comes back from a provider, nothing key-shaped reaches the chat. */
+function scrub(text){
+  return String(text==null?'':text)
+    .replace(/\b(?:xai-|sk-(?:ant-|proj-|live-|test-)?|gsk_|AIza|ghp_|glpat-)[A-Za-z0-9_\-]{12,}\b/g,'[redacted]')
+    .replace(/\b[A-Za-z0-9_\-]{40,}\b/g,'[redacted]');
+}
+function why(e,noun){
+  if(!e)return 'Something failed';
+  if(e.status===401||e.status===403)
+    return 'You are signed out on this domain — sign in on Scen in another tab and try again.';
+  if(e.status===404)return 'The /api routes are not reachable from this page.';
+  if(e.status===503||e.code==='missing_key')return 'No AI provider key is configured on the server.';
+  if(e.code==='timeout')return 'The gateway did not answer in time.';
+  if(e.status===402||e.code==='insufficient_credits')return 'Not enough credits for '+(noun||'that')+'.';
+  return scrub(e.message||('Could not '+(noun||'do that')));
+}
+
+/* One call. The standing instruction goes in `system`; the step's own task
+   goes in `input`. Nothing else ever restates the rules. */
+var GATE={provider:'',model:'',calls:0,cost:0,lastError:''};
+function ask(feature,input,opts){
+  opts=opts||{};
+  return req('/api/ai/generate',{method:'POST',body:{
+    feature:feature,input:input,system:SUPER_PROMPT,
+    maxOutputTokens:opts.max||4096,
+    temperature:opts.temp==null?0.75:opts.temp
+  }}).then(function(d){
+    GATE.calls++;GATE.lastError='';
+    if(d.provider)GATE.provider=d.provider;
+    if(d.model)GATE.model=d.model;
+    var u=d.usage||{};GATE.cost+=Number(u.estimatedCostUsd||0);
+    return String(d.text||'');
+  },function(e){GATE.lastError=why(e,'reach the model');throw e});
+}
+
+/* ---------- reading what the model sent back ---------- */
+function unfence(t){
+  return String(t==null?'':t)
+    .replace(/^﻿/,'')
+    .replace(/^\s*```[a-zA-Z]*[ \t]*\r?\n/,'')
+    .replace(/\r?\n```\s*$/,'');
+}
+function jsonFrom(text){
+  var t=String(text||'');
+  var a=t.indexOf('{'),b=t.lastIndexOf('}');
+  if(a<0||b<=a)return null;
+  var body=t.slice(a,b+1);
+  try{return JSON.parse(body)}catch(e){}
+  try{return JSON.parse(body.replace(/,\s*([}\]])/g,'$1'))}catch(e){}
+  return null;
+}
+/* Files arrive as raw text between markers rather than inside JSON: a page of
+   HTML escaped into a JSON string is the single most reliable way to get a
+   truncated, unparseable answer out of any of these models. */
+function parseFiles(text){
+  var t=unfence(text).replace(/\r/g,'');
+  var parts=t.split(/^@@FILE[ \t]+/m);
+  var out=[];
+  for(var i=1;i<parts.length;i++){
+    var seg=parts[i],nl=seg.indexOf('\n');
+    if(nl<0)continue;
+    var path=seg.slice(0,nl).trim().replace(/["'`]/g,'').replace(/^\.?\//,'');
+    var body=seg.slice(nl+1).replace(/\n?@@END[\s\S]*$/,'');
+    body=body.replace(/^\s*```[a-zA-Z]*[ \t]*\n/,'').replace(/\n```\s*$/,'');
+    if(path&&body.trim())out.push({path:path,body:body.replace(/\s+$/,'')+'\n'});
+  }
+  return out;
+}
+function fileNamed(files,path){
+  for(var i=0;i<files.length;i++)if(files[i].path===path)return files[i];
+  return null;
+}
+function putFile(files,path,body){
+  var f=fileNamed(files,path);
+  if(f){var was=f.body;f.body=body;return was===body?'same':'changed'}
+  files.push({path:path,body:body});return 'new';
+}
+
+window.__SUPER={$:$,$$:$$,esc:esc,el:el,toast:toast,sniffLang:sniffLang,
+  DB:DB,load:load,save:save,project:project,active:active,newProject:newProject,touch:touch,
+  SESSION:SESSION,req:req,scrub:scrub,why:why,ask:ask,GATE:GATE,
+  unfence:unfence,jsonFrom:jsonFrom,parseFiles:parseFiles,fileNamed:fileNamed,putFile:putFile};
+})();
+</script>
+
+<script>
+/* ============================================================
+   The pipeline — §42, in order.
+
+   brief → understand → creative direction → design system → image plan →
+   photographs → build → insert → run → look → review → refine → deliver.
+
+   Every step is one call to the gateway with the standing instruction as its
+   system prompt. Nothing here writes a page: it decides what to ask for, keeps
+   the steps inside the gateway's own budget, and refuses to call anything done
+   that it has not seen come back.
+   ============================================================ */
+(function(){
+"use strict";
+var U=window.__SUPER;
+var ask=U.ask,req=U.req,why=U.why,jsonFrom=U.jsonFrom,parseFiles=U.parseFiles,putFile=U.putFile;
+
+/* ---------- what both sides of the build agree on ----------
+   A naming contract, not a template. The stylesheet styles these, the pages
+   may use them, and every section beyond them is the page's own invention. */
+var CONTRACT=[
+'Shared class vocabulary — the stylesheet defines these and every page may use them:',
+'  .wrap            the page container (max-width and gutters)',
+'  .site-nav        header bar; inside it .brand, .links, .cta and .nav-toggle (the phone button)',
+'  .site-foot       footer',
+'  .btn             a button or link-button; .btn--primary and .btn--ghost are its two weights',
+'  .eyebrow .display .h2 .lead .meta   the type scale, in that order of size',
+'  .sr-only         visually hidden, still read aloud',
+'  [data-reveal]    put on any element that should fade up as it scrolls in — the shared',
+'                   script adds [data-seen] and the stylesheet already animates it',
+'  [data-year]      the shared script writes the current year into it',
+'Everything else is yours. Name a page\'s own sections with that page\'s prefix',
+'(home-, work-, about-) so two pages can never collide.'
+].join('\n');
+
+/* Guaranteed regardless of what any model writes: the reveal hook, no sideways
+   scroll, images that cannot overflow, and a real reduced-motion answer. */
+var KERNEL=[
+'*,*::before,*::after{box-sizing:border-box}',
+'html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}',
+'body{margin:0;overflow-x:hidden}',
+'img,video,svg{max-width:100%;height:auto;display:block}',
+'.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}',
+'[data-reveal]{opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.22,.61,.36,1),transform .8s cubic-bezier(.22,.61,.36,1)}',
+'[data-reveal][data-seen]{opacity:1;transform:none}',
+'@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}[data-reveal]{opacity:1!important;transform:none!important}}'
+].join('\n');
+
+var APPJS=[
+'(function(){',
+'  "use strict";',
+'  var still=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;',
+'  var io=(!still&&"IntersectionObserver" in window)?new IntersectionObserver(function(rows){',
+'    rows.forEach(function(r){if(r.isIntersecting){r.target.setAttribute("data-seen","");io.unobserve(r.target)}});',
+'  },{rootMargin:"0px 0px -10% 0px",threshold:.08}):null;',
+'  function start(){',
+'    var reveal=document.querySelectorAll("[data-reveal]");',
+'    for(var i=0;i<reveal.length;i++){io?io.observe(reveal[i]):reveal[i].setAttribute("data-seen","")}',
+'    var toggle=document.querySelector(".nav-toggle");',
+'    if(toggle){',
+'      toggle.setAttribute("aria-expanded","false");',
+'      toggle.addEventListener("click",function(){',
+'        var open=document.documentElement.hasAttribute("data-nav-open");',
+'        if(open)document.documentElement.removeAttribute("data-nav-open");',
+'        else document.documentElement.setAttribute("data-nav-open","");',
+'        toggle.setAttribute("aria-expanded",open?"false":"true");',
+'      });',
+'    }',
+'    var years=document.querySelectorAll("[data-year]");',
+'    for(var y=0;y<years.length;y++)years[y].textContent=new Date().getFullYear();',
+'    var forms=document.querySelectorAll("form[data-demo]");',
+'    for(var f=0;f<forms.length;f++)forms[f].addEventListener("submit",function(e){',
+'      e.preventDefault();',
+'      var note=this.querySelector("[data-form-note]");',
+'      if(note)note.textContent="Thank you — this form is not connected to an inbox yet.";',
+'    });',
+'  }',
+'  if(document.readyState!=="loading")start();',
+'  else document.addEventListener("DOMContentLoaded",start);',
+'})();'
+].join('\n');
+
+function langLine(p){
+  return p.lang==='hi'
+    ? 'The client writes Roman Hindi. Every sentence you address to them must be Roman Hindi (Latin letters, not Devanagari), the way they write it. The website copy itself stays in the language the business needs — usually English, or Hindi where the audience is Hindi-speaking.'
+    : 'Write to the client in English.';
+}
+function brand(p){
+  var d=p.direction||{};
+  return ['Business: '+(d.name||p.name||'unnamed'),
+    d.trade?'Trade: '+d.trade:'',
+    d.audience?'Audience: '+d.audience:'',
+    d.personality?'Personality: '+d.personality:'',
+    d.concept?'Visual concept: '+d.concept:'',
+    d.imageDirection?'Image direction: '+d.imageDirection:'',
+    d.motion?'Motion: '+d.motion:'',
+    d.conversion?'Conversion goal: '+d.conversion:'',
+    d.palette?'Palette: '+JSON.stringify(d.palette):'',
+    d.type?'Typography: '+JSON.stringify(d.type):''
+  ].filter(Boolean).join('\n');
+}
+
+/* ---------- 1. what kind of request is this (§1) ---------- */
+var INTENTS=['normal_chat','create_website','create_app','edit_existing_project',
+  'visual_upgrade','add_feature','fix_bug','content_change','deploy_or_publish'];
+function classify(p,text){
+  var built=(p.files&&p.files.length)?'There is already a build in this project: '+
+      p.files.map(function(f){return f.path}).join(', ') : 'Nothing has been built in this project yet.';
+  var input=['Classify this one message. '+built,
+    'Message: """'+text+'"""',
+    'Reply with JSON only: {"intent":"one of '+INTENTS.join('|')+'",',
+    '"reply":"if and only if the intent is normal_chat, your actual conversational answer, 1-3 sentences",',
+    '"ask":["at most 3 questions, and only if you genuinely cannot build without them — usually empty"]}',
+    langLine(p)].join('\n');
+  return ask('analysis',input,{max:700,temp:.3}).then(function(t){
+    var o=jsonFrom(t)||{};
+    var intent=INTENTS.indexOf(o.intent)>=0?o.intent:(p.files.length?'edit_existing_project':'create_website');
+    return {intent:intent,reply:String(o.reply||''),ask:Array.isArray(o.ask)?o.ask.slice(0,3):[]};
+  });
+}
+
+/* ---------- 2. creative direction + image plan (§3, §4, §26, §27) ---------- */
+function direct(p,text,mode){
+  var input=[
+    'A client asked for this: """'+text+'"""',
+    p.direction?'This project already has a direction, which you are revising:\n'+brand(p):'',
+    mode==='upgrade'?'This is a visual_upgrade of an existing build. Re-judge the direction against §13 and change what is weak — do not repaint the same layout.':'',
+    p.reference?'The client attached a photograph of their own. §34 applies: the image direction and every generated picture must sit beside it, not fight it.':'',
+    '',
+    'Decide the direction before anything is written, then answer with JSON only, in this shape:',
+    '{',
+    ' "name":"the business name — invent a good one if none was given",',
+    ' "trade":"what it actually does, or \\"\\" if you genuinely cannot tell",',
+    ' "audience":"", "personality":"", "concept":"one line naming the visual concept for THIS business",',
+    ' "palette":{"bg":"#","surface":"#","ink":"#","muted":"#","line":"#","accent":"#","accentInk":"#"},',
+    ' "type":{"display":"a full CSS font-family stack","body":"a full CSS font-family stack",',
+    '   "googleFonts":["Family+Name:wght@400;700"],"note":"the hierarchy in one line"},',
+    ' "imageDirection":"the one photographic direction every picture shares",',
+    ' "images":[{"id":"short-id","ratio":"16:9|21:9|3:2|4:5|3:4|1:1|4:3","alt":"real alt text",',
+    '   "use":"which page and section, and where the subject sits",',
+    '   "prompt":"a specific art-directed brief: subject, environment, composition, framing, lighting, lens, materials, mood, colour, negative space"}],',
+    ' "pages":[{"file":"index.html","title":"Home","nav":"Home","goal":"",',
+    '   "sections":[{"id":"hero","shape":"the layout strategy in a few words","note":"what it says and shows"}]}],',
+    ' "motion":"", "conversion":"",',
+    ' "opening":"what you address to the client: name the business and what the site is for, say plainly which decisions you took without asking and that any of them can change, and name the pages you are about to write. 3-5 sentences.",',
+    ' "next":["at most two genuinely useful next moves for THIS business (§20)"]',
+    '}',
+    '',
+    'Rules for this answer:',
+    '- 3 to 5 pages. index.html always first. Every other file is lowercase and ends in .html.',
+    '- 5 to 8 sections on the home page and they must not all be the same shape (§6, §9).',
+    '- The hero must be a deliberate choice from §7, named in its "shape".',
+    '- 2 to 4 images, no more. Every one must earn its place (§37) and share one direction (§30).',
+    '- Never put website text, logos or interface inside an image prompt (§32).',
+    '- Colours must be real hex. The palette carries the brand, not a default blue.',
+    langLine(p)
+  ].filter(Boolean).join('\n');
+  return ask('planning',input,{max:2600,temp:.85}).then(function(t){
+    var d=jsonFrom(t);
+    if(!d||!Array.isArray(d.pages)||!d.pages.length)
+      throw Object.assign(new Error('The direction came back unreadable'),{status:502});
+    d.pages=d.pages.slice(0,6).map(function(pg,i){
+      var file=String(pg.file||'').toLowerCase().replace(/[^a-z0-9.\-]/g,'');
+      if(i===0||!/\.html$/.test(file))file=i===0?'index.html':(file||('page'+i+'.html'));
+      if(!/\.html$/.test(file))file+='.html';
+      return {file:file,title:String(pg.title||'Page'),nav:String(pg.nav||pg.title||'Page'),
+        goal:String(pg.goal||''),sections:Array.isArray(pg.sections)?pg.sections.slice(0,9):[]};
+    });
+    d.images=(Array.isArray(d.images)?d.images:[]).slice(0,4).map(function(im,i){
+      return {id:String(im.id||('img'+i)).replace(/[^a-z0-9\-]/gi,'')||('img'+i),
+        ratio:['1:1','4:3','3:4','16:9','9:16','3:2','2:3'].indexOf(String(im.ratio))>=0?im.ratio:'16:9',
+        alt:String(im.alt||''),use:String(im.use||''),prompt:String(im.prompt||'')};
+    }).filter(function(im){return im.prompt});
+    return d;
+  });
+}
+
+/* ---------- 3. the design system (§5, §8, §12) ---------- */
+function writeBase(p){
+  var d=p.direction,nav=d.pages.map(function(pg){return pg.nav+' → '+pg.file}).join(', ');
+  var input=[
+    brand(p),'','Navigation across the site: '+nav,'',CONTRACT,'',
+    'Write the shared stylesheet for this brand — tokens, the type scale, the container, the',
+    'buttons, the header and the footer, and the phone behaviour of the header. Nothing else:',
+    'each page writes the CSS for its own sections.',
+    '',
+    '- Open with :root custom properties built from the palette above, and use them throughout.',
+    '- Build a real type scale with clamp(): .display is a display size, .h2 clearly smaller,',
+    '  .lead larger than body, .eyebrow small and lettered, .meta smallest. They must not look alike (§8).',
+    '- .site-nav must work on a phone: .nav-toggle is visible under 860px, .links collapse, and',
+    '  html[data-nav-open] .links opens them. Targets at least 44px (§12).',
+    '- No @import. Do not restate a CSS reset — one is already prepended. No !important beyond',
+    '  the phone navigation. Under 6000 characters.',
+    '',
+    'Answer with the file and nothing else:',
+    '@@FILE styles.css',
+    '...css...',
+    '@@END'
+  ].join('\n');
+  return ask('code',input,{max:3200,temp:.5}).then(function(t){
+    var f=parseFiles(t)[0];
+    if(!f||!/\{/.test(f.body))throw Object.assign(new Error('The stylesheet came back unusable'),{status:502});
+    return KERNEL+'\n\n/* ---------- '+(d.name||'brand')+' ---------- */\n'+f.body;
+  });
+}
+
+/* ---------- 4. one page at a time (§7, §9, §12) ---------- */
+function writePage(p,pg,index){
+  var d=p.direction;
+  var imgs=(d.images||[]).map(function(im){
+    return '  {{img:'+im.id+'}}  '+im.ratio+' — '+im.use+' — alt: "'+im.alt+'"'}).join('\n');
+  var nav=d.pages.map(function(x){return x.nav+' → '+x.file}).join(', ');
+  var sections=(pg.sections||[]).map(function(s,i){
+    return '  '+(i+1)+'. '+(s.id||'section')+' — '+(s.shape||'')+(s.note?' — '+s.note:'')}).join('\n');
+  var input=[
+    brand(p),'','Navigation across the site: '+nav,'',
+    'Write '+pg.file+' — "'+pg.title+'"'+(pg.goal?'. The page exists to: '+pg.goal:'')+'.',
+    'Its planned sections, which you may sharpen but not flatten into one repeated shape:',
+    sections||'  (decide them yourself from the direction)',
+    '',CONTRACT,'',
+    imgs?('Pictures already planned for this site. Use a token exactly as written wherever the\n'+
+          'picture belongs — in src="", or in CSS as url({{img:id}}). Do not invent other tokens,\n'+
+          'do not use placeholder services, and never leave an empty <img>:\n'+imgs):
+         'No photography is available for this build. Do not link to any external image or\n'+
+         'placeholder service — carry the sections with type, colour, rule and space instead (§41).',
+    '',
+    'Requirements:',
+    '- One complete HTML document. In <head>, exactly these two lines and no other stylesheet or script:',
+    '    <link rel="stylesheet" href="styles.css"/>',
+    '    <script src="app.js"></scr'+'ipt>',
+    '- A real <title> and <meta name="description">, and lang on <html>.',
+    '- The same .site-nav and .site-foot on every page, with the links above; mark this page current.',
+    '- Every internal link points at a real file from the navigation list.',
+    index===0?'- This is the first screen of the whole site. §7 applies: it must be memorable, and it must not be a centred headline with two buttons under it unless that is genuinely right here.':'- Do not simply repeat the home page hero; this page opens its own way.',
+    '- Vary the section shapes down the page (§9). Real copy about this business — never lorem ipsum,',
+    '  never "Your text here", never a dead <a href="#">.',
+    '- Put data-reveal on the elements that should arrive as you scroll, not on everything.',
+    '- Under 9000 characters of HTML.',
+    '',
+    'Then write only the CSS for THIS page\'s own sections, prefixed so it cannot collide,',
+    'including its phone layout. Do not restate anything the shared stylesheet already has.',
+    '',
+    'Answer with the two files and nothing else:',
+    '@@FILE '+pg.file,
+    '...html...',
+    '@@FILE '+pg.file.replace(/\.html$/,'')+'.page.css',
+    '...css...',
+    '@@END'
+  ].join('\n');
+  return ask('code',input,{max:4096,temp:.8}).then(function(t){
+    var files=parseFiles(t);
+    var html=null,css='';
+    files.forEach(function(f){
+      if(/\.html$/.test(f.path)&&!html)html=f.body;
+      else if(/\.css$/.test(f.path))css+=f.body+'\n';
+    });
+    if(!html||!/<html|<body|<section|<main/i.test(html))
+      throw Object.assign(new Error('The page came back unusable'),{status:502});
+    return {html:fixPage(html,p),css:css};
+  });
+}
+
+/* The two lines the preview and the published renderer both replace by exact
+   match. A model that writes them slightly differently breaks both, so they are
+   normalised here rather than hoped for. */
+function fixPage(html,p){
+  var d=p.direction||{},t=String(html);
+  t=t.replace(/<link[^>]+rel=["']stylesheet["'][^>]*>/gi,function(m){
+    return /styles\.css/.test(m)?'<link rel="stylesheet" href="styles.css"/>':'';
+  });
+  t=t.replace(/<script[^>]*src=["'][^"']*app\.js["'][^>]*><\/script>/gi,'<scr'+'ipt src="app.js"></scr'+'ipt>');
+  if(t.indexOf('href="styles.css"')<0)
+    t=t.replace(/<\/head>/i,'<link rel="stylesheet" href="styles.css"/>\n</head>');
+  if(t.indexOf('src="app.js"')<0)
+    t=t.replace(/<\/body>/i,'<scr'+'ipt src="app.js"></scr'+'ipt>\n</body>');
+  var fonts=(d.type&&Array.isArray(d.type.googleFonts))?d.type.googleFonts:[];
+  if(fonts.length&&!/fonts\.googleapis/.test(t)){
+    var href='https://fonts.googleapis.com/css2?'+fonts.slice(0,2).map(function(f){
+      return 'family='+String(f).replace(/^family=/,'').replace(/ /g,'+')}).join('&')+'&display=swap';
+    t=t.replace(/<\/head>/i,'<link rel="preconnect" href="https://fonts.googleapis.com">\n'+
+      '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'+
+      '<link rel="stylesheet" href="'+href+'">\n</head>');
+  }
+  return t;
+}
+window.__SUPER_BUILD={CONTRACT:CONTRACT,KERNEL:KERNEL,APPJS:APPJS,langLine:langLine,brand:brand,
+  classify:classify,direct:direct,writeBase:writeBase,writePage:writePage,fixPage:fixPage};
+})();
+</script>
+
+<script>
+/* ============================================================
+   Photographs, assembly, and the part that looks at its own work.
+   ============================================================ */
+(function(){
+"use strict";
+var U=window.__SUPER,B=window.__SUPER_BUILD;
+var ask=U.ask,req=U.req,why=U.why,jsonFrom=U.jsonFrom,parseFiles=U.parseFiles,fileNamed=U.fileNamed;
+
+/* ---------- §41 — a placeholder that still looks finished ---------- */
+var RATIO={'1:1':[1,1],'4:3':[4,3],'3:4':[3,4],'16:9':[16,9],'9:16':[9,16],'3:2':[3,2],'2:3':[2,3],'21:9':[21,9]};
+function placeholder(ratio,pal,seed){
+  var r=RATIO[ratio]||RATIO['16:9'],w=r[0]*90,h=r[1]*90;
+  var a=(pal&&pal.accent)||'#6b6b78',b=(pal&&pal.surface)||'#1a1a20',c=(pal&&pal.bg)||'#0d0d11';
+  var n=0;for(var i=0;i<String(seed||'x').length;i++)n+=String(seed).charCodeAt(i);
+  var ang=(n%4)*40+120;
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">'+
+    '<defs><linearGradient id="g" gradientTransform="rotate('+ang+' .5 .5)">'+
+    '<stop offset="0" stop-color="'+c+'"/><stop offset=".55" stop-color="'+b+'"/>'+
+    '<stop offset="1" stop-color="'+a+'" stop-opacity=".55"/></linearGradient></defs>'+
+    '<rect width="'+w+'" height="'+h+'" fill="url(#g)"/>'+
+    '<circle cx="'+Math.round(w*(0.24+(n%5)*0.13))+'" cy="'+Math.round(h*0.42)+'" r="'+Math.round(h*0.34)+
+      '" fill="'+a+'" opacity=".16"/></svg>';
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+
+/* ---------- the photographs (§25–§40) ---------- */
+function photograph(spec,dir,reference){
+  var prompt=[spec.prompt,
+    dir?('Overall direction for this brand: '+dir):'',
+    reference?'Match the look of the supplied reference photograph — its light, palette and framing.':'',
+    'Photographic, not illustrated unless the direction says otherwise.',
+    'No text, no letters, no logos, no watermarks and no interface anywhere in the frame.'
+  ].filter(Boolean).join(' ');
+  /* §34 — a picture the client handed over steers the shoot rather than being
+     ignored. The route takes references as raw base64 with their own type. */
+  var refs=[];
+  var m=/^data:(image\/[a-z+]+);base64,(.+)$/i.exec(String(reference||''));
+  if(m)refs.push({mimeType:m[1],dataBase64:m[2]});
+  return req('/api/image/generate',{method:'POST',body:{
+    mode:refs.length?'edit':'generate',prompt:prompt,aspectRatio:spec.ratio,size:'1K',quality:'medium',
+    format:'webp',count:1,references:refs}}).then(function(d){
+    var img=(d.images||[])[0];
+    if(!img)throw new Error('The image gateway returned nothing');
+    var id=img.assetId||img.id||'';
+    /* A signed storage URL expires in minutes — fine to look at, wrong to build
+       with. A picture is referenced by its asset path whenever it has one. */
+    return {url:id?('/api/assets/'+encodeURIComponent(id)+'/content'):(img.url||''),
+      assetId:id,provider:d.provider||''};
+  });
+}
+
+/* ---------- tokens → real pictures, or a considered stand-in ---------- */
+function paint(text,p){
+  var pal=(p.direction&&p.direction.palette)||{};
+  var specs={};(((p.direction||{}).images)||[]).forEach(function(im){specs[im.id]=im});
+  return String(text==null?'':text).replace(/\{\{img:([a-z0-9\-]+)\}\}/gi,function(_,id){
+    var got=p.images&&p.images[id];
+    if(got&&got.url)return got.url;
+    var spec=specs[id]||{};
+    return placeholder(spec.ratio||'16:9',pal,id);
+  });
+}
+
+/* ---------- assembly ---------- */
+var BRIDGE='<scr'+'ipt>document.addEventListener("click",function(e){'+
+  'var a=e.target.closest&&e.target.closest("a[href$=\\".html\\"]");'+
+  'if(a){e.preventDefault();parent.postMessage({superNav:a.getAttribute("href")},"*")}'+
+  '},true);</scr'+'ipt>';
+function docFor(p,file,withBridge){
+  var f=fileNamed(p.files,file)||fileNamed(p.files,'index.html');
+  if(!f)return '';
+  var css=(fileNamed(p.files,'styles.css')||{}).body||'';
+  var js=(fileNamed(p.files,'app.js')||{}).body||'';
+  return paint(f.body,p)
+    .replace('<link rel="stylesheet" href="styles.css"/>','<style>\n'+paint(css,p)+'\n</style>')
+    .replace('<scr'+'ipt src="app.js"></scr'+'ipt>','<scr'+'ipt>\n'+js+'\n</scr'+'ipt>'+(withBridge?BRIDGE:''));
+}
+
+/* A card on the projects screen shows the real build, but it must not run it:
+   twelve live pages with their own timers is not a gallery. The script comes
+   out — and with it the thing that switches [data-reveal] on, so the reveal is
+   forced instead, or every thumbnail would be a blank rectangle. */
+function thumbDoc(p){
+  var cut=new RegExp('<scr'+'ipt[\\s\\S]*?</scr'+'ipt>','gi');
+  var doc=docFor(p,'index.html',false).replace(cut,'');
+  var unhide='<style>[data-reveal]{opacity:1!important;transform:none!important}</style>';
+  return /<\/head>/i.test(doc)?doc.replace(/<\/head>/i,unhide+'</head>'):(unhide+doc);
+}
+
+/* ---------- §12, actually checked ----------
+   Not "responsive design applied" — the page is loaded at 390px in a frame
+   nobody sees and measured. What comes back is the truth about this build. */
+function phoneCheck(p){
+  return new Promise(function(resolve){
+    var f=document.createElement('iframe');
+    f.setAttribute('sandbox','allow-scripts allow-same-origin');
+    f.style.cssText='position:fixed;left:-9999px;top:0;width:390px;height:844px;border:0;visibility:hidden';
+    document.body.appendChild(f);
+    var done=false;
+    function finish(r){if(done)return;done=true;try{f.remove()}catch(e){}resolve(r)}
+    var give=setTimeout(function(){finish({ok:false,reason:'the phone check did not finish'})},9000);
+    f.onload=function(){
+      setTimeout(function(){
+        clearTimeout(give);
+        var out={ok:true,overflow:0,wide:[],small:0};
+        try{
+          var d=f.contentDocument,root=d.documentElement;
+          out.overflow=Math.max(0,root.scrollWidth-root.clientWidth);
+          var all=d.body.querySelectorAll('*'),lim=root.clientWidth+1;
+          for(var i=0;i<all.length&&out.wide.length<4;i++){
+            var r=all[i].getBoundingClientRect();
+            if(r.width>lim+2&&r.height>4)out.wide.push((all[i].className||all[i].tagName).toString().slice(0,40));
+          }
+          var taps=d.querySelectorAll('a,button,input,select,textarea');
+          for(var j=0;j<taps.length;j++){
+            var t=taps[j].getBoundingClientRect();
+            if(t.width>0&&t.height>0&&t.height<38)out.small++;
+          }
+        }catch(e){out.ok=false;out.reason='the phone frame could not be read'}
+        finish(out);
+      },700);
+    };
+    f.srcdoc=docFor(p,p.page||'index.html',false);
+  });
+}
+
+/* ---------- §16 — a picture of the build, and an honest mark ----------
+   There is no screenshot API in a tab and no library may be loaded here, so
+   the frame's own document is serialised into an SVG foreignObject and drawn
+   to a canvas. A document that will not serialise returns nothing, and the
+   review is skipped rather than the build being called finished on faith. */
+function shot(frame){
+  return new Promise(function(resolve){
+    var doc=null;try{doc=frame&&frame.contentDocument}catch(e){}
+    if(!doc||!doc.documentElement)return resolve('');
+    var w=Math.min(1180,doc.documentElement.clientWidth||1180);
+    var h=Math.min(1400,Math.max(700,doc.documentElement.clientHeight||900));
+    var html;
+    try{
+      var clone=doc.documentElement.cloneNode(true);
+      Array.prototype.slice.call(clone.querySelectorAll('script')).forEach(function(n){n.remove()});
+      /* the page's own reveal starts everything at opacity 0 and is switched on
+         by one of those scripts — without this the review marks a blank page */
+      var unhide=doc.createElement('style');
+      unhide.textContent='[data-reveal],[data-reveal] *{opacity:1!important;transform:none!important;'+
+        'filter:none!important;clip-path:none!important;visibility:visible!important}'+
+        'html,body{overflow:visible!important}*{animation:none!important;transition:none!important}';
+      (clone.querySelector('head')||clone).appendChild(unhide);
+      html=new XMLSerializer().serializeToString(clone);
+    }catch(e){return resolve('')}
+    var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'+
+      '<foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">'+
+      html+'</div></foreignObject></svg>';
+    var url;try{url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}catch(e){return resolve('')}
+    var img=new Image(),settled=false;
+    var give=setTimeout(function(){if(!settled){settled=true;resolve('')}},10000);
+    img.onload=function(){
+      if(settled)return;settled=true;clearTimeout(give);
+      try{
+        var cv=document.createElement('canvas');
+        cv.width=Math.round(w*.62);cv.height=Math.round(h*.62);
+        var cx=cv.getContext('2d');
+        cx.fillStyle='#ffffff';cx.fillRect(0,0,cv.width,cv.height);
+        cx.drawImage(img,0,0,cv.width,cv.height);
+        resolve(cv.toDataURL('image/jpeg',.62));
+      }catch(e){resolve('')}
+    };
+    img.onerror=function(){if(!settled){settled=true;clearTimeout(give);resolve('')}};
+    img.src=url;
+  });
+}
+
+var FIXES=[
+ 'hero:rebuild — the first screen is generic or forgettable',
+ 'variety:sections — too many sections share one layout',
+ 'type:scale — the type hierarchy is too flat',
+ 'space:open — the spacing is cramped or mechanically even',
+ 'accent:restrain — the accent colour is overused',
+ 'contrast:raise — text and background are too close',
+ 'cards:fewer — the page leans on repeated cards',
+ 'images:weight — the imagery is weak or carries no weight'
+];
+function review(p,frame){
+  return shot(frame).then(function(data){
+    if(!data)return null;
+    var hint=[
+      'This is the home page of a '+((p.direction&&p.direction.trade)||'business')+
+        ' called '+((p.direction&&p.direction.name)||p.name)+'.',
+      'Its stated visual concept was: '+((p.direction&&p.direction.concept)||'not recorded')+'.',
+      'Judge it against that. The fixes list you may choose from, exactly as written before the dash:',
+      FIXES.join('\n')
+    ].join('\n');
+    return req('/api/ai/vision-review',{method:'POST',body:{image:data,mode:'page',hint:hint}})
+      .then(function(d){
+        var o=jsonFrom(d&&d.text);
+        if(!o||!o.scores)return null;
+        var s=o.scores,keys=Object.keys(s),low=[];
+        keys.forEach(function(k){if(Number(s[k])<8)low.push(k)});
+        return {scores:s,low:low,worst:String(o.worst||low[0]||''),
+          problems:(Array.isArray(o.problems)?o.problems:[]).slice(0,3),
+          fixes:(Array.isArray(o.fixes)?o.fixes:[]).map(function(f){return String(f).split(' ')[0]}).slice(0,2),
+          verdict:String(o.verdict||'')};
+      },function(){return null});
+  });
+}
+
+/* ---------- §18 — fix the worst of it, in CSS only ----------
+   Appended after everything else, so a correction can improve the build
+   without being able to break its markup. */
+function patch(p,found){
+  var input=[
+    B.brand(p),'',
+    'A design review of the built page found:',
+    found.problems.map(function(x){return '- '+x}).join('\n'),
+    found.fixes.length?('It asked for: '+found.fixes.join(', ')):'',
+    '',
+    'Write CSS that corrects those findings when appended after the existing stylesheet.',
+    'Use the custom properties the stylesheet already declares rather than new colours, and do',
+    'not change the palette. No @import, no url(), no fonts, no more than two !important rules.',
+    'Under 2600 characters.',
+    '',
+    'Existing stylesheet (truncated):',
+    String((U.fileNamed(p.files,'styles.css')||{}).body||'').slice(0,4200),
+    '',
+    'Answer with the file and nothing else:',
+    '@@FILE fix.css',
+    '...css...',
+    '@@END'
+  ].filter(Boolean).join('\n');
+  return ask('code',input,{max:1100,temp:.35}).then(function(t){
+    var f=parseFiles(t)[0];
+    if(!f)return null;
+    var css=f.body.trim();
+    if(!css||css.length>2900)return null;
+    if(/@import|url\s*\(|javascript:|<\/?script|expression\s*\(/i.test(css))return null;
+    if((css.match(/\{/g)||[]).length!==(css.match(/\}/g)||[]).length)return null;
+    return css;
+  },function(){return null});
+}
+
+/* ---------- follow-ups (§14) ---------- */
+function editFiles(p,text,intent){
+  var list=p.files.filter(function(f){return f.path!=='app.js'});
+  var body=list.map(function(f){return '@@FILE '+f.path+'\n'+f.body}).join('\n')+'\n@@END';
+  var input=[
+    B.brand(p),'',
+    'The client asked for this change: """'+text+'"""',
+    'Classified as: '+intent+'.','',
+    'This is the current build. Read it, work out the smallest set of files that has to change,',
+    'and return ONLY those files, complete. Do not return a file you did not change. Do not',
+    'rewrite the whole site for a small change (§14). Keep the existing structure, copy and',
+    'features that work.',
+    'Picture tokens like {{img:hero}} are real — leave any you do not touch exactly as they are.',
+    'Keep the two exact lines in every page head/body:',
+    '  <link rel="stylesheet" href="styles.css"/>',
+    '  <scr'+'ipt src="app.js"></scr'+'ipt>',
+    '',
+    body,'',
+    'Answer with the changed files in the same @@FILE form and nothing else, then @@END.',
+    'After the last file, on its own line, write:',
+    '@@NOTE one or two sentences to the client about what you changed and why.',
+    B.langLine(p)
+  ].join('\n');
+  return ask('code',input,{max:4096,temp:.6}).then(function(t){
+    var note='';
+    var m=/@@NOTE[ \t]*([\s\S]*)$/.exec(t);
+    if(m){note=m[1].trim();t=t.slice(0,m.index)}
+    var files=parseFiles(t).filter(function(f){return /\.(html|css)$/.test(f.path)});
+    if(!files.length)throw Object.assign(new Error('Nothing came back that could be applied'),{status:502});
+    files.forEach(function(f){if(/\.html$/.test(f.path))f.body=B.fixPage(f.body,p)});
+    return {files:files,note:note};
+  });
+}
+
+function chat(p,text){
+  var input=[
+    p.direction?B.brand(p):'Nothing has been built in this project yet.','',
+    'The client said: """'+text+'"""',
+    'Answer them. Two or three sentences, as a creative partner (§22), not a workflow machine.',
+    'Do not start building and do not list steps.',
+    B.langLine(p)
+  ].join('\n');
+  return ask('chat',input,{max:400,temp:.8});
+}
+
+window.__SUPER_RUN={placeholder:placeholder,photograph:photograph,paint:paint,docFor:docFor,thumbDoc:thumbDoc,
+  phoneCheck:phoneCheck,shot:shot,review:review,patch:patch,editFiles:editFiles,chat:chat,FIXES:FIXES};
+})();
+</script>
+
+<script>
+/* ============================================================
+   The studio — what the client sees, and the order it happens in.
+   ============================================================ */
+(function(){
+"use strict";
+var U=window.__SUPER,B=window.__SUPER_BUILD,R=window.__SUPER_RUN;
+var $=U.$,$$=U.$$,esc=U.esc,toast=U.toast,DB=U.DB,save=U.save,req=U.req,why=U.why,ask=U.ask;
+var S={busy:false,stop:false,tab:'preview',device:'desktop',codeFile:'',mode:'build',
+       reference:null,chatHidden:false,
+       /* under 900px the two columns cannot both be on screen, so one of them
+          is showing and the other is not. 'chat' | 'view'. */
+       narrow:'chat'};
+function isNarrow(){return innerWidth<900}
+
+function L(en,hi){var p=U.active();return (p&&p.lang==='hi'&&hi)?hi:en}
+function p(){return U.active()}
+
+/* ---------- session ---------- */
+function probe(){
+  var tag=$('#sessionTag');
+  return req('/api/auth/me').then(function(d){
+    var me=d.user||d;
+    U.SESSION.state='in';
+    U.SESSION.name=String(me.name||me.email||'').split('@')[0]||'there';
+    U.SESSION.email=String(me.email||'');
+    tag.className='tag ok';tag.textContent='signed in as '+(U.SESSION.email||U.SESSION.name);
+    $('#wsName').textContent=U.SESSION.name+"'s workspace";
+    var i=(U.SESSION.name||'S').slice(0,1).toUpperCase();
+    $('#wsBadge').textContent=i;$('#avatar').textContent=i;
+    $('#heroTitle').textContent='What are we building, '+U.SESSION.name+'?';
+    return req('/api/billing/credits').then(function(c){
+      U.SESSION.credits=Number(c.balance!=null?c.balance:(c.credits!=null?c.credits:NaN));
+      if(!isNaN(U.SESSION.credits))tag.textContent+=' · '+U.SESSION.credits+' credits';
+    },function(){});
+  },function(e){
+    U.SESSION.state='out';
+    tag.className='tag bad';
+    tag.textContent=e&&e.status===401?'signed out — the model will refuse':'the /api routes are not reachable';
+    banner(e&&e.status===401
+      ? 'You are signed out on this domain. Nothing can be generated until you sign in to Scen in another tab.'
+      : 'The /api routes are not reachable from this address, so the gateway cannot be called from here.');
+  });
+}
+function banner(text){
+  var b=$('#banner');
+  if(!text)return b.classList.add('hidden');
+  b.innerHTML='<span>'+esc(text)+'</span><button data-act="recheck">check again</button>';
+  b.classList.remove('hidden');
+}
+
+/* ---------- home ---------- */
+var filter='all',query='';
+function setFilter(f){filter=f;drawHome()}
+function setQuery(q){query=q;drawHome()}
+function drawHome(){
+  var list=DB.projects.slice();
+  if(filter==='starred')list=list.filter(function(x){return x.starred});
+  if(filter==='published')list=list.filter(function(x){return x.published});
+  if(filter==='recent')list=list.sort(function(a,b){return (b.openedAt||0)-(a.openedAt||0)}).slice(0,8);
+  if(query)list=list.filter(function(x){
+    return (x.name+' '+x.brief).toLowerCase().indexOf(query.toLowerCase())>=0});
+
+  var rec=$('#recents');rec.innerHTML='';
+  DB.projects.slice(0,8).forEach(function(x){
+    var b=document.createElement('button');b.className='r';b.textContent=x.name||'Untitled';
+    b.setAttribute('data-open',x.id);rec.appendChild(b);
+  });
+  if(!DB.projects.length)rec.innerHTML='<div class="empty" style="padding:14px 10px;text-align:left">Nothing yet.</div>';
+
+  var wrap=$('#cards'),blank=$('#cardsEmpty');wrap.innerHTML='';
+  if(!list.length){
+    blank.classList.remove('hidden');
+    blank.textContent=DB.projects.length
+      ? 'Nothing matches that.'
+      : 'No projects yet. Describe a business above and this fills up.';
+    return;
+  }
+  blank.classList.add('hidden');
+  list.slice(0,12).forEach(function(x){
+    /* a div, not a button: the thumbnail is a live frame of the build, and an
+       iframe inside a button is neither valid nor clickable */
+    var card=document.createElement('div');
+    card.className='card';card.setAttribute('data-open',x.id);
+    card.setAttribute('role','button');card.tabIndex=0;
+    var when=new Date(x.updatedAt||x.createdAt);
+    card.innerHTML='<div class="thumb"></div><div class="meta"><b>'+esc(x.name||'Untitled')+'</b>'+
+      '<span>'+(x.published?'live · ':'')+when.toLocaleDateString()+' · '+
+      (x.files.length?x.files.length+' files':'not built yet')+'</span></div>';
+    var star=document.createElement('span');
+    star.className='star'+(x.starred?' on':'');
+    star.setAttribute('data-star',x.id);
+    star.innerHTML='<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:'+
+      (x.starred?'currentColor':'none')+';stroke-width:1.7"><path d="m12 4 2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"/></svg>';
+    card.querySelector('.thumb').appendChild(star);
+    if(x.files.length){
+      var f=document.createElement('iframe');
+      f.setAttribute('sandbox','allow-same-origin');
+      f.setAttribute('loading','lazy');f.setAttribute('title',x.name||'preview');
+      f.srcdoc=R.thumbDoc(x);
+      card.querySelector('.thumb').insertBefore(f,star);
+    }
+    wrap.appendChild(card);
+  });
+}
+
+/* ---------- project ---------- */
+function open(id){
+  var x=U.project(id);if(!x)return;
+  DB.activeId=id;x.openedAt=Date.now();save();
+  $('#home').classList.add('hidden');$('#work').classList.remove('hidden');
+  S.tab='preview';S.codeFile='';
+  drawProject();drawThread();renderPreview();
+  setTimeout(function(){$('#say').focus()},60);
+}
+function home(){
+  $('#work').classList.add('hidden');$('#home').classList.remove('hidden');
+  drawHome();
+}
+function drawProject(){
+  var x=p();if(!x)return;
+  $('#projName').textContent=x.name||'Untitled';
+  $('#projNote').textContent=S.busy?L('Working…','Kaam chal raha hai…')
+    :(x.published?('Live at '+x.published.slug):(x.files.length?L('Ready','Taiyaar'):L('Nothing built yet','Abhi kuch bana nahi')));
+  $('#pageLabel').textContent=pageTitle(x,x.page||'index.html');
+  $$('.seg button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-tab')===S.tab)});
+  $('#codewrap').classList.toggle('hidden',S.tab!=='code');
+  $('#frame').classList.toggle('hidden',S.tab==='code');
+  $('#frame').className='frame '+S.device+(S.tab==='code'?' hidden':'');
+  $('#chatcol').classList.toggle('collapsed',S.chatHidden&&!isNarrow());
+  $('#work').classList.toggle('showpreview',isNarrow()&&S.narrow==='view');
+  $('#stopBtn').classList.toggle('hidden',!S.busy);
+  $('#sendBtn').classList.toggle('hidden',S.busy);
+  $('#sayPhotos').checked=x.photos!==false;
+  $('#askPhotos').checked=x.photos!==false;
+  if(S.tab==='code')drawCode();
+}
+function pageTitle(x,file){
+  var d=x.direction;
+  if(d&&d.pages)for(var i=0;i<d.pages.length;i++)if(d.pages[i].file===file)return d.pages[i].title;
+  return file==='index.html'?'Homepage':file;
+}
+function drawCode(){
+  var x=p();if(!x)return;
+  var nav=$('#codenav'),body=$('#codebody');
+  if(!x.files.length){nav.innerHTML='';body.textContent='Nothing built yet.';return}
+  if(!S.codeFile||!U.fileNamed(x.files,S.codeFile))S.codeFile=x.files[0].path;
+  nav.innerHTML='';
+  x.files.forEach(function(f){
+    var b=document.createElement('button');
+    b.textContent=f.path;b.className=(f.path===S.codeFile?'on':'');
+    b.setAttribute('data-code',f.path);nav.appendChild(b);
+  });
+  body.textContent=(U.fileNamed(x.files,S.codeFile)||{}).body||'';
+}
+function renderPreview(){
+  var x=p();if(!x)return;
+  var frame=$('#preview'),blank=$('#frameBlank');
+  if(!x.files.length){blank.classList.remove('hidden');frame.srcdoc='';return}
+  blank.classList.add('hidden');
+  frame.srcdoc=R.docFor(x,x.page||'index.html',true);
+}
+addEventListener('message',function(e){
+  if(!e.data||!e.data.superNav)return;
+  var x=p();if(!x)return;
+  var f=String(e.data.superNav);
+  if(!U.fileNamed(x.files,f))return toast('That page has not been written yet.');
+  x.page=f;save();drawProject();renderPreview();
+});
+
+/* ---------- the thread ---------- */
+function drawThread(){
+  var x=p();if(!x)return;
+  var t=$('#thread');t.innerHTML='';
+  x.messages.forEach(function(m){t.appendChild(node(m,x))});
+  t.scrollTop=t.scrollHeight;
+}
+function node(m,x){
+  if(m.role==='you'){
+    var d=U.el('div','msg you');
+    d.appendChild(U.el('div','bubble',esc(m.text)));
+    if(m.image){var i=new Image();i.src=m.image;i.style.cssText='max-width:180px;border-radius:12px;margin-top:8px';
+      d.appendChild(i)}
+    return d;
+  }
+  if(m.role==='step'){
+    var s=U.el('div','msg step'+(m.done?'':' live'));
+    var mark=m.failed
+      ?'<span class="tick" style="color:var(--rose)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></span>'
+      :(m.done
+        ?'<span class="tick"><svg viewBox="0 0 24 24"><path d="m5 13 4 4 10-10"/></svg></span>'
+        :'<span class="tick" style="color:var(--muted)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></span>');
+    s.innerHTML=mark+'<span'+(m.done?'':' class="shim"')+'>'+esc(m.text)+'</span>';
+    return s;
+  }
+  var b=U.el('div','msg bot');
+  b.innerHTML=esc(m.text).replace(/\n/g,'<br>');
+  if(m.files&&m.files.length){
+    var fl=U.el('div','filelist');
+    m.files.forEach(function(f){
+      var row=document.createElement('button');
+      row.className='f';row.setAttribute('data-code',f.path);
+      row.innerHTML='<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#9a9aa4;fill:none;stroke-width:1.7">'+
+        '<path d="M14 3H7a1.5 1.5 0 0 0-1.5 1.5v15A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V7.5z"/><path d="M14 3v4.5h4.5"/></svg>'+
+        '<code>'+esc(f.path)+'</code><span class="kind'+(f.kind==='new'?' new':'')+'">'+esc(f.kind)+'</span>';
+      fl.appendChild(row);
+    });
+    b.appendChild(fl);
+  }
+  if(m.scores){
+    var sb=U.el('div','scorebar');
+    Object.keys(m.scores).forEach(function(k){
+      var v=Number(m.scores[k]);
+      sb.appendChild(U.el('span','s'+(v<8?' low':''),esc(k)+' <b>'+v+'</b>'));
+    });
+    b.appendChild(sb);
+  }
+  if(m.next&&m.next.length){
+    var n=U.el('div','nextup');
+    m.next.forEach(function(txt){
+      var btn=document.createElement('button');
+      btn.textContent='→ '+txt;btn.setAttribute('data-next',txt);n.appendChild(btn);
+    });
+    b.appendChild(n);
+  }
+  return b;
+}
+function say(role,text,extra){
+  var x=p();if(!x)return null;
+  var m=Object.assign({role:role,text:String(text||'')},extra||{});
+  x.messages.push(m);save();
+  var t=$('#thread');t.appendChild(node(m,x));t.scrollTop=t.scrollHeight;
+  return m;
+}
+function step(text){return say('step',text,{done:false})}
+function seal(m,text){
+  if(!m)return;
+  m.done=true;if(text)m.text=text;
+  save();drawThread();
+}
+/* A run that throws used to leave its last step shimmering for the rest of the
+   session, so the studio looked like it was still working on something it had
+   already given up on. */
+function sealOpen(){
+  var x=p();if(!x)return;
+  for(var i=x.messages.length-1;i>=0;i--){
+    var m=x.messages[i];
+    if(m.role==='step'&&!m.done){m.done=true;m.failed=true;break}
+  }
+  save();drawThread();
+}
+window.__SUPER_UI={S:S,L:L,p:p,say:say,step:step,seal:seal,drawThread:drawThread,drawProject:drawProject,
+  drawHome:drawHome,drawCode:drawCode,renderPreview:renderPreview,open:open,home:home,probe:probe,
+  banner:banner,pageTitle:pageTitle,setFilter:setFilter,setQuery:setQuery,sealOpen:sealOpen};
+})();
+</script>
+
+<script>
+/* ============================================================
+   The run — §42 in order, and only claiming what came back (§23).
+   ============================================================ */
+(function(){
+"use strict";
+var U=window.__SUPER,B=window.__SUPER_BUILD,R=window.__SUPER_RUN,I=window.__SUPER_UI;
+var $=U.$,esc=U.esc,toast=U.toast,save=U.save,why=U.why;
+var S=I.S,L=I.L,say=I.say,step=I.step,seal=I.seal;
+
+function stopped(){if(S.stop)throw Object.assign(new Error('stopped'),{quiet:true});}
+function fileRows(before,after){
+  var was={};before.forEach(function(f){was[f.path]=f.body});
+  var rows=[];
+  after.forEach(function(f){
+    if(f.path==='app.js')return;
+    if(!(f.path in was))rows.push({path:f.path,kind:'new'});
+    else if(was[f.path]!==f.body)rows.push({path:f.path,kind:'changed'});
+  });
+  rows.sort(function(a,b){
+    var ah=/\.html$/.test(a.path)?0:1,bh=/\.html$/.test(b.path)?0:1;
+    return ah-bh||a.path.localeCompare(b.path);
+  });
+  return rows;
+}
+/* Read off this build, not invented (§20). At most two. */
+function nextSteps(x){
+  var out=[],html=x.files.filter(function(f){return /\.html$/.test(f.path)});
+  var all=x.files.map(function(f){return f.body}).join('');
+  var shot=Object.keys(x.images||{}).length;
+  var planned=((x.direction||{}).images||[]).length;
+  if(planned&&shot<planned)out.push(L('Photograph the set — the pictures are still stand-ins',
+                                       'Photos bana lo — abhi placeholder lage hain'));
+  if(!x.published)out.push(L('Put it online at a Scen address','Isko live address par daal do'));
+  if(!/<form/i.test(all))out.push(L('Give visitors a way to get in touch',
+                                    'Visitors ke liye contact form add karo'));
+  if(html.length<3)out.push(L('Add the page this business is missing',
+                              'Ek aur zaroori page add karo'));
+  return out.slice(0,2);
+}
+
+async function photographs(x,on){
+  var planned=(x.direction.images||[]);
+  if(!on||!planned.length)return;
+  var s=step(L('Photographing the set — '+planned.length+' pictures, 25 credits each…',
+               planned.length+' photos bana raha hoon — 25 credits per picture…'));
+  var made=0,failed='';
+  for(var i=0;i<planned.length;i++){
+    stopped();
+    try{
+      var got=await R.photograph(planned[i],x.direction.imageDirection,x.reference);
+      x.images[planned[i].id]=got;made++;save();
+    }catch(e){failed=why(e,'generate the photography');break}
+  }
+  seal(s,made===planned.length
+    ? L('Photographed all '+made+' pictures','Saari '+made+' photos ban gayi')
+    : (made
+        ? L(made+' of '+planned.length+' photographed — '+failed,
+            planned.length+' mein se '+made+' bani — '+failed)
+        : L('No photography this time — '+failed+' The layout carries itself instead.',
+            'Photos nahi ban paayi — '+failed+' Layout khud sambhal raha hai.')));
+}
+
+async function build(x,text,upgrade){
+  var before=x.files.map(function(f){return {path:f.path,body:f.body}});
+
+  var s1=step(L('Creating the visual direction…','Visual direction bana raha hoon…'));
+  x.direction=await B.direct(x,text,upgrade?'upgrade':'');
+  x.name=String(x.direction.name||x.name||'Untitled').slice(0,60);
+  save();seal(s1);I.drawProject();
+  if(x.direction.opening)say('bot',x.direction.opening);
+
+  if(S.mode==='plan'){
+    say('bot',L('That is the direction. Say build when you want it written.',
+                'Yeh raha direction. "build" bolo to likh deta hoon.'),
+        {next:x.direction.pages.map(function(pg){return pg.title})});
+    return;
+  }
+
+  await photographs(x,x.photos);
+  stopped();
+
+  var s2=step(L('Building the design system…','Design system bana raha hoon…'));
+  var css=await B.writeBase(x);
+  seal(s2);
+
+  var pages=x.direction.pages;
+  var written=[];
+  for(var i=0;i<pages.length;i++){
+    stopped();
+    var s=step(L('Writing '+pages[i].title+'…',pages[i].title+' likh raha hoon…'));
+    try{
+      var r=await B.writePage(x,pages[i],i);
+      written.push({file:pages[i].file,html:r.html});
+      if(r.css)css+='\n\n/* ---------- '+pages[i].file+' ---------- */\n'+r.css;
+      seal(s);
+    }catch(e){
+      if(e&&e.quiet)throw e;
+      seal(s,L(pages[i].title+' did not come back — '+why(e,'write that page'),
+               pages[i].title+' nahi bana — '+why(e,'woh page likhne')));
+      if(i===0)throw e;   /* no home page is not a build */
+    }
+  }
+  if(!written.length)throw new Error('Nothing was written');
+
+  /* only now does the project change, so a failed run leaves the old build alone */
+  var next=[];
+  written.forEach(function(w){next.push({path:w.file,body:w.html})});
+  next.push({path:'styles.css',body:css});
+  next.push({path:'app.js',body:B.APPJS});
+  x.files=next;x.page='index.html';
+  x.versions=(x.versions||[]).concat([{at:Date.now(),label:text.slice(0,60),
+    files:next.map(function(f){return {path:f.path,body:f.body}})}]).slice(-4);
+  save();I.drawProject();I.renderPreview();
+
+  /* §12 — measured, not asserted */
+  stopped();
+  var s3=step(L('Checking mobile layouts…','Mobile layout check kar raha hoon…'));
+  var m=await R.phoneCheck(x);
+  if(!m.ok)seal(s3,L('The phone check could not run — '+(m.reason||'no reason given'),
+                     'Phone check nahi chala — '+(m.reason||'')));
+  else if(m.overflow>0){
+    css+='\n\n/* phone: something was wider than the screen */\n'+
+      'html,body{overflow-x:hidden}\n'+
+      '@media (max-width:430px){img,video,table,pre{max-width:100%}\n'+
+      '  *{min-width:0}\n  .wrap{padding-left:20px;padding-right:20px}}\n';
+    U.putFile(x.files,'styles.css',css);save();I.renderPreview();
+    seal(s3,L('The phone layout ran '+m.overflow+'px wide — held it back to the screen',
+              'Phone par '+m.overflow+'px chauda tha — theek kar diya'));
+  }
+  else seal(s3,L('Phone layout holds at 390px'+(m.small?', '+m.small+' targets under 38px':''),
+                 '390px par layout theek hai'+(m.small?', '+m.small+' buttons chhote hain':'')));
+
+  /* §16 — look at it */
+  stopped();
+  var s4=step(L('Reviewing the design…','Design review kar raha hoon…'));
+  var found=await R.review(x,$('#preview'));
+  if(!found){seal(s4,L('The review could not read the page — marking it unreviewed',
+                       'Review nahi ho paaya — bina review ke chhod raha hoon'))}
+  else{
+    seal(s4,found.verdict||L('Reviewed','Review ho gaya'));
+    x.qa=found;save();
+    say('bot',found.problems.length?found.problems.map(function(q){return '· '+q}).join('\n'):'',
+        {scores:found.scores});
+    if(found.low.length){
+      stopped();
+      var s5=step(L('Refining the design…','Design refine kar raha hoon…'));
+      var fix=await R.patch(x,found);
+      if(fix){
+        css+='\n\n/* ---------- review pass ---------- */\n'+fix;
+        U.putFile(x.files,'styles.css',css);save();I.renderPreview();
+        seal(s5,L('Corrected '+found.low.join(', '),found.low.join(', ')+' theek kiya'));
+      }else seal(s5,L('The correction came back unusable — the build is unchanged',
+                      'Correction sahi nahi aaya — build waisa hi hai'));
+    }
+  }
+
+  var s6=step(L('Polishing the final details…','Final polish…'));
+  seal(s6,L('Ready.','Ho gaya.'));
+  say('bot',L('Built '+x.name+' — '+written.length+' pages.','Ban gaya — '+written.length+' pages.'),
+      {files:fileRows(before,x.files),next:nextSteps(x)});
+}
+
+async function change(x,text,intent){
+  var before=x.files.map(function(f){return {path:f.path,body:f.body}});
+  var s=step(L('Making that change…','Woh change kar raha hoon…'));
+  var out=await R.editFiles(x,text,intent);
+  out.files.forEach(function(f){U.putFile(x.files,f.path,f.body)});
+  x.versions=(x.versions||[]).concat([{at:Date.now(),label:text.slice(0,60),
+    files:x.files.map(function(f){return {path:f.path,body:f.body}})}]).slice(-4);
+  save();seal(s);I.renderPreview();I.drawCode();
+  var rows=fileRows(before,x.files);
+  say('bot',out.note||L('Done.','Ho gaya.'),{files:rows,next:nextSteps(x)});
+  if(!rows.length)say('bot',L('Nothing in the build actually changed — say it a different way and I will try again.',
+                              'Build mein kuch badla nahi — thoda aur clearly bolo, phir karta hoon.'));
+}
+
+async function run(text,image){
+  var x=I.p();if(!x||S.busy)return;
+  S.busy=true;S.stop=false;I.drawProject();
+  say('you',text,image?{image:image}:null);
+  if(!x.brief)x.brief=text;
+  if(image)x.reference=image;
+  /* sticky once it is Hinglish: a client who writes "premium karo" and then
+     "make the hero bigger" has not switched languages, and flipping back on
+     one English sentence made the studio answer in two voices */
+  var lang=U.sniffLang(text);
+  if(lang==='hi')x.lang='hi';else if(!x.lang&&lang)x.lang=lang;
+  save();
+  try{
+    if(S.mode==='chat'){
+      var s=step(L('Reading that…','Padh raha hoon…'));
+      var r=await R.chat(x,text);seal(s);say('bot',U.scrub(r));
+    }else{
+      var s0=step(L('Reading that…','Padh raha hoon…'));
+      var c=await B.classify(x,text);
+      seal(s0);
+      if(c.intent==='normal_chat'&&S.mode!=='plan'){
+        say('bot',U.scrub(c.reply||await R.chat(x,text)));
+      }else if(c.ask.length&&!x.files.length&&S.mode!=='plan'){
+        say('bot',L('Two things before I start:','Shuru karne se pehle:')+'\n'+
+          c.ask.map(function(q){return '· '+q}).join('\n'));
+      }else if(c.intent==='deploy_or_publish'){
+        say('bot',L('Opening the publish box.','Publish box khol raha hoon.'));publish();
+      }else if(!x.files.length||c.intent==='create_website'||c.intent==='create_app'){
+        await build(x,text,false);
+      }else if(c.intent==='visual_upgrade'){
+        await build(x,text,true);
+      }else{
+        await change(x,text,c.intent);
+      }
+    }
+  }catch(e){
+    I.sealOpen();
+    if(e&&e.quiet)say('bot',L('Stopped.','Rok diya.'));
+    else say('bot',L('That did not go through — '+why(e,'finish that'),
+                     'Nahi ho paaya — '+why(e,'yeh poora karne')));
+  }
+  S.busy=false;S.stop=false;U.touch(x);I.drawProject();
+}
+
+/* ---------- publishing ---------- */
+function slugify(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-')
+  .replace(/^-+|-+$/g,'').slice(0,48)}
+function snapshot(x,slug){
+  var ids=[];
+  function pub(t){
+    return String(t==null?'':t).replace(/\/api\/assets\/([A-Za-z0-9_-]{6,64})\/content/g,function(_,id){
+      if(ids.indexOf(id)<0)ids.push(id);
+      return '/api/sites/'+encodeURIComponent(slug)+'/asset/'+encodeURIComponent(id);
+    });
+  }
+  var d=x.direction||{},pal=d.palette||{};
+  var pages=x.files.filter(function(f){return /\.html$/.test(f.path)}).map(function(f){
+    return {page:I.pageTitle(x,f.path),file:f.path,html:pub(R.paint(f.body,x))};
+  });
+  return {kind:'scen-agent-build',v:1,generatedAt:new Date().toISOString(),
+    palette:{accent:pal.accent||'#2f6bff',accent2:pal.ink||'#111'},
+    heroTitle:x.name,heroSubtitle:d.concept||'',components:pages.map(function(p2){return p2.page}),
+    sectionCopy:[],sections:[],ctas:[],
+    accent:pal.accent||'#2f6bff',style:d.concept||'',
+    pages:pages,assetIds:ids,
+    css:pub(R.paint((U.fileNamed(x.files,'styles.css')||{}).body||'',x)),
+    js:(U.fileNamed(x.files,'app.js')||{}).body||''};
+}
+function publish(){
+  var x=I.p();if(!x)return;
+  if(!x.files.length)return toast(L('There is nothing built to publish yet.','Abhi publish karne ko kuch nahi hai.'));
+  var suggested=(x.published&&x.published.slug)||slugify(x.name)||'my-site';
+  $('#modal').innerHTML=
+    '<h3>'+L('Put it online','Live kar do')+'</h3>'+
+    '<p>'+L('It will be served at scen.space/s/&lt;address&gt;. Republishing keeps the same address.',
+            'scen.space/s/&lt;address&gt; par live hoga. Dobara publish karne par address wahi rehta hai.')+'</p>'+
+    '<label class="field"><span>'+L('Address','Address')+'</span>'+
+    '<input id="slug" value="'+esc(suggested)+'" autocomplete="off"></label>'+
+    '<div class="modal-row"><button class="btn" data-act="close">'+L('Cancel','Rehne do')+'</button>'+
+    '<button class="btn blue" data-act="doPublish">'+L('Publish','Publish')+'</button></div>';
+  $('#scrim').classList.add('open');
+  setTimeout(function(){var i=$('#slug');i&&i.focus()},50);
+}
+function doPublish(){
+  var x=I.p(),slug=slugify($('#slug').value);
+  if(slug.length<3)return toast(L('That address is too short.','Address bahut chhota hai.'));
+  var btn=$('#modal').querySelector('[data-act="doPublish"]');
+  btn.disabled=true;btn.textContent=L('Publishing…','Publish ho raha hai…');
+  U.req('/api/publish',{method:'POST',body:{slug:slug,projectName:x.name||slug,site:snapshot(x,slug)}})
+    .then(function(d){
+      x.published={slug:d.slug,url:d.url};save();
+      $('#scrim').classList.remove('open');I.drawProject();
+      say('bot',L('Live at '+d.url,'Live hai: '+d.url));
+      toast(L('Published to '+d.url,'Publish ho gaya: '+d.url),6000);
+    },function(e){
+      btn.disabled=false;btn.textContent=L('Publish','Publish');
+      toast(why(e,'publish this site'),6000);
+    });
+}
+window.__SUPER_ACT={run:run,publish:publish,doPublish:doPublish,snapshot:snapshot,
+  nextSteps:nextSteps,fileRows:fileRows};
+})();
+</script>
+
+<script>
+/* ============================================================
+   Events, menus, and the boot.
+   ============================================================ */
+(function(){
+"use strict";
+var U=window.__SUPER,B=window.__SUPER_BUILD,R=window.__SUPER_RUN,I=window.__SUPER_UI,A=window.__SUPER_ACT;
+var $=U.$,$$=U.$$,esc=U.esc,toast=U.toast,DB=U.DB,save=U.save,why=U.why;
+var S=I.S,L=I.L;
+
+/* ---------- popovers ---------- */
+function pop(anchor,html){
+  var el=$('#pop');
+  el.innerHTML=html;el.classList.add('open');
+  var r=anchor.getBoundingClientRect(),w=el.offsetWidth,h=el.offsetHeight;
+  var left=Math.min(Math.max(8,r.left),innerWidth-w-8);
+  var top=r.bottom+8;
+  if(top+h>innerHeight-8)top=Math.max(8,r.top-h-8);
+  el.style.left=left+'px';el.style.top=top+'px';
+}
+function closePop(){$('#pop').classList.remove('open')}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('#pop')&&!e.target.closest('[data-act]'))closePop();
+});
+function closeModal(){$('#scrim').classList.remove('open')}
+$('#scrim').addEventListener('click',function(e){if(e.target===this)closeModal()});
+addEventListener('keydown',function(e){if(e.key==='Escape'){closePop();closeModal()}});
+
+/* ---------- downloads ---------- */
+function selfContained(x,file){return R.docFor(x,file,false)}
+function download(name,text,type){
+  var blob=new Blob([text],{type:type||'text/html'});
+  var url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);a.remove()},1500);
+}
+
+/* ---------- menus ---------- */
+function modeMenu(btn){
+  var rows=[['build','Build','writes and rebuilds the site'],
+            ['plan','Plan','the direction only, nothing written'],
+            ['chat','Chat','talk it through, no building']];
+  pop(btn,'<h5>'+L('What should this message do','Yeh message kya kare')+'</h5>'+
+    rows.map(function(r){
+      return '<button data-mode="'+r[0]+'">'+esc(r[1])+
+        (S.mode===r[0]?' ·':'')+'<br><small style="color:var(--muted);font-size:11.5px">'+esc(r[2])+'</small></button>';
+    }).join(''));
+}
+function setMode(m){
+  S.mode=m;closePop();
+  var label=m==='build'?'Build':(m==='plan'?'Plan':'Chat');
+  var caret='<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8"><path d="m6 9 6 6 6-6"/></svg>';
+  $('#askMode').innerHTML=label+caret;$('#sayMode').innerHTML=label+caret;
+}
+function projMenu(btn){
+  pop(btn,'<button data-act="rename">'+L('Rename','Naam badlo')+'</button>'+
+    '<button data-act="duplicate">'+L('Duplicate','Copy banao')+'</button>'+
+    '<div class="sep"></div>'+
+    '<button class="bad" data-act="deleteProject">'+L('Delete this project','Project delete karo')+'</button>');
+}
+function moreMenu(btn){
+  var x=I.p(),G=U.GATE;
+  /* the page picker lives in the top bar on a wide screen and has nowhere to
+     be on a phone, so it comes in here instead of disappearing */
+  var pages=(innerWidth<900&&x&&x.files.length)
+    ? '<h5>'+L('Pages','Pages')+'</h5>'+
+      x.files.filter(function(f){return /\.html$/.test(f.path)}).map(function(f){
+        return '<button data-page="'+esc(f.path)+'">'+esc(I.pageTitle(x,f.path))+
+          (x.page===f.path?' ·':'')+'</button>'}).join('')+'<div class="sep"></div>'
+    : '';
+  pop(btn,pages+'<h5>'+L('This session','Yeh session')+'</h5>'+
+    '<div class="row"><span>'+L('Answering','Jawab de raha hai')+'</span><b>'+
+      esc(G.provider?(G.provider+' · '+G.model):'not called yet')+'</b></div>'+
+    '<div class="row"><span>'+L('Model calls','Model calls')+'</span><b>'+G.calls+'</b></div>'+
+    '<div class="row"><span>'+L('Estimated cost','Anumaanit cost')+'</span><b>$'+(G.cost||0).toFixed(4)+'</b></div>'+
+    (G.lastError?'<div class="row"><span>'+L('Last error','Aakhri error')+'</span><b>'+esc(G.lastError)+'</b></div>':'')+
+    '<div class="sep"></div>'+
+    '<button data-act="downloadPage">'+L('Download this page','Yeh page download karo')+'</button>'+
+    '<button data-act="downloadAll">'+L('Download every file','Saari files download karo')+'</button>'+
+    '<div class="sep"></div>'+
+    (innerWidth<900?'<button data-act="review">'+L('Design review','Design review')+'</button>'+
+                    '<button data-act="account">'+L('Account','Account')+'</button>':'')+
+    '<button data-act="clearThread">'+L('Clear the conversation','Chat saaf karo')+'</button>');
+}
+function pageMenu(btn){
+  var x=I.p();if(!x||!x.files.length)return toast(L('Nothing built yet.','Abhi kuch bana nahi.'));
+  pop(btn,'<h5>'+L('Pages','Pages')+'</h5>'+x.files.filter(function(f){return /\.html$/.test(f.path)})
+    .map(function(f){
+      return '<button data-page="'+esc(f.path)+'">'+esc(I.pageTitle(x,f.path))+
+        (x.page===f.path?' ·':'')+'</button>'}).join(''));
+}
+function historyMenu(btn){
+  var x=I.p();if(!x)return;
+  var v=(x.versions||[]).slice().reverse();
+  pop(btn,'<h5>'+L('Version history','Version history')+'</h5>'+
+    (v.length?v.map(function(ver,i){
+      return '<button data-restore="'+(x.versions.length-1-i)+'">'+
+        esc(new Date(ver.at).toLocaleString())+'<br><small style="color:var(--muted);font-size:11.5px">'+
+        esc(ver.label||'')+'</small></button>'}).join('')
+      :'<div class="row"><span>'+L('Nothing saved yet','Abhi kuch save nahi')+'</span></div>'));
+}
+function accountMenu(btn){
+  var s=U.SESSION;
+  pop(btn,'<h5>'+L('Account','Account')+'</h5>'+
+    '<div class="row"><span>'+L('Signed in','Signed in')+'</span><b>'+
+      esc(s.state==='in'?(s.email||s.name):'no')+'</b></div>'+
+    (s.credits!=null&&!isNaN(s.credits)?'<div class="row"><span>Credits</span><b>'+s.credits+'</b></div>':'')+
+    '<div class="sep"></div>'+
+    '<button data-act="openScen">'+L('Open Scen','Scen kholo')+'</button>'+
+    '<button data-act="openStudio">'+L('Open Agent Studio','Agent Studio kholo')+'</button>'+
+    '<button data-act="recheck">'+L('Check the session again','Session dobara check karo')+'</button>');
+}
+
+/* ---------- a design review on demand (§16) ---------- */
+function manualReview(){
+  var x=I.p();if(!x||!x.files.length)return toast(L('Nothing built yet.','Abhi kuch bana nahi.'));
+  if(S.busy)return;
+  S.busy=true;I.drawProject();
+  var s=I.step(L('Reviewing the design…','Design review kar raha hoon…'));
+  R.review(x,$('#preview')).then(function(found){
+    if(!found){I.seal(s,L('The review could not read the page.','Review nahi ho paaya.'))}
+    else{
+      I.seal(s,found.verdict||L('Reviewed','Review ho gaya'));
+      x.qa=found;save();
+      I.say('bot',found.problems.map(function(q){return '· '+q}).join('\n'),{scores:found.scores});
+    }
+  }).catch(function(e){I.seal(s,why(e,'review the page'))})
+    .then(function(){S.busy=false;I.drawProject()});
+}
+
+/* ---------- one click handler ---------- */
+document.addEventListener('click',function(e){
+  var open=e.target.closest('[data-open]');
+  if(open)return I.open(open.getAttribute('data-open'));
+  var star=e.target.closest('[data-star]');
+  if(star){e.stopPropagation();var sx=U.project(star.getAttribute('data-star'));
+    if(sx){sx.starred=!sx.starred;save();I.drawHome()}return}
+  var code=e.target.closest('[data-code]');
+  if(code){S.tab='code';S.codeFile=code.getAttribute('data-code');I.drawProject();return}
+  var nx=e.target.closest('[data-next]');
+  if(nx){$('#say').value=nx.getAttribute('data-next');$('#say').focus();return}
+  var md=e.target.closest('[data-mode]');
+  if(md)return setMode(md.getAttribute('data-mode'));
+  var pg=e.target.closest('[data-page]');
+  if(pg){var x1=I.p();x1.page=pg.getAttribute('data-page');save();closePop();
+    I.drawProject();I.renderPreview();return}
+  var rs=e.target.closest('[data-restore]');
+  if(rs){var x2=I.p(),v=x2.versions[Number(rs.getAttribute('data-restore'))];
+    if(v){x2.files=v.files.map(function(f){return {path:f.path,body:f.body}});save();closePop();
+      I.renderPreview();I.drawCode();I.say('bot',L('Restored the build from '+new Date(v.at).toLocaleString(),
+        new Date(v.at).toLocaleString()+' wala build wapas laga diya'))}
+    return}
+  var tab=e.target.closest('[data-tab]');
+  if(tab){S.tab=tab.getAttribute('data-tab');
+    /* on a phone the two columns cannot share the screen, so asking for the
+       preview has to actually bring it forward */
+    if(innerWidth<900)S.narrow='view';
+    I.drawProject();return}
+  var flt=e.target.closest('[data-filter]');
+  if(flt&&flt.getAttribute('data-act')==='filter'){
+    var f2=flt.getAttribute('data-filter');
+    $$('[data-filter]').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-filter')===f2)});
+    I.setFilter(f2);return}
+
+  var act=e.target.closest('[data-act]');if(!act)return;
+  var a=act.getAttribute('data-act'),x=I.p();
+  if(a==='home')            {e.preventDefault();closePop();I.home()}
+  else if(a==='newProject') {startFresh()}
+  else if(a==='account')    {accountMenu(act)}
+  else if(a==='focusSearch'){$('#search').focus()}
+  else if(a==='openStudio') {open2('/agent-studio.html')}
+  else if(a==='openScen')   {open2('/')}
+  else if(a==='connections'){toast(L('Providers, storage and domains are managed in Scen itself.',
+                                     'Providers, storage aur domains Scen ke andar se manage hote hain.'))}
+  else if(a==='attach')     {$('#filePick').click()}
+  else if(a==='modeMenu')   {modeMenu(act)}
+  else if(a==='startBuild') {startFresh($('#ask').value)}
+  else if(a==='projMenu')   {projMenu(act)}
+  else if(a==='moreMenu')   {moreMenu(act)}
+  else if(a==='pageMenu')   {pageMenu(act)}
+  else if(a==='history')    {historyMenu(act)}
+  else if(a==='toggleChat') {if(innerWidth<900)S.narrow=(S.narrow==='view'?'chat':'view');
+                             else S.chatHidden=!S.chatHidden;
+                             I.drawProject()}
+  else if(a==='device')     {S.device=S.device==='desktop'?'tablet':(S.device==='tablet'?'mobile':'desktop');
+                             I.drawProject();toast(S.device)}
+  else if(a==='refresh')    {I.renderPreview()}
+  else if(a==='openTab')    {if(!x||!x.files.length)return toast(L('Nothing built yet.','Abhi kuch bana nahi.'));
+                             var b=new Blob([selfContained(x,x.page||'index.html')],{type:'text/html'});
+                             open2(URL.createObjectURL(b))}
+  else if(a==='review')     {manualReview()}
+  else if(a==='publish')    {A.publish()}
+  else if(a==='doPublish')  {A.doPublish()}
+  else if(a==='close')      {closeModal()}
+  else if(a==='send')       {send()}
+  else if(a==='stop')       {S.stop=true;toast(L('Stopping after this step.','Is step ke baad ruk jaunga.'))}
+  else if(a==='recheck')    {closePop();I.banner('');I.probe()}
+  else if(a==='rename')     {closePop();rename()}
+  else if(a==='duplicate')  {closePop();duplicate()}
+  else if(a==='deleteProject'){closePop();removeProject()}
+  else if(a==='downloadPage'){closePop();if(x&&x.files.length)
+                              download((x.page||'index.html'),selfContained(x,x.page||'index.html'))}
+  else if(a==='downloadAll'){closePop();if(x)x.files.forEach(function(f){
+                              download(f.path,R.paint(f.body,x),/\.css$/.test(f.path)?'text/css':
+                                (/\.js$/.test(f.path)?'text/javascript':'text/html'))})}
+  else if(a==='clearThread'){closePop();if(x){x.messages=[];save();I.drawThread()}}
+});
+function open2(href){var w=window.open(href,'_blank','noopener');if(!w)toast('The browser blocked that tab.')}
+
+/* a card is a div so it can hold a live frame — so it needs the keyboard back */
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter'&&e.key!==' ')return;
+  var card=e.target.closest&&e.target.closest('.card[data-open]');
+  if(!card)return;
+  e.preventDefault();I.open(card.getAttribute('data-open'));
+});
+
+/* ---------- project lifecycle ---------- */
+function startFresh(seed){
+  var text=String(seed||'').trim();
+  var x=U.newProject(text);
+  /* the switch on the home composer is the answer for the project it starts —
+     turning photography off there and having the first build shoot anyway is
+     the kind of thing that costs 75 credits before anyone notices */
+  x.photos=$('#askPhotos').checked;
+  U.save();
+  I.open(x.id);
+  $('#ask').value='';
+  if(text)A.run(text,S.reference);
+}
+function rename(){
+  var x=I.p();if(!x)return;
+  $('#modal').innerHTML='<h3>'+L('Rename','Naam badlo')+'</h3>'+
+    '<label class="field"><span>'+L('Project name','Project ka naam')+'</span>'+
+    '<input id="newName" value="'+esc(x.name||'')+'"></label>'+
+    '<div class="modal-row"><button class="btn" data-act="close">'+L('Cancel','Rehne do')+'</button>'+
+    '<button class="btn primary" id="saveName">'+L('Save','Save')+'</button></div>';
+  $('#scrim').classList.add('open');
+  $('#saveName').onclick=function(){
+    x.name=$('#newName').value.trim()||x.name;save();closeModal();I.drawProject();I.drawHome();
+  };
+  setTimeout(function(){$('#newName').select()},50);
+}
+function duplicate(){
+  var x=I.p();if(!x)return;
+  var copy=JSON.parse(JSON.stringify(x));
+  copy.id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  copy.name=(x.name||'Untitled')+' copy';copy.published=null;copy.createdAt=copy.updatedAt=Date.now();
+  DB.projects.unshift(copy);save();I.open(copy.id);
+  toast(L('Duplicated.','Copy ban gayi.'));
+}
+function removeProject(){
+  var x=I.p();if(!x)return;
+  $('#modal').innerHTML='<h3>'+L('Delete this project?','Yeh project delete karein?')+'</h3>'+
+    '<p>'+L('The build, the conversation and the version history go with it. A published site stays live.',
+            'Build, chat aur history sab chali jayegi. Published site live rahegi.')+'</p>'+
+    '<div class="modal-row"><button class="btn" data-act="close">'+L('Keep it','Rehne do')+'</button>'+
+    '<button class="btn" id="reallyDelete" style="background:var(--rose);color:#fff;border-color:var(--rose)">'+
+    L('Delete','Delete')+'</button></div>';
+  $('#scrim').classList.add('open');
+  $('#reallyDelete').onclick=function(){
+    DB.projects=DB.projects.filter(function(q){return q.id!==x.id});
+    DB.activeId='';save();closeModal();I.home();
+  };
+}
+
+/* ---------- the composer ---------- */
+function grow(t){t.style.height='auto';t.style.height=Math.min(t.scrollHeight,190)+'px'}
+function send(){
+  var t=$('#say'),text=t.value.trim();
+  if(!text)return;
+  if(S.busy)return toast(L('It is still working — stop it first.','Abhi chal raha hai — pehle rok do.'));
+  t.value='';grow(t);
+  A.run(text,S.reference);
+  S.reference=null;
+}
+['#say','#ask'].forEach(function(sel){
+  var t=$(sel);
+  t.addEventListener('input',function(){grow(t)});
+  t.addEventListener('keydown',function(e){
+    if(e.key==='Enter'&&!e.shiftKey){
+      e.preventDefault();
+      if(sel==='#say')send();else startFresh(t.value);
+    }
+  });
+});
+$('#search').addEventListener('input',function(){I.setQuery(this.value)});
+$('#askPhotos').addEventListener('change',function(){var x=I.p();if(x){x.photos=this.checked;save()}});
+$('#sayPhotos').addEventListener('change',function(){var x=I.p();if(x){x.photos=this.checked;save()}});
+
+$('#filePick').addEventListener('change',function(){
+  var f=this.files&&this.files[0];if(!f)return;
+  if(f.size>4.5e6)return toast(L('That image is too large — under 4MB please.','Image bahut badi hai — 4MB se kam.'));
+  var r=new FileReader();
+  r.onload=function(){
+    S.reference=String(r.result||'');
+    toast(L('Reference attached — it will steer the photography.',
+            'Reference lag gaya — photos isi hisaab se banengi.'));
+  };
+  r.readAsDataURL(f);
+  this.value='';
+});
+
+/* ---------- boot ---------- */
+U.load();
+setMode('build');
+I.probe();
+I.drawHome();
+var hash=/^#p\/(.+)$/.exec(location.hash||'');
+if(hash&&U.project(hash[1]))I.open(hash[1]);
+})();
+</script>
+</body>
+</html>

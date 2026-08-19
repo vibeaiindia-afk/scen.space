@@ -5,7 +5,7 @@
       "destination": "https://scen-backend.vercel.app/api/:path*"
     },
     {
-      "source": "/((?!api/|assets/|prompt-library.json|agent-studio).*)",
+      "source": "/((?!api/|assets/|prompt-library.json|agent-studio|superaiagent).*)",
       "destination": "/index.html"
     }
   ],

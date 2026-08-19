@@ -177,6 +177,9 @@ button.pill:hover{border-color:rgba(255,255,255,.28);color:#fff}
 .fileline b{color:#8f8f9b;font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;flex:0 0 58px}
 .fileline code{color:#cfcfd6;background:none;border:0;padding:0;font-size:12.5px}
 .fileline.more{color:#6a6a76;justify-content:center}
+.planblock{margin-top:12px;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:baseline}
+.planblock b{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#6f6f7b;font-weight:600}
+.planblock span{font-size:13.2px;color:#c6c6cf}
 .nextlist{margin-top:14px}
 .nextlist>b{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#6f6f7b;margin-bottom:7px}
 .nextline{display:flex;gap:9px;align-items:baseline;font-size:13.2px;color:#c6c6cf;padding:3px 0}
@@ -5354,13 +5357,41 @@ function planData(){
   return{pages:pages,sections:total,files:files,credits:credits};
 }
 
-/* One sentence saying what is about to happen, in the order it happens. */
+/* The first reply: what I understood, what I am assuming, and what gets built.
+
+   One line was too little. The client showed the shape they want from the tool
+   they use — the business read back in their own words, the decisions taken
+   without asking listed plainly, then the pages. Nothing here is a question;
+   every one of these is changed by saying so. */
 function intentLine(b){
-  var what=b.kind==='app'?L('app','app'):b.kind==='both'?L('site and app','site aur app'):L('site','site');
-  return L("I'll build <b>"+esc(b.name)+"</b> — your "+what+". Designing the interface first "+
-           "(palette, type, layout), then writing the pages. The preview fills in as it goes.",
-           "<b>"+esc(b.name)+"</b> bana raha hoon — aapki "+what+". Pehle interface design karunga "+
-           "(colour, type, layout), phir pages likhunga. Preview saath-saath bharega.");
+  var P=INDUSTRIES[b.industry]||INDUSTRIES.other;
+  /* INDUSTRIES.other is labelled "Something else" — fine in a menu, wrong in
+     the first sentence a client reads about their own business. When the trade
+     is not one we know, their own words describe it. */
+  var trade=(b.industryOther||'').toLowerCase();
+  if(!trade&&b.industry!=='other')trade=String(P.l||'').toLowerCase();
+  /* and when the trade is genuinely unknown, the sentence simply does not
+     claim one — inventing a description from the pack is how "a small team
+     doing careful work" ended up standing in for a printing business */
+  var goal={sell:L('selling','bechne'),book:L('taking bookings','booking lene'),
+            lead:L('bringing enquiries','enquiry laane'),show:L('showing the work','kaam dikhane'),
+            signup:L('signing people up','signup karane')}[b.goal]||L('bringing enquiries','enquiry laane');
+  var pages=(b.pages||[]).slice(0,6).join(' · ');
+  var mods=(b.features||[]).map(function(f){return FEATURES[f]&&FEATURES[f].l}).filter(Boolean).slice(0,4);
+
+  var head=trade
+    ?L('<b>'+esc(b.name)+'</b> — a '+esc(trade)+' site, built for '+goal+'.',
+       '<b>'+esc(b.name)+'</b> — '+esc(trade)+' ki site, '+goal+' ke liye.')
+    :L('<b>'+esc(b.name)+'</b> — built for '+goal+'.',
+       '<b>'+esc(b.name)+'</b> — '+goal+' ke liye.');
+  var took=L('Taken without asking, all of it changeable by saying so: the name, the pages and the look.',
+             'Bina poochhe ye maan liya, aur ye sab bolne par badal jayega: naam, pages aur look.');
+  var plan='<div class="planblock"><b>'+L('Pages','Pages')+'</b><span>'+esc(pages)+'</span>'+
+    (mods.length?'<b>'+L('Modules','Modules')+'</b><span>'+esc(mods.join(' · '))+'</span>':'')+
+    '<b>'+L('Then','Phir')+'</b><span>'+
+      L('the look, the words, the photographs, the code — in that order','look, words, photos, code — isi kram mein')+
+    '</span></div>';
+  return head+'<br/><br/>'+took+plan;
 }
 
 /* The client's first sentence, turned into a build without asking anything.
@@ -5714,7 +5745,11 @@ function startBuild(){
     var st=steps[i],row=document.createElement('div');
     row.className='step run';
     row.innerHTML='<span class="mark"></span><span>'+esc(st.l)+'<span class="sub">'+esc(st.s)+'</span></span><span class="ms"></span>';
-    list.appendChild(row);list.scrollTop=list.scrollHeight;jumpChat();
+    /* Some steps do their work without narrating it — the art direction and
+       the check that stops a build repeating the last one's shape. Both are
+       decisions, not progress, and neither gives the client anything to act
+       on mid-build. */
+    if(!st.quiet){list.appendChild(row);list.scrollTop=list.scrollHeight;jumpChat()}
     var a=Date.now();
 
     function finish(sub){
@@ -5969,7 +6004,7 @@ function startBuild(){
         (S.qaVerdict?'<br/><br/>'+esc(String(S.qaVerdict).slice(0,180)):'')+
         (signedIn()?'':'<br/><br/>'+L('You are not signed in, so saving and publishing are off — the build itself is finished.',
                                       'Aap signed in nahi ho, isliye save aur publish band hain — build to poori ho chuki hai.'))+
-        autoImages());
+        autoImages()+fileRows(gen.files.map(function(f){return ['Created',f.path]}))+nextItems());
       nextChips();
       $('#prevBadge').classList.remove('hidden');
       drainQueued();              /* §37 — whatever was said while this ran */

@@ -1175,6 +1175,15 @@ function heroClaim(b){
 }
 /* The line under the headline used to be the same sentence again, because both
    came from the one line the brief had. */
+/* Was this field written for this business, or is it the pack's filler?
+   With no gateway everything is filler and the page still has to exist — the
+   question only bites once a model has answered and left gaps. */
+function written(b,key){
+  var P=pack(b);
+  if(!P.__ai)return true;                 /* no live copy at all: the pack is all there is */
+  return !P.__src||P.__src[key]==='ai';
+}
+
 /* The industry packs exist so a build without a gateway still reads like
    English. They are not copy for anyone's site, so where a written line exists
    the canned one never wins. */
@@ -1953,6 +1962,9 @@ over,h1,leadP,cta,proofRow,'    </div>',
        size, no section: an empty gesture is worse than the whitespace it
        replaces. */
     var P=pack(b),line=P.statement||'';
+    /* the model answered and left both the statement and the one-liner out;
+       a stock sentence at headline size is the loudest thing on the page */
+    if(!line&&!written(b,'pitch'))return '';
     if(!line){
       var sents=String(saneLine(b)||'').split(/(?<=[.!?])\s+/).filter(Boolean);
       line=sents[1]||(P.services&&P.services[0]&&P.services[0][1])||'';
@@ -3027,22 +3039,77 @@ function copyPrompt(b,hist){
   '"faq":[["question","answer"],["question","answer"],["question","answer"]],'+
   '"cta":["heading for the closing block","one supporting sentence","button label under 4 words"]}';
 }
+/* Which of these the model actually wrote.
+
+   Every field falls back to the industry pack when the model leaves it out,
+   and the pack exists so a build with no gateway still reads like English —
+   it is not copy for anyone's business. Printed without a mark, a short answer
+   from the model becomes a page that is half stock and looks written. So each
+   field records where it came from, the missing ones are asked for again, and
+   whatever is still stock afterwards is kept off the page rather than dressed
+   up as the client's own words. */
 function coerceCopy(o,b){
-  var base=INDUSTRIES[b.industry]||INDUSTRIES.other,out={};
+  var base=INDUSTRIES[b.industry]||INDUSTRIES.other,out={},src={};
   Object.keys(base).forEach(function(k){out[k]=base[k]});
-  out.kicker=str(o.kicker,base.kicker);
-  out.headline=str(o.headline,'');
-  out.statement=str(o.statement,'');
-  out.pitch=str(o.pitch,base.pitch);
-  out.services=pairList(o.services,3,base.services);
-  out.gallery=strList(o.gallery,4,base.gallery);
-  out.stats=pairList(o.stats,3,base.stats);
-  out.quote=strList(o.quote,2,base.quote);
-  out.faq=pairList(o.faq,3,base.faq);
-  out.cta=strList(o.cta,3,base.cta);
-  out.__ai=true;
+  function take(k,v,fallback){
+    var got=(v!=null&&v!=='')&&!(Array.isArray(v)&&!v.length);
+    src[k]=got?'ai':'pack';
+    out[k]=got?v:fallback;
+  }
+  take('kicker',str(o.kicker,''),base.kicker);
+  take('headline',str(o.headline,''),'');
+  take('statement',str(o.statement,''),'');
+  take('pitch',str(o.pitch,''),base.pitch);
+  take('services',o.services&&o.services.length?pairList(o.services,3,base.services):null,base.services);
+  take('gallery',o.gallery&&o.gallery.length?strList(o.gallery,4,base.gallery):null,base.gallery);
+  take('stats',o.stats&&o.stats.length?pairList(o.stats,3,base.stats):null,base.stats);
+  take('quote',o.quote&&o.quote.length?strList(o.quote,2,base.quote):null,base.quote);
+  take('faq',o.faq&&o.faq.length?pairList(o.faq,3,base.faq):null,base.faq);
+  take('cta',o.cta&&o.cta.length?strList(o.cta,3,base.cta):null,base.cta);
+  out.__ai=true;out.__src=src;
   return out;
 }
+/* The fields a page cannot fake its way through. */
+var COPY_MUST=['headline','pitch','services','cta','gallery'];
+function missingCopy(pack){
+  var s=(pack&&pack.__src)||{},out=[];
+  COPY_MUST.forEach(function(k){if(s[k]!=='ai')out.push(k)});
+  return out;
+}
+/* One short second ask for exactly what came back missing. Cheaper and far
+   more reliable than making the first prompt longer: a model that dropped
+   three fields under load will usually return three fields on their own. */
+function repairCopy(b,pack,hist){
+  var gaps=missingCopy(pack);
+  if(!gaps.length)return Promise.resolve(pack);
+  var shapes={
+    headline:'"headline":"the line across the top of the page. A claim about what this is, not the company name. Under 8 words."',
+    pitch:'"pitch":"one sentence under 22 words that sits below the headline"',
+    services:'"services":[["title","one or two sentences"],["title","..."],["title","..."]]',
+    cta:'"cta":["heading for the closing block","one supporting sentence","button label under 4 words"]',
+    gallery:'"gallery":["short image subject","short image subject","short image subject","short image subject"]'
+  };
+  var ask='Write the missing parts of this business\u2019s copy.\n\nBRIEF:\n'+briefSummary(b)+
+    '\n\nReturn one JSON object with exactly these keys and nothing else:\n{'+
+    gaps.map(function(k){return shapes[k]}).filter(Boolean).join(',\n ')+'}';
+  return post('chat',ask,VOICE,{maxOutputTokens:700,temperature:.75})
+    .then(function(d){
+      record(d,0);
+      var o=jsonFrom(d.text);if(!o)return pack;
+      gaps.forEach(function(k){
+        var v=o[k];
+        if(v==null||v===''||(Array.isArray(v)&&!v.length))return;
+        if(k==='services')pack.services=pairList(v,3,pack.services);
+        else if(k==='cta')pack.cta=strList(v,3,pack.cta);
+        else if(k==='gallery')pack.gallery=strList(v,4,pack.gallery);
+        else pack[k]=str(v,pack[k]);
+        pack.__src[k]='ai';
+      });
+      return pack;
+    })
+    .catch(function(){return pack});
+}
+
 function writeCopy(b,hist){
   var t0=Date.now();
   /* This was cut to 950 while a slow primary was timing out. Racing solved the
@@ -3056,7 +3123,11 @@ function writeCopy(b,hist){
       record(d,Date.now()-t0);
       var o=jsonFrom(d.text);
       if(!o)throw Object.assign(new Error('The model did not return usable JSON'),{status:502});
-      return{copy:coerceCopy(o,b),provider:d.provider,model:d.model,ms:Date.now()-t0};
+      var pack=coerceCopy(o,b);
+      return repairCopy(b,pack,hist).then(function(fixed){
+        return{copy:fixed,provider:d.provider,model:d.model,ms:Date.now()-t0,
+               gaps:missingCopy(fixed)};
+      });
     })
     .catch(function(e){failed(e);return null});
 }

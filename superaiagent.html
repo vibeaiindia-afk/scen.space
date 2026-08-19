@@ -733,19 +733,39 @@ function why(e,noun){
 /* One call. The standing instruction goes in `system`; the step's own task
    goes in `input`. Nothing else ever restates the rules. */
 var GATE={provider:'',model:'',calls:0,cost:0,lastError:''};
+/* Each provider gets 45 seconds (SCEN_AI_TIMEOUT_MS), and the gateway races two
+   of them. A long answer simply cannot arrive in that window — a full stylesheet
+   lost the race on both providers and ended the build with "AI provider timeout".
+
+   A timeout is not a refusal: nothing was wrong with the request except its
+   size. So it is asked again, once, for a shorter answer. Anything else — a bad
+   key, no credits, a signed-out session — is fatal on the first try, because
+   asking again would say the same thing. */
 function ask(feature,input,opts){
   opts=opts||{};
-  return req('/api/ai/generate',{method:'POST',body:{
-    feature:feature,input:input,system:SUPER_PROMPT,
-    maxOutputTokens:opts.max||4096,
-    temperature:opts.temp==null?0.75:opts.temp
-  }}).then(function(d){
-    GATE.calls++;GATE.lastError='';
-    if(d.provider)GATE.provider=d.provider;
-    if(d.model)GATE.model=d.model;
-    var u=d.usage||{};GATE.cost+=Number(u.estimatedCostUsd||0);
-    return String(d.text||'');
-  },function(e){GATE.lastError=why(e,'reach the model');throw e});
+  var max=opts.max||4096,tries=opts.tries==null?2:opts.tries;
+  function attempt(n){
+    var thisMax=n===0?max:Math.max(700,Math.round(max*0.55));
+    var body=n===0?input:(input+
+      '\n\nYou ran out of time on the first attempt. Answer again, shorter and '+
+      'more directly, in well under half the length. Same format, same rules.');
+    return req('/api/ai/generate',{method:'POST',body:{
+      feature:feature,input:body,system:SUPER_PROMPT,
+      maxOutputTokens:thisMax,
+      temperature:opts.temp==null?0.75:opts.temp
+    }}).then(function(d){
+      GATE.calls++;GATE.lastError='';
+      if(d.provider)GATE.provider=d.provider;
+      if(d.model)GATE.model=d.model;
+      var u=d.usage||{};GATE.cost+=Number(u.estimatedCostUsd||0);
+      return String(d.text||'');
+    },function(e){
+      var slow=e&&(e.code==='timeout'||e.status===504||/timed? ?out/i.test(String(e.message||'')));
+      if(slow&&n+1<tries)return attempt(n+1);
+      GATE.lastError=why(e,'reach the model');throw e;
+    });
+  }
+  return attempt(0);
 }
 
 /* ---------- reading what the model sent back ---------- */
@@ -990,18 +1010,73 @@ function writeBase(p){
     '- .site-nav must work on a phone: .nav-toggle is visible under 860px, .links collapse, and',
     '  html[data-nav-open] .links opens them. Targets at least 44px (§12).',
     '- No @import. Do not restate a CSS reset — one is already prepended. No !important beyond',
-    '  the phone navigation. Under 6000 characters.',
+    '  the phone navigation. No comments. Be terse: every provider here has 45 seconds and a',
+    '  long answer never arrives. Under 3000 characters.',
     '',
     'Answer with the file and nothing else:',
     '@@FILE styles.css',
     '...css...',
     '@@END'
   ].join('\n');
-  return ask('code',input,{max:3200,temp:.5}).then(function(t){
+  return ask('code',input,{max:2000,temp:.5}).then(function(t){
     var f=parseFiles(t)[0];
     if(!f||!/\{/.test(f.body))throw Object.assign(new Error('The stylesheet came back unusable'),{status:502});
     return KERNEL+'\n\n/* ---------- '+(d.name||'brand')+' ---------- */\n'+f.body;
   });
+}
+
+/* The same stylesheet, written here from the direction the model already gave.
+
+   §41 applies to more than photographs: a step that cannot reach the gateway
+   must not end the build. The palette, the two font stacks and the type scale
+   are the model's own decisions — this only sets them, so what comes out is
+   plain rather than generic, and the pages still bring their own art direction. */
+function localBase(d){
+  d=d||{};
+  var p=d.palette||{},t=d.type||{};
+  function c(k,fb){return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(p[k]||''))?p[k]:fb}
+  var bg=c('bg','#0e0e11'),surface=c('surface','#17171c'),ink=c('ink','#f4f4f0'),
+      muted=c('muted','#9b9ba6'),line=c('line','rgba(255,255,255,.12)'),
+      accent=c('accent','#c9a227'),accentInk=c('accentInk','#0e0e11');
+  var display=String(t.display||'Georgia,"Times New Roman",serif').slice(0,160);
+  var bodyFont=String(t.body||'system-ui,-apple-system,"Segoe UI",sans-serif').slice(0,160);
+  return KERNEL+'\n\n/* ---------- '+(d.name||'brand')+' ---------- */\n'+[
+  ':root{--bg:'+bg+';--surface:'+surface+';--ink:'+ink+';--muted:'+muted+';--line:'+line+
+    ';--accent:'+accent+';--accent-ink:'+accentInk+';--wrap:1180px;--gut:clamp(20px,5vw,64px)}',
+  'body{background:var(--bg);color:var(--ink);font-family:'+bodyFont+';font-size:17px;line-height:1.6}',
+  '.wrap{width:min(var(--wrap),100%);margin-inline:auto;padding-inline:var(--gut)}',
+  '.eyebrow{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0 0 1rem}',
+  '.display{font-family:'+display+';font-weight:700;font-size:clamp(2.6rem,7.4vw,5.6rem);line-height:.98;letter-spacing:-.03em;margin:0 0 1.4rem}',
+  '.h2{font-family:'+display+';font-weight:700;font-size:clamp(1.7rem,3.4vw,2.9rem);line-height:1.08;letter-spacing:-.02em;margin:0 0 1rem}',
+  '.lead{font-size:clamp(1.1rem,1.6vw,1.34rem);line-height:1.5;color:var(--ink);max-width:56ch;margin:0 0 1.5rem}',
+  '.meta{font-size:.82rem;color:var(--muted);letter-spacing:.02em}',
+  'a{color:inherit}',
+  '.btn{display:inline-flex;align-items:center;gap:.6em;min-height:48px;padding:0 1.5rem;border-radius:999px;',
+  '  border:1px solid var(--line);text-decoration:none;font-size:.95rem;font-weight:500;transition:.18s ease}',
+  '.btn--primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}',
+  '.btn--primary:hover{filter:brightness(1.08)}',
+  '.btn--ghost{background:transparent}',
+  '.btn--ghost:hover{border-color:var(--ink)}',
+  '.site-nav{display:flex;align-items:center;gap:2rem;padding:1.25rem var(--gut);',
+  '  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;background:var(--bg)}',
+  '.site-nav .brand{font-family:'+display+';font-size:1.15rem;font-weight:700;letter-spacing:-.01em}',
+  '.site-nav .links{display:flex;gap:1.6rem;margin-left:auto;font-size:.95rem}',
+  '.site-nav .links a{text-decoration:none;color:var(--muted);transition:.16s}',
+  '.site-nav .links a:hover,.site-nav .links a[aria-current]{color:var(--ink)}',
+  '.site-nav .cta{margin-left:.4rem}',
+  '.nav-toggle{display:none;margin-left:auto;min-width:48px;min-height:48px;background:none;',
+  '  border:1px solid var(--line);border-radius:12px;color:inherit;font:inherit}',
+  '@media (max-width:860px){',
+  '  .site-nav{flex-wrap:wrap}',
+  '  .site-nav .links{display:none;order:3;width:100%;flex-direction:column;gap:.2rem;padding-top:1rem}',
+  '  html[data-nav-open] .site-nav .links{display:flex}',
+  '  html[data-nav-open] .site-nav .links a{padding:.7rem 0;font-size:1.05rem}',
+  '  .nav-toggle{display:block}',
+  '  .site-nav .cta{display:none}',
+  '}',
+  '.site-foot{border-top:1px solid var(--line);padding:3.5rem var(--gut);color:var(--muted);font-size:.9rem}',
+  'section{padding-block:clamp(3.5rem,9vw,8rem)}'
+  ].join('\n');
 }
 
 /* ---------- 4. one page at a time (§7, §9, §12) ---------- */
@@ -1035,7 +1110,8 @@ function writePage(p,pg,index){
     '- Vary the section shapes down the page (§9). Real copy about this business — never lorem ipsum,',
     '  never "Your text here", never a dead <a href="#">.',
     '- Put data-reveal on the elements that should arrive as you scroll, not on everything.',
-    '- Under 9000 characters of HTML.',
+    '- Under 6000 characters of HTML. Every provider here has 45 seconds and a long answer',
+    '  never arrives at all, so write tightly — fewer, stronger sections beat more of them.',
     '',
     'Then write only the CSS for THIS page\'s own sections, prefixed so it cannot collide,',
     'including its phone layout. Do not restate anything the shared stylesheet already has.',
@@ -1047,7 +1123,7 @@ function writePage(p,pg,index){
     '...css...',
     '@@END'
   ].join('\n');
-  return ask('code',input,{max:4096,temp:.8}).then(function(t){
+  return ask('code',input,{max:3200,temp:.8}).then(function(t){
     var files=parseFiles(t);
     var html=null,css='';
     files.forEach(function(f){
@@ -1083,7 +1159,7 @@ function fixPage(html,p){
   }
   return t;
 }
-window.__SUPER_BUILD={CONTRACT:CONTRACT,KERNEL:KERNEL,APPJS:APPJS,langLine:langLine,brand:brand,
+window.__SUPER_BUILD={CONTRACT:CONTRACT,KERNEL:KERNEL,APPJS:APPJS,langLine:langLine,brand:brand,localBase:localBase,
   classify:classify,direct:direct,writeBase:writeBase,writePage:writePage,fixPage:fixPage};
 })();
 </script>
@@ -1127,7 +1203,11 @@ function photograph(spec,dir,reference){
   var refs=[];
   var m=/^data:(image\/[a-z+]+);base64,(.+)$/i.exec(String(reference||''));
   if(m)refs.push({mimeType:m[1],dataBase64:m[2]});
-  return req('/api/image/generate',{method:'POST',body:{
+  /* The image route is allowed 180 seconds and the client was giving up at 115.
+     A picture that took two minutes was reported as a timeout after the server
+     had already generated it and committed the credits — the client saw a
+     failure and paid for it anyway. The client now outlasts the server. */
+  return req('/api/image/generate',{timeout:175000,method:'POST',body:{
     mode:refs.length?'edit':'generate',prompt:prompt,aspectRatio:spec.ratio,size:'1K',quality:'medium',
     format:'webp',count:1,references:refs}}).then(function(d){
     var img=(d.images||[])[0];
@@ -1352,7 +1432,7 @@ function editFiles(p,text,intent){
     '@@NOTE one or two sentences to the client about what you changed and why.',
     B.langLine(p)
   ].join('\n');
-  return ask('code',input,{max:4096,temp:.6}).then(function(t){
+  return ask('code',input,{max:3400,temp:.6}).then(function(t){
     var note='';
     var m=/@@NOTE[ \t]*([\s\S]*)$/.exec(t);
     if(m){note=m[1].trim();t=t.slice(0,m.index)}
@@ -1619,6 +1699,12 @@ function seal(m,text){
   m.done=true;if(text)m.text=text;
   save();drawThread();
 }
+/* A step that runs for minutes needs to say where it has got to. Four
+   photographs behind one unchanging line is indistinguishable from a hang. */
+function retitle(m,text){
+  if(!m||m.done)return;
+  m.text=String(text||'');save();drawThread();
+}
 /* A run that throws used to leave its last step shimmering for the rest of the
    session, so the studio looked like it was still working on something it had
    already given up on. */
@@ -1632,7 +1718,8 @@ function sealOpen(){
 }
 window.__SUPER_UI={S:S,L:L,p:p,say:say,step:step,seal:seal,drawThread:drawThread,drawProject:drawProject,
   drawHome:drawHome,drawCode:drawCode,renderPreview:renderPreview,open:open,home:home,probe:probe,
-  banner:banner,pageTitle:pageTitle,setFilter:setFilter,setQuery:setQuery,sealOpen:sealOpen};
+  banner:banner,pageTitle:pageTitle,setFilter:setFilter,setQuery:setQuery,
+  sealOpen:sealOpen,retitle:retitle};
 })();
 </script>
 
@@ -1680,21 +1767,40 @@ function nextSteps(x){
 async function photographs(x,on){
   var planned=(x.direction.images||[]);
   if(!on||!planned.length)return;
-  var s=step(L('Photographing the set — '+planned.length+' pictures, 25 credits each…',
-               planned.length+' photos bana raha hoon — 25 credits per picture…'));
+  var have=x.images||(x.images={});
+  /* A picture costs 25 credits and it is already in hand. The first build here
+     shot four, the stylesheet step then failed, and running it again would have
+     shot the same four a second time — a hundred credits for nothing. Only what
+     is genuinely missing is ordered. */
+  var todo=planned.filter(function(im){return !(have[im.id]&&have[im.id].url)});
+  var kept=planned.length-todo.length;
+  if(!todo.length){
+    seal(step(L('Reusing the '+kept+' pictures already shot — no new credits',
+                'Pehle se bani '+kept+' photos hi use kar raha hoon — naye credits nahi')));
+    return;
+  }
+  var s=step(L('Photographing '+todo.length+' pictures — 25 credits each…',
+               todo.length+' photos bana raha hoon — 25 credits per picture…'));
   var made=0,failed='';
-  for(var i=0;i<planned.length;i++){
+  for(var i=0;i<todo.length;i++){
     stopped();
+    I.retitle(s,L('Photographing '+(i+1)+' of '+todo.length+' — 25 credits each…',
+                  todo.length+' mein se '+(i+1)+' photo — 25 credits each…'));
     try{
-      var got=await R.photograph(planned[i],x.direction.imageDirection,x.reference);
-      x.images[planned[i].id]=got;made++;save();
+      var got=await R.photograph(todo[i],x.direction.imageDirection,x.reference);
+      have[todo[i].id]=got;made++;save();
+      /* each picture is kept the moment it lands, so a failure on the fourth
+         does not throw away the three that already cost credits */
+      I.renderPreview();
     }catch(e){failed=why(e,'generate the photography');break}
   }
-  seal(s,made===planned.length
-    ? L('Photographed all '+made+' pictures','Saari '+made+' photos ban gayi')
-    : (made
-        ? L(made+' of '+planned.length+' photographed — '+failed,
-            planned.length+' mein se '+made+' bani — '+failed)
+  var total=made+kept;
+  seal(s,made===todo.length
+    ? L('Photographed all '+total+' pictures'+(kept?' ('+kept+' reused)':''),
+        'Saari '+total+' photos taiyaar'+(kept?' ('+kept+' purani)':''))
+    : (total
+        ? L(total+' of '+planned.length+' photographed — '+failed,
+            planned.length+' mein se '+total+' bani — '+failed)
         : L('No photography this time — '+failed+' The layout carries itself instead.',
             'Photos nahi ban paayi — '+failed+' Layout khud sambhal raha hai.')));
 }
@@ -1719,8 +1825,20 @@ async function build(x,text,upgrade){
   stopped();
 
   var s2=step(L('Building the design system…','Design system bana raha hoon…'));
-  var css=await B.writeBase(x);
-  seal(s2);
+  var css;
+  try{
+    css=await B.writeBase(x);
+    seal(s2);
+  }catch(e){
+    if(e&&e.quiet)throw e;
+    /* One step losing the race must not cost the build — and the photographs
+       above it have already been paid for. The direction's own palette and type
+       are set here instead, and the step says so rather than claiming the model
+       wrote it (§23). */
+    css=B.localBase(x.direction);
+    seal(s2,L('The model ran out of time on the stylesheet — set your palette and type directly instead',
+              'Stylesheet par model ka time khatam ho gaya — aapka palette aur type maine khud laga diya'));
+  }
 
   var pages=x.direction.pages;
   var written=[];

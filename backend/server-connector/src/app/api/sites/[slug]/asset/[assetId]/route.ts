@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/data/db';
-import { signGet } from '@/lib/storage/s3';
+import { getObjectBody } from '@/lib/storage/s3';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,10 +76,19 @@ export async function GET(
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
-    const url = await signGet(asset.objectKey, asset.originalName || undefined);
-    return NextResponse.redirect(url, {
-      status: 307,
-      headers: { 'Cache-Control': 'public, max-age=300' },
+    /* A redirect to a presigned URL used to be returned here, but this route is
+       only ever reached through the scen.space -> scen-backend cross-project
+       rewrite, and that redirect-through-a-rewrite combination makes Vercel's
+       own routing report INFINITE_LOOP_DETECTED (508) before this function
+       runs at all — the same failure found on /api/assets/[id]/content.
+       Streaming the bytes back directly avoids the redirect entirely. */
+    const o = await getObjectBody(asset.objectKey);
+    return new NextResponse(o.stream as any, {
+      headers: {
+        'Content-Type': o.contentType,
+        ...(o.contentLength != null ? { 'Content-Length': String(o.contentLength) } : {}),
+        'Cache-Control': 'public, max-age=300',
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Asset lookup failed';

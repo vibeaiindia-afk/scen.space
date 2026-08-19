@@ -988,7 +988,12 @@ function direct(p,text,mode){
     '- Colours must be real hex. The palette carries the brand, not a default blue.',
     langLine(p)
   ].filter(Boolean).join('\n');
-  return ask('planning',input,{max:2600,temp:.85}).then(function(t){
+  /* 2600 tokens was not enough room for 2-4 richly art-directed image prompts
+     plus 3-6 pages of sections — the model ran past the cap and the JSON came
+     back cut off mid-object, which reads as "unreadable" even though nothing
+     was actually wrong with the request. 3900 leaves ~200 tokens of headroom
+     under the gateway's 4096 ceiling (SCEN_AI_MAX_OUTPUT_TOKENS). */
+  return ask('planning',input,{max:3900,temp:.85}).then(function(t){
     var d=jsonFrom(t);
     if(!d||!Array.isArray(d.pages)||!d.pages.length)
       throw Object.assign(new Error('The direction came back unreadable'),{status:502});

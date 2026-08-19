@@ -67,4 +67,19 @@
     }catch(e){}
     return base.apply(this,arguments);
   };
+
+  /* The very first script on the page (01-inline.js) detects a /s/:slug URL
+     and calls showPublishedSite(slug) synchronously, before this — the last
+     script on the page — has even loaded, let alone wrapped the function.
+     So a scen-agent-build site always rendered through the pre-existing base
+     renderer instead, which only understands the older single-page preset
+     shape: it read heroTitle/heroSubtitle (present in both shapes) and
+     silently ignored `pages`, so every multi-page agent build painted a bare
+     hero with no real content, nav, or images — while still reporting
+     success, so nothing ever surfaced this as an error. Re-running the now
+     fully-wrapped function once this script has loaded catches that case and
+     replaces it with the real site; for every other kind of published site
+     this just repeats the same render the base already did. */
+  var m=(location.pathname.match(/^\/s\/([a-z0-9-]{3,48})\/?$/i)||[]);
+  if(m[1])window.showPublishedSite(m[1]);
 })();

@@ -48,7 +48,7 @@ See `backend/server-connector/`:
 - Video generation gateway
 - PostgreSQL-compatible database
 - S3-compatible storage
-- Cashfree + Stripe + Razorpay billing/credits architecture
+- Dodo Payments + Stripe + Razorpay billing/credits architecture
 - Authentication + Google OIDC + sessions
 - Transactional email adapters/templates
 - Vercel integration architecture

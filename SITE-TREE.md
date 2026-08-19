@@ -136,7 +136,7 @@ __ADMIN_ROUTES = 15 staff-only routes                      index.html:1130310
 │   └── each card: price · credits/mo + meter · "~N sites/mo, ~N ZIP exports" ·
 │       feature list · Subscribe → data-action="choosePlan"
 │       └── no session → toast "Sign in to subscribe" → Auth
-│           with session → Cashfree subscribe modal
+│           with session → Dodo Payments subscribe modal
 │
 └── footer
     ├── logo + "3D-native AI website creation system."
@@ -622,7 +622,7 @@ A separate Vercel project (Next.js App Router), reached only through the
 ├── video/jobs · jobs/[id] · [id]/cancel · [id]/content · [id]/store · from-asset
 ├── billing/
 │   ├── checkout · credits · invoices · portal
-│   └── webhooks/stripe · webhooks/razorpay · webhooks/cashfree
+│   └── webhooks/stripe · webhooks/razorpay · webhooks/dodo
 ├── store/products · store/checkout
 ├── domains · domains/[id]
 ├── workspaces/invitations · invitations/accept
@@ -650,7 +650,7 @@ src/lib/
 ├── video/     registry + router + 4 providers: openai · gemini · grok · replicate
 │              + credits · job-token · moderation + storage
 ├── auth/      session · password · tokens · google · account · flows
-├── billing/   checkout · credits · events · webhooks + stripe/razorpay/cashfree
+├── billing/   checkout · credits · events · webhooks + stripe/razorpay/dodo
 ├── email/     send · templates · events + postmark/resend
 ├── data/      db · migrations · projects · versions · scenes · assets · principals
 ├── storage/   s3 · keys · ingest · upload-token

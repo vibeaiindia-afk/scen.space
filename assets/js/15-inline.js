@@ -9,7 +9,7 @@
       {id:'google',name:'Google AI',icon:'G',category:'AI',env:'GOOGLE_AI_API_KEY',status:'missing',last4:'',secretRef:''},
       {id:'image',name:'Image Generation',icon:'◇',category:'Media',env:'IMAGE_PROVIDER_API_KEY',status:'missing',last4:'',secretRef:''},
       {id:'video',name:'Video Generation',icon:'▶',category:'Media',env:'VIDEO_PROVIDER_API_KEY',status:'missing',last4:'',secretRef:''},
-      {id:'cashfree',name:'Cashfree',icon:'₹',category:'Payments',env:'CASHFREE_SECRET_KEY',status:'missing',last4:'',secretRef:''},
+      {id:'dodo',name:'Dodo Payments',icon:'₹',category:'Payments',env:'DODO_API_KEY',status:'missing',last4:'',secretRef:''},
     {id:'razorpay',name:'Razorpay',icon:'₹',category:'Payments',env:'RAZORPAY_KEY_SECRET',status:'missing',last4:'',secretRef:''},
       {id:'stripe',name:'Stripe',icon:'S',category:'Payments',env:'STRIPE_SECRET_KEY',status:'missing',last4:'',secretRef:''},
       {id:'database',name:'Database',icon:'DB',category:'Data',env:'DATABASE_URL',status:'missing',last4:'',secretRef:''},

@@ -12,7 +12,7 @@ Scen is a cinematic 3D AI website builder: **Prompt → 3D World → Website**.
   - Video generation jobs gateway
   - PostgreSQL-compatible database foundation
   - S3-compatible storage foundation
-  - Cashfree + Stripe + Razorpay billing/credits architecture
+  - Dodo Payments + Stripe + Razorpay billing/credits architecture
   - Authentication, Google OIDC and session architecture
   - Transactional email adapters/templates
 - `manifests/` — feature manifests.

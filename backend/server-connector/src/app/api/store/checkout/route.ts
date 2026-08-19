@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPendingOrder, attachProviderReference } from '@/lib/store/orders';
-import { cashfreeStoreCheckout } from '@/lib/billing/providers/cashfree';
+import { dodoStoreCheckout } from '@/lib/billing/providers/dodo';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const pay = await cashfreeStoreCheckout({
+    const pay = await dodoStoreCheckout({
       workspaceId,
       orderId: order.orderId,
       orderNumber: order.orderNumber,
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       name: customer.name || undefined,
       returnUrl: typeof b?.returnUrl === 'string' ? b.returnUrl : undefined,
     });
-    await attachProviderReference(order.orderId, 'cashfree', pay.id);
+    await attachProviderReference(order.orderId, 'dodo', pay.id);
 
     return NextResponse.json(
       {
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
         totalMinor: order.totalMinor,
         currency: order.currency,
         method: 'online',
-        provider: 'cashfree',
+        provider: 'dodo',
         paymentUrl: pay.url,
         status: 'pending',
       },

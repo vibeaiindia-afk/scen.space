@@ -38,6 +38,12 @@ function referencedAssets(payload: Record<string, unknown> | null): string[] {
       }
     }
   }
+  /* An agent build is pages of HTML rather than named slots, so it carries the
+     ids it uses in a list beside them. Without this every photograph on a
+     published agent site 404s for the visitor while working perfectly for the
+     signed-in author, which is the worst shape a bug can take. */
+  const listed = payload?.assetIds;
+  if (Array.isArray(listed)) for (const id of listed) ids.push(id);
   return ids.filter(Boolean).map((x) => String(x));
 }
 

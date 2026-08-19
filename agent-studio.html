@@ -3600,9 +3600,24 @@ function settingsFor(b,gen,depth){
     planWrittenBy:b.__plan?'gateway':'local'
   };
 }
-function siteSnapshot(b,gen){
+/* A generated photograph lives at /api/assets/<id>/content, which asks for a
+   session. That is right for the studio and useless for a published site: the
+   visitor has no session, so every picture would 404 for them while looking
+   perfect to the author. Publishing rewrites those to the public per-site
+   route, and lists the ids so the backend can prove the site is allowed to
+   show them. */
+var ASSET_RE=/\/api\/assets\/([A-Za-z0-9_-]{6,64})\/content/g;
+function publicAssets(text,slug,ids){
+  return String(text==null?'':text).replace(ASSET_RE,function(_,id){
+    if(ids.indexOf(id)<0)ids.push(id);
+    return '/api/sites/'+encodeURIComponent(slug)+'/asset/'+encodeURIComponent(id);
+  });
+}
+function siteSnapshot(b,gen,pubSlug){
+  var ids=[],address=String(pubSlug||'');
   var pages=(gen&&gen.site&&gen.site.pages||[]).map(function(p){
-    return{page:p.page,file:p.file.replace(/^site\//,''),html:p.html}});
+    return{page:p.page,file:p.file.replace(/^site\//,''),
+           html:address?publicAssets(p.html,address,ids):p.html}});
   return{
     kind:'scen-agent-build',v:1,generatedAt:new Date().toISOString(),
     /* the older renderer reads these, so a snapshot is never blank */
@@ -3610,8 +3625,10 @@ function siteSnapshot(b,gen){
     heroTitle:b.name,heroSubtitle:b.pitch,
     components:b.pages.slice(0,6),sectionCopy:[],sections:[],ctas:[],
     /* what the agent build actually needs */
-    accent:b.accent,style:b.style,pages:pages,
-    css:gen&&gen.site?gen.site.css:'',js:gen&&gen.site?gen.site.js:''
+    accent:b.accent,style:b.style,pages:pages,assetIds:ids,
+    css:address?publicAssets(gen&&gen.site?gen.site.css:'',address,ids)
+               :(gen&&gen.site?gen.site.css:''),
+    js:gen&&gen.site?gen.site.js:''
   };
 }
 
@@ -3640,7 +3657,7 @@ function listVersions(){
 }
 function publish(address,b,gen){
   return req('/api/publish',{method:'POST',body:{
-    slug:address,projectName:b.name||address,site:siteSnapshot(b,gen)}})
+    slug:address,projectName:b.name||address,site:siteSnapshot(b,gen,address)}})
     .then(function(d){API.published=d;return d});
 }
 function addDomain(host,address){
@@ -3670,7 +3687,11 @@ function heroImage(prompt,aspect){
     var img=(d.images||[])[0]||null;
     if(!img)throw new Error('The image gateway returned nothing');
     ensure('credits',true);ensure('assets',true);
-    return{url:img.url||('/api/assets/'+encodeURIComponent(img.assetId||img.id||'')+'/content'),
+    /* The gateway may hand back a signed storage URL that expires in minutes.
+       That is fine for looking at and wrong for building with, so a picture is
+       referenced by its asset path whenever it has one. */
+    var id=img.assetId||img.id||'';
+    return{url:id?('/api/assets/'+encodeURIComponent(id)+'/content'):(img.url||''),
       assetId:img.assetId||img.id||'',provider:d.provider||'',model:d.model||''};
   });
 }
@@ -7994,17 +8015,30 @@ function confirmReset(){
     localStorage.removeItem(KEYNAME);location.reload()});
 }
 var KEYNAME='scen.agentstudio.v1';
+/* Which copy of this file is running.
+
+   "It is still the old one" has been the hardest thing to answer all day,
+   because a browser holding a cached page looks exactly like a deploy that did
+   not take. document.lastModified is the served file's own timestamp, so it
+   needs no version constant to maintain and cannot drift from the truth. */
+function buildStamp(){
+  var t=document.lastModified||'';
+  try{var d=new Date(t);if(!isNaN(d))return d.toLocaleString()}catch(e){}
+  return t||'unknown';
+}
 function aboutModal(){
   modal('<div class="modal-head"><span class="avatar"></span><b>What this studio is</b></div>'+
-  '<div class="modal-body">The agent interviews you, turns the answers into a plan, then writes real HTML, CSS, '+
-  'JavaScript and React Native source you can read and download.<br/><br/>'+
-  'Everything runs in this page. There is no server call, no key, and nothing published. '+
-  'When the Scen AI gateway is connected, the same six steps call it instead of the local generators.</div>'+
+  '<div class="modal-body">You say what you want in one line. The agent decides the design, writes the words, '+
+  'makes the pictures, builds the pages and then marks its own work — real HTML, CSS and JavaScript you can '+
+  'read, download and publish.<br/><br/>'+
+  '<b>This page was built '+esc(buildStamp())+'.</b> If that is older than the change you are looking for, '+
+  'the browser is holding a cached copy \u2014 reload with \u2318\u21e7R.</div>'+
   '<div class="modal-foot"><button class="btn primary" data-act="close">Close</button></div>')}
 
 /* ============================================================
    Boot
    ============================================================ */
+try{console.log('%cScen studio','color:#dfff45','build '+(document.lastModified||''))}catch(e){}
 function restore(){
   body.innerHTML='';
   S.msgs.forEach(function(m){body.appendChild(nodeFor(m))});

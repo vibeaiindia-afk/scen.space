@@ -1906,8 +1906,10 @@ async function build(x,text,upgrade){
     seal(s3,L('The phone layout ran '+m.overflow+'px wide — held it back to the screen',
               'Phone par '+m.overflow+'px chauda tha — theek kar diya'));
   }
-  else seal(s3,L('Phone layout holds at 390px'+(m.small?', '+m.small+' targets under 38px':''),
-                 '390px par layout theek hai'+(m.small?', '+m.small+' buttons chhote hain':'')));
+  else seal(s3,L('Phone layout holds at 390px'+
+                   (m.small?', '+m.small+' tap target'+(m.small===1?'':'s')+' under 38px':''),
+                 '390px par layout theek hai'+
+                   (m.small?', '+m.small+' button'+(m.small===1?'':'s')+' 38px se chhote hain':'')));
 
   /* §16 — look at it */
   stopped();

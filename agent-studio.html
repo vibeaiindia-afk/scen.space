@@ -1162,6 +1162,16 @@ function saneLine(b){
 /* No live writer, no headline — so build the claim from a sentence that is
    actually about the business, and end it somewhere a person would. */
 function heroClaim(b){
+  /* Before the writer answers, the only sentence the brief has is the one the
+     client typed at me. "Authentic Japanese sushi restaurant ki cinematic
+     website" is an instruction, and it was going up in hundred-point type for
+     the fifteen seconds a build takes. The trade's own line holds the space
+     until real copy lands. */
+  if(b.__pitchIsPrompt&&!(b.__copy&&b.__copy.__ai)){
+    var P0=INDUSTRIES[b.industry]||INDUSTRIES.other;
+    var first0=String(P0.pitch||'').split(/[.;\u2014]/)[0].trim();
+    if(first0)return first0;
+  }
   var line=saneLine(b);
   var first=line.split(/[.;\u2014]/)[0].trim();
   var w=first.split(/\s+/);
@@ -2074,7 +2084,7 @@ over,h1,leadP,cta,proofRow,'    </div>',
       if(st&&st[0]&&st[1])rows.push('      <div class="specrow" data-reveal><span>'+esc(st[1])+'</span><b>'+esc(st[0])+'</b></div>')});
     if(rows.length<3)return '';
     return ['  <section class="specs">','    <div class="wrap">',
-'      <div class="sec-head" data-reveal><h2>'+esc(L('The detail','The detail'))+'</h2></div>',
+'      <div class="sec-head" data-reveal><h2>'+esc(P.headline?'In detail':'The detail')+'</h2></div>',
 rows.join('\n'),'    </div>','  </section>'].join('\n');
   },
   /* A vertical run of numbered moments against a rule. */
@@ -2082,7 +2092,7 @@ rows.join('\n'),'    </div>','  </section>'].join('\n');
     var P=pack(b),items=(P.services||[]).concat((P.faq||[]).map(function(f){return [f[0],f[1]]})).slice(0,5);
     if(items.length<3)return '';
     return ['  <section class="timeline">','    <div class="wrap">',
-'      <div class="sec-head" data-reveal><h2>'+esc(L('How it goes','How it goes'))+'</h2></div>',
+'      <div class="sec-head" data-reveal><h2>How it goes</h2></div>',
 items.map(function(it,i){
   return '      <div class="tl-item" data-reveal><i>'+String(i+1).padStart(2,'0')+'</i>'+
     '<div><h3>'+esc(it[0])+'</h3><p>'+esc(it[1])+'</p></div></div>'}).join('\n'),
@@ -2312,17 +2322,24 @@ function sectionsFor(page,b,pro){
   if(b.__plan&&b.__plan[page]&&b.__plan[page].length)return b.__plan[page].slice();
   var n=page.toLowerCase(),out=[];
   if(n==='home'){
-    out.push('hero');
-    if(pro)out.push('logos');
-    out.push('services');
-    out.push('statement');
-    if(has(b,'gallery')||pro||b.industry==='games')out.push('showcase');
-    if(pro)out.push('stats');
-    if(has(b,'store'))out.push('products');
-    if(has(b,'bookings'))out.push('booking');
-    if(b.goal==='sell'||b.goal==='signup')out.push('pricing');
-    if(pro)out.push('testimonial');
-    if(pro)out.push('faq');
+    /* Without a live plan this used to emit one order — hero, services,
+       statement, showcase, stats — for every business on earth, which is the
+       sameness the client keeps seeing. Four architectures instead, chosen by
+       the project rather than by chance, each with a different spine. */
+    var homes=[
+      ['hero','split','statement','services','specs','showcase'],
+      ['hero','services','bleed','timeline','stats','showcase'],
+      ['hero','specs','split','statement','servicelist','showcase'],
+      ['hero','statement','showcase','timeline','split','stats']
+    ];
+    var seed=String(b.name||'')+'|'+String(b.industry||'')+'|'+String(b.goal||'');
+    var h=0;for(var i=0;i<seed.length;i++)h=(h*37+seed.charCodeAt(i))>>>0;
+    out=homes[h%homes.length].slice();
+    if(!pro)out=out.filter(function(id,ix){return ix<5});
+    if(has(b,'store')&&out.indexOf('products')<0)out.splice(3,0,'products');
+    if(has(b,'bookings')&&out.indexOf('booking')<0)out.splice(3,0,'booking');
+    if((b.goal==='sell'||b.goal==='signup')&&out.indexOf('pricing')<0)out.push('pricing');
+    if(pro&&out.indexOf('faq')<0)out.push('faq');
     out.push('cta');
     return out;
   }
@@ -5336,7 +5353,12 @@ function intentLine(b){
 function startFromPrompt(text){
   var b=S.brief;
   absorbBrief(text);
-  if(!b.pitch)b.pitch=String(text).replace(/\s+/g,' ').trim().slice(0,180);
+  if(!b.pitch){
+    /* kept so the model has the client's own words, and marked so the page
+       never shows them as if the business had written them */
+    b.pitch=String(text).replace(/\s+/g,' ').trim().slice(0,180);
+    b.__pitchIsPrompt=1;
+  }
   var t0=Date.now();
   thinking();
 
@@ -5578,7 +5600,7 @@ function buildPlanSteps(){
     run:function(){
       return X.writeCopy(b,transcript()).then(function(r){
         if(!r){delete b.__copy;setAiPill();return 'gateway unavailable — used the local writer'}
-        b.__copy=r.copy;setAiPill();
+        b.__copy=r.copy;delete b.__pitchIsPrompt;setAiPill();
         return r.provider+' · '+r.model+' — '+r.ms+'ms, written for this brief'+fellNote();
       });
     }});

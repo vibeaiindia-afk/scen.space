@@ -45,11 +45,11 @@ function syncAuthActions(){
   var on=signedIn();
   var auth=box.querySelectorAll('[data-nav="auth"]');
   for(var i=0;i<auth.length;i++)auth[i].style.display=on?'none':'';
-  var open=box.querySelector('[data-nav="dashboard"]');
+  var open=box.querySelector('.workspace-cta');
   if(on&&!open){
-    open=document.createElement('button');
-    open.className='btn light';
-    open.setAttribute('data-nav','dashboard');
+    open=document.createElement('a');
+    open.className='btn light workspace-cta';
+    open.setAttribute('href','/superaiagent.html');
     open.innerHTML='Open workspace <span>↗</span>';
     box.appendChild(open);
   }

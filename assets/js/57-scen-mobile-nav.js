@@ -62,9 +62,9 @@ function fill(sheet){
     h+='<a href="'+(a.getAttribute('href')||'#')+'" data-mnav-go>'+a.textContent+'</a>';
   }
   h+='<hr>';
-  h+='<a class="studio" href="/agent-studio.html">4D Website Builder</a>';
+  h+='<a class="studio" href="/superaiagent.html">4D Website Builder</a>';
   if(signedIn()){
-    h+='<a class="go" href="#" data-nav="dashboard">Open workspace ↗</a>';
+    h+='<a class="go" href="/superaiagent.html">Open workspace ↗</a>';
     h+='<button data-action="logout">Sign out</button>';
   }else{
     h+='<button data-nav="auth">Log in</button>';

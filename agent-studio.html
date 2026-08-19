@@ -4212,7 +4212,10 @@ var REF_RE=/\b(clone|cloan|copy|like|similar to|inspired by|same as)\b/i;
    "answer to whatever question is on screen", which is how "hero chota kro"
    became someone's business name. Kinds map to routes, nothing else. */
 var INTENT={
-  greeting:/^\s*(hi+|hey|hello|yo|hola|namaste|sup|good (morning|evening|afternoon))\b[\s!.?]*$/i,
+  /* "KESE HO" started a build and named the site KESE. Small talk in the
+     client's own language was not on the list, so anything that was not
+     English small talk counted as a brief. */
+  greeting:/^\s*(?:hi+|hey+|hello+|yo|hola|sup|wassup|what'?s up|namaste|namaskar|salaam|salam|k[ae]se ho|k[ae]sa hai|k[ae]se hain|kaise ho|kya haal(?: hai)?|kya hal(?: hai)?|kya kar rahe ho|kya kr rhe ho|kya chal raha hai|kya chal rha hai|sab theek|sab thik|thik ho|theek ho|aur sunao|aur bata|aur batao|aur bhai|how are you|how'?s it going|good (?:morning|evening|afternoon|night)|gm|gn|thanks|thank you|shukriya|dhanyavaad|tum kaun ho|aap kaun ho|who are you|kaun ho)\b[\s!.?,]*$/i,
   approve : /\b(approve|go ahead|build it|bana do|banao ab|start kro|shuru kro|theek hai|thik hai|ok(ay)? go|looks good|perfect|haan)\b/i,
   reject  : /\b(nahi|nahin|no thanks|don'?t|mat |hatao|remove that|cancel|rehne do)\b/i,
   /* Hinglish carries the instruction in the verb at the end — "kr do", "kro",
@@ -5093,8 +5096,8 @@ function handleText(text){
     if(intent.kind==='greeting'){
       userSay(text,atts);S.atts=[];renderAtts();
       agentSay(L('Hello. Tell me what you want built — a line about the business is enough to start.',
-                 'Namaste. Bataiye kya banwana hai — business ke baare mein ek line kaafi hai.'));
-      return askCurrent(true);
+                 'Theek hoon. Bataiye kya banwana hai — business ke baare mein ek line kaafi hai.'));
+      return;
     }
 
     /* A change asked for during the interview is not the answer to whatever
@@ -5158,7 +5161,12 @@ function handleText(text){
        Three things still are not a brief and are handled above or below:
        small talk, an edit to what is already in the preview, and a question
        about the studio itself. */
-    if(intent.kind!=='question'&&text.trim().split(/\s+/).length>=2){
+    /* Two words are not a brief unless they say what the business is. "kese
+       ho" has two; so does "thank you". A brief either names a trade, or says
+       build something, or is long enough to be describing one. */
+    var words=text.trim().split(/\s+/).length;
+    var briefish=words>=5||BUILD_VERB.test(text)||bestIndustry(text)||URL_RE.test(text);
+    if(intent.kind!=='question'&&words>=2&&briefish){
       userSay(text,atts);S.atts=[];renderAtts();
       var bare=text.trim().match(/^(?:a |an )?(website|web ?site|site|app|mobile app|both|website \+ app|website and app)[.!]?$/i);
       if(bare){
@@ -5248,7 +5256,7 @@ function handleText(text){
     }
     /* "Hi" is not a brief. Small talk should stay conversation — the machine
        used to file it as the answer to whatever question was on screen. */
-    if(/^\s*(hi+|hey|hello|yo|hola|namaste|sup|good (morning|evening|afternoon))\b[\s!.?]*$/i.test(text)){
+    if(INTENT.greeting.test(text)){
       userSay(text,atts);S.atts=[];renderAtts();
       agentSay('Hey. What do you want to build?');
       return;

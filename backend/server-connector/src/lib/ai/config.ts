@@ -31,4 +31,16 @@ export function routeFor(feature:AIFeature):{primary:AIProviderId;fallback?:AIPr
   const fallback=rawFallback==='none'?undefined:asProvider(rawFallback,df||dp);
   return {primary,fallback};
 }
-export function gatewayLimits(){return {timeoutMs:Math.max(5000,Number(process.env.SCEN_AI_TIMEOUT_MS||45000)),maxInputChars:Math.max(1000,Number(process.env.SCEN_AI_MAX_INPUT_CHARS||120000)),maxOutputTokens:Math.max(64,Number(process.env.SCEN_AI_MAX_OUTPUT_TOKENS||4096))}}
+/* Forty-five seconds was too little for anything that writes a whole file.
+
+   A studio asking for a stylesheet lost the race on both providers and got back
+   "AI provider timeout" — nothing was wrong with the request except that the
+   answer could not be finished in the window. The two are raced rather than
+   queued, so raising this costs no extra wall time: both still start together
+   and the first good answer still wins.
+
+   Eighty-five sits inside both ceilings that bound it — SCEN_AI_BUDGET_MS is
+   100s, and the route is declared at maxDuration 120 on a team plan, which
+   allows it. Do not raise this past the budget: the platform would kill the
+   function before the gateway could say which provider had failed. */
+export function gatewayLimits(){return {timeoutMs:Math.max(5000,Number(process.env.SCEN_AI_TIMEOUT_MS||85000)),maxInputChars:Math.max(1000,Number(process.env.SCEN_AI_MAX_INPUT_CHARS||120000)),maxOutputTokens:Math.max(64,Number(process.env.SCEN_AI_MAX_OUTPUT_TOKENS||4096))}}

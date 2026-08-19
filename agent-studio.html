@@ -409,7 +409,6 @@ pre.code .c{color:#4d4d58;font-style:italic}pre.code .k{color:#ff9ec4}pre.code .
   <div class="shell">
     <aside class="rail">
       <button class="on" data-rail="chat" title="Agent chat">◎</button>
-      <button data-rail="brief" title="Jump to the brief">▤</button>
       <button data-rail="new" title="New project">＋</button>
       <div class="grow"></div>
       <button data-rail="about" title="About this studio">?</button>
@@ -3868,7 +3867,7 @@ function answer(value,label,quiet){
   else st.set(S.brief,'__skip');
   S.pending=null;
   if(!S.projectName&&S.brief.name){S.projectName=S.brief.name;$('#projName').textContent=S.brief.name}
-  save();refreshTools();if(S.tool==='brief')renderMain();
+  save();refreshTools();
 
   function advance(){
     if(S.__resumeReview){S.__resumeReview=false;save();return finishInterview()}
@@ -6230,7 +6229,6 @@ function renderTools(){
     out+='<span class="caps">'+grp[0]+'</span>';
     grp[2].forEach(function(t){
       var meta='';
-      if(t[0]==='brief')meta=haveEnough(S.brief)?'<span class="cnt">ready</span>':'';
       if(t[0]==='plan'&&S.brief.pages.length)meta='<span class="cnt">'+S.brief.pages.length+'</span>';
       if(t[0]==='files'&&S.files.length)meta='<span class="cnt">'+S.files.length+'</span>';
       if(t[0]==='log'&&S.buildLog.length)meta='<span class="cnt">'+S.buildLog.length+'</span>';
@@ -6253,7 +6251,7 @@ function renderMain(){
   var m=$('#mainPane');
   if(S.tab==='preview')return m.innerHTML=panesPreview(),bindPreview();
   if(S.tab==='code')return m.innerHTML=paneCode(),bindCode();
-  var fn=PANE[S.tool]||PANE.brief;
+  var fn=PANE[S.tool]||PANE.aigateway;
   m.innerHTML=fn();
   bindPane();
 }
@@ -6265,48 +6263,14 @@ function notWired(what){
 
 var PANE={};
 
-PANE.brief=function(){
-  var b=S.brief;
-  var rows=[
-    ['Building',b.kind?({website:'Website',app:'Mobile app',both:'Website + app'})[b.kind]:''],
-    ['Name',b.name],
-    ['Business',b.industry?(b.industryOther||(INDUSTRIES[b.industry]||INDUSTRIES.other).l):''],
-    ['One-liner',b.pitch],
-    ['Goal',b.goal?GOALS[b.goal]:''],
-    ['Audience',b.audience],
-    ['Pages',b.pages.map(function(p){return '<span class="tk">'+esc(p)+'</span>'}).join('')],
-    ['Features',b.features.map(function(x){return '<span class="tk">'+esc(FEATURES[x].l)+'</span>'}).join('')],
-    ['Style',b.style?(STYLES[b.style].l+(b.__dir&&G.DIRS[b.__dir]?' · '+G.DIRS[b.__dir].l:'')):''],
-    ['Accent',b.accent?'<span class="swatch" style="background:'+esc(b.accent)+'"></span>'+esc(b.accent):''],
-    ['Motion',b.motion],
-    ['Content',b.content?({agent:'Agent writes everything',mix:'Agent writes, client edits later',own:'Client supplies copy'})[b.content]:''],
-    ['Languages',(b.languages||[]).join(', ')],
-    ['Domain',b.domain||(b.name?slug(b.name)+'.scen.space':'')]
-  ];
-  /* Twelve boxes reading "not answered yet" is a form, and it made the studio
-     feel like one — the client's own words for it. Only what is known is
-     shown; the rest is one quiet line saying the agent will decide it. */
-  var known=rows.filter(function(r){return r[1]}),blank=rows.filter(function(r){return !r[1]});
-  return '<div class="pane">'+head('Brief',
-    'What the agent has been told, and what it worked out. It fills in as you talk — nothing here is a form to complete.')+
-    /* §16 — "3 of 10 essentials · 30%" read like a form you had to finish
-       before anything could happen. Nothing here ever gated the build, but the
-       bar said otherwise. It now reports readiness, and the brief keeps
-       growing during and after the build. */
-    '<div style="max-width:460px;margin-bottom:24px;font-size:12px;color:#8c8c98">'+
-    (known.length?'<span style="color:#7ee787">Building from this</span> — say the word and I change any of it.'
-                 :'Nothing yet. Describe the place in a line and I will work the rest out.')+
-    '</div>'+
-    (known.length?'<div class="brief-grid">'+known.map(function(r){
-      return '<div class="bcard filled"><div class="k"><span class="dot"></span>'+
-        '<span class="caps">'+esc(r[0])+'</span></div><div class="v">'+r[1]+'</div></div>'}).join('')+'</div>':'')+
-    (known.length&&blank.length?'<p style="margin-top:18px;font-size:12.5px;color:#6f6f7a;line-height:1.7">'+
-      'Everything else I decide myself.</p>':'')+
-    (b.refs&&b.refs.length?'<h2>References you attached</h2><div style="display:flex;gap:9px;flex-wrap:wrap">'+
-      b.refs.map(function(r){return '<img class="att" style="width:96px;height:96px" src="'+r.url+'" alt=""/>'}).join('')+'</div>':'')+
-    '</div>';
-};
+/* The Brief panel is gone.
 
+   It was the interview in another shape: Building, Name, Business, One-liner,
+   Pages, Features, Accent, Motion, laid out as cards — a form the client was
+   never asked to fill and could only read. Everything on it is either said in
+   the conversation or visible in the preview, and what is left is the studio
+   describing its own state back to the person who described it in the first
+   place. */
 PANE.plan=function(){
   if(!S.brief.pages.length)return '<div class="pane"><div class="empty"><div><div class="orb"></div>'+
     '<h2>No plan yet</h2><p>Answer a few more questions and the page-by-page plan appears here.</p></div></div></div>';
@@ -7882,7 +7846,6 @@ $$('.rail button').forEach(function(b){
   b.addEventListener('click',function(){
     var r=b.dataset.rail;
     if(r==='chat'){setMode('design');scrollChat()}
-    if(r==='brief'){S.tool='brief';setTab('tools');renderTools()}
     if(r==='new')confirmReset();
     if(r==='about')aboutModal();
     $$('.rail button').forEach(function(x){x.classList.toggle('on',x===b&&r==='chat')});
@@ -7986,7 +7949,7 @@ function restore(){
 }
 function resetState(){
   S.phase='interview';S.step=0;S.brief=C.freshBrief();S.msgs=[];S.pending=null;
-  S.skip=[];S.seedLabel='';S.mode='design';S.tab='tools';S.tool='brief';S.file='';
+  S.skip=[];S.seedLabel='';S.mode='design';S.tab='tools';S.tool='aigateway';S.file='';
   S.buildLog=[];S.files=[];S.built=false;S.atts=[];S.projectName='';
   S.queued=[];                     /* §37's hold-list, or it fires on the next build */
   S.previewKind='site';S.device='desktop';S.preset=null;S.pane=false;S.picking=false;S.pick='';
@@ -8056,7 +8019,7 @@ function boot(){
   /* No seed to read, but the address can still name a preset — a shared link,
      or storage that was cleared between the gallery and here. */
   autoPreview=openPreset()&&innerWidth>980;
-  S.tool='brief';S.mode='design';
+  S.tool='aigateway';S.mode='design';
   renderTools();setMode('design');setPhasePill();
   setTab(autoPreview?'preview':'tools',true);
   askCurrent(true);

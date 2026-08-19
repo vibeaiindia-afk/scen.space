@@ -1254,7 +1254,9 @@ function makeCss(b){
 '.hero h1{font-size:clamp(38px,6.4vw,104px);letter-spacing:-.045em;line-height:1.03;text-wrap:balance}',
 '.hero-visual{margin-top:clamp(34px,5vw,74px);border-radius:calc(var(--rad) + 8px);overflow:hidden;',
 '  aspect-ratio:16/9;border:1px solid var(--line);background:var(--bg2);position:relative}',
-'.hero-visual .stage{aspect-ratio:auto;width:100%;height:100%;padding:clamp(16px,2vw,30px)}',
+'.hero-visual .stage{aspect-ratio:auto;width:100%;height:100%;padding:clamp(16px,2vw,30px);',
+'  place-items:stretch;justify-items:stretch;align-items:stretch}',
+'.hero-visual .tile{aspect-ratio:auto;height:100%;min-height:0}',
 '.hero-visual img{width:100%;height:100%;object-fit:cover}',
 '.tlink{color:var(--a);font-weight:600;font-size:15.5px;display:inline-flex;align-items:center;gap:6px;padding:14px 8px}',
 /* split — copy one side, the picture the other, both full height */
@@ -1872,7 +1874,7 @@ var SEC={
     }else{
       art='      <div class="stage" data-reveal style="display:grid;grid-template-columns:1fr 1fr;gap:14px;aspect-ratio:auto">\n'+
         P.gallery.slice(0,4).map(function(g,i){
-          return '        <div class="tile" '+ph(t,i)+'><b>'+esc(g)+'</b></div>'}).join('\n')+'\n      </div>';
+          return '        <div class="tile" '+artFor(b,t,i)+'><b>'+esc(g)+'</b></div>'}).join('\n')+'\n      </div>';
     }
     /* The company name in 104px type is a letterhead, not a page. The claim
        goes there and the name sits small above it — which is what every page
@@ -1890,6 +1892,10 @@ var SEC={
        loudest way a site looks generated. The project picks its own from its
        name instead, so two businesses do not open the same way. */
     var kind=(b.__ui&&b.__ui.hero)||heroKindFor(b);
+    /* The model may ask for the full-bleed opening; it is only an opening when
+       there is a photograph to bleed. Without one it puts the placeholder
+       cards behind the headline, which is what the client was looking at. */
+    if(kind==='full'&&!b.__heroImage)kind='editorial';
     var cta='      <div class="hero-cta" data-reveal>\n'+
 '        <a class="btn" href="'+pageFile(lastPage(b))+'">'+esc(P.cta[2])+'</a>\n'+
 '        <a class="tlink" href="'+pageFile(b.pages[1]||'Home')+'">'+esc(b.pages[1]||'Learn more')+' \u203a</a>\n'+
@@ -1978,7 +1984,7 @@ over,h1,leadP,cta,proofRow,'    </div>',
 '      <div class="sec-head" data-reveal><h2>'+esc(P.headline?'What you get':'What we do')+'</h2><p>'+esc(b.audience||P.pitch)+'</p></div>'
     ].concat(P.services.map(function(sv,i){
       return '      <div class="featrow'+(i%2?' flip':'')+'" data-reveal>\n'+
-'        <div class="featart" '+ph(t,i)+'><b>'+esc((P.gallery&&P.gallery[i])||sv[0])+'</b></div>\n'+
+'        <div class="featart" '+artFor(b,t,i)+'><b>'+esc((P.gallery&&P.gallery[i])||sv[0])+'</b></div>\n'+
 '        <div class="feattext"><span class="n">0'+(i+1)+'</span><h3>'+esc(sv[0])+'</h3><p>'+esc(sv[1])+'</p></div>\n'+
 '      </div>';
     })).concat(['    </div>','  </section>']).join('\n');
@@ -2014,7 +2020,7 @@ over,h1,leadP,cta,proofRow,'    </div>',
 '        <p>Prices, stock and images all come from the catalogue once the store module is connected.</p></div>',
 '      <div class="grid4">'+names.map(function(n,i){
         return '\n        <article class="prod" data-reveal>\n'+
-'          <div class="ph" '+ph(t,i)+'></div>\n'+
+'          <div class="ph" '+artFor(b,t,i)+'></div>\n'+
 '          <div class="body"><b>'+esc(n)+'</b><span class="pr">₹'+base[i%base.length].toLocaleString('en-IN')+'</span>'+
 '<p style="font-size:13px">'+esc(P.services[i%P.services.length][0])+'</p>'+
 '<button data-add>Add to cart</button></div>\n        </article>'}).join('')+'\n      </div>',
@@ -2072,7 +2078,7 @@ over,h1,leadP,cta,proofRow,'    </div>',
     return ['  <section id="blog">','    <div class="wrap">',
 '      <div class="sec-head" data-reveal><h2>Writing</h2><p>Posts come from the CMS once it is connected.</p></div>',
 '      <div class="grid3">'+titles.map(function(x,i){
-        return '\n        <article class="post" data-reveal><div class="ph" '+ph(t,i+1)+'></div>'+
+        return '\n        <article class="post" data-reveal><div class="ph" '+artFor(b,t,i+1)+'></div>'+
 '<div class="body"><span>'+['Notes','Update','Long read'][i]+'</span><h3>'+esc(x)+'</h3>'+
 '<p style="font-size:14px">'+esc(P.services[i%P.services.length][1])+'</p></div></article>'}).join('')+'\n      </div>',
 '    </div>','  </section>'].join('\n');
@@ -5270,8 +5276,14 @@ function fellNote(){return AI.fell?'  ·  '+AI.fell:''}
 function applyDesign(d){
   var b=S.brief;
   delete b.__fixCss;          /* patched against the previous look */
+  /* hero and images were being dropped here — the art director chose the shape
+     of the first screen and the photographic direction for the whole set, and
+     this copied everything except those two. Every build then fell back to the
+     name-derived shape and a generic image direction, which is what "it keeps
+     making the same layout" actually was. */
   b.__ui={display:d.display,body:d.body,radius:d.radius,heroAlign:d.heroAlign,
-          density:d.density,caps:d.caps,surface:d.surface,idea:d.idea||''};
+          density:d.density,caps:d.caps,surface:d.surface,idea:d.idea||'',
+          hero:d.hero||'',images:d.images||''};
   if(/^#[0-9a-f]{6}$/i.test(d.bg||''))b.__bg=d.bg;
   if(/^#[0-9a-f]{6}$/i.test(d.accent||'')&&!b.__accentAsked)b.accent=d.accent;
   save();

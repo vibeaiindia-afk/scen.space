@@ -2894,7 +2894,10 @@ function generate(b,depth){
     files.push({path:'app/App.jsx',lang:'jsx',body:makeApp(b)});
     files.push({path:'app/theme.js',lang:'js',body:makeTheme(b)});
   }
-  files.push({path:'brief.json',lang:'json',body:JSON.stringify(briefJson(b,depth),null,2)});
+  /* brief.json was the studio's own record — the trade, the goal, the depth,
+     the timestamp — shipped inside the client's website. Nobody asked for it
+     and it is the last piece of the interview still standing. The README stays:
+     it tells whoever opens the folder how to run the thing. */
   files.push({path:'README.md',lang:'md',body:readme(b,depth,site.pages)});
   return{files:files,site:site};
 }
@@ -2914,7 +2917,7 @@ function readme(b,depth,pages){
 pages.map(function(p){return '  '+p.file.replace('site/','')+(p.page==='Home'?'   ← start here':'')}).join('\n'),
 '  styles.css','  app.js',
 (b.kind==='app'||b.kind==='both'?'app/\n  App.jsx\n  theme.js':''),
-'brief.json','README.md','```','',
+'README.md','```','',
 '## Run it','',
 'Open `site/index.html` in a browser. Nothing to install — the pages are plain HTML, one stylesheet and one script.','',
 (b.kind==='app'||b.kind==='both'?
@@ -5637,7 +5640,7 @@ function buildPlanSteps(){
     out.push({l:L('Building the app screens','App ki screens bana raha hoon'),s:L('screens, tab bar and shared tokens','screens, tab bar aur shared tokens'),ms:520,file:'app/App.jsx'});
     out.push({l:L('Matching the app to the site','App ko site se milaa raha hoon'),s:L('one set of colours for both','dono ke liye ek hi colours'),ms:280,file:'app/theme.js'});
   }
-  out.push({l:L('Saving the project','Project save kar raha hoon'),s:L('so this build can be rerun exactly','taaki ye build dobara waisi hi ban sake'),ms:300,file:'brief.json'});
+  out.push({l:L('Writing the readme','Readme likh raha hoon'),s:L('how to open and run the files','files kaise kholni aur chalani hain'),ms:300,file:'README.md'});
   out.push({l:L('Checking mobile and contrast','Mobile aur contrast check kar raha hoon'),s:L('headings, links, tap targets, widths','headings, links, tap targets, widths'),ms:640});
   return out;
 }
@@ -6548,8 +6551,7 @@ var TOOLS=[
   ['SCEN CLOUD','advanced',[['aigateway','✦','AI'],['publishing','◈','Publishing'],['domains','🌐','Domain'],['database','⛁','Data'],
     ['users','◍','Login & Users'],['monitoring','📈','Site Health'],['storage','▦','Storage'],
     ['security','⛨','Security']]],
-  ['SETUP','advanced',[['integrations','⧉','Connections'],['git','⑂','GitHub'],['secrets','🔑','API Keys'],
-    ['skills','✦','AI Skills']]]
+  ['SETUP','advanced',[['integrations','⧉','Connections'],['git','⑂','GitHub'],['secrets','🔑','API Keys']]]
 ];
 var MODE_KEY='scen.uimode';
 function uiMode(){try{return localStorage.getItem(MODE_KEY)==='advanced'?'advanced':'simple'}catch(e){return 'simple'}}
@@ -6971,26 +6973,12 @@ PANE.secrets=function(){return simple('Secrets',
   [['Keys stored','0'],['Read by the generator','none'],
    ['Where they belong','server environment, never in page source'],['Required now','nothing']],
   'This studio never asks for a key, and the generated files contain none.')};
-PANE.skills=function(){
-  /* §2 and §45 — this used to list six named agents with "running" pills
-     beside them, which is the internal architecture, not something a client
-     needs. Same capabilities, described as what you get. */
-  var rows=[['Understands what you ask for','in English, Hindi or Hinglish, and remembers the conversation'],
-    ['Plans the pages','works out what your business needs on each one'],
-    ['Writes the words','headlines, services, FAQs and buttons'],
-    ['Designs the look','colours, type and movement, chosen to suit the trade'],
-    ['Writes the code','HTML, CSS, JS and the React Native screens'],
-    ['Changes anything you ask','say it plainly and it rebuilds']];
-  return '<div class="pane">'+head('What Scen can do','Everything here happens in the chat — you never have to pick a step.')+
-    '<div class="spec">'+rows.map(function(r,i){
-      return '<div class="row"><span style="color:#d8d8e0">'+(i+1)+'. '+esc(r[0])+'</span>'+
-        '<span style="color:#7d7d88;text-align:left;flex:1;margin-left:16px">'+esc(r[1])+'</span>'+
-        '</div>'}).join('')+'</div>'+
-    '<div class="info" style="margin-top:18px"><em>✦</em><div><b>Two of them call the gateway</b>'+
-    'The planner and the copywriter post to <code>/api/ai/generate</code> when a session is available, and the '+
-    'editor uses it for sentences the pattern reader cannot place. The rest are deterministic generators in this '+
-    'page. Every gateway call has a local fallback, so a build never fails because the model did.</div></div></div>';
-};
+/* The "AI Skills" panel is gone.
+
+   Six numbered lines explaining that the studio understands you, plans your
+   pages, writes your words and changes what you ask — to someone who has been
+   doing exactly that in the chat for the last ten minutes. It described the
+   product to the person using it. */
 PANE.growth=PANE.monitoring;
 
 /* ============================================================
@@ -7456,7 +7444,9 @@ function panesPreview(){
       '<div class="seg"><button class="'+(appMode?'':'on')+'" data-pk="site">Website</button>'+
       '<button class="'+(appMode?'on':'')+'" data-pk="app">App</button></div>':'')+
     (appMode?'':'<select id="pageSel" class="btn" style="padding:6px 10px">'+pages.map(function(p){
-      return '<option value="'+esc(p.path)+'"'+(S.file===p.path?' selected':'')+'>'+esc(p.page)+' — '+esc(p.path.replace('site/',''))+'</option>'
+      /* The client picks a page, not a file. "Home — index.html" is the studio
+         showing its filing system to someone who asked for a website. */
+      return '<option value="'+esc(p.path)+'"'+(S.file===p.path?' selected':'')+'>'+esc(p.page)+'</option>'
     }).join('')+'</select>'))+
     '<span class="grow"></span>'+
     (appMode?'<span class="pill">390 × 844</span>':

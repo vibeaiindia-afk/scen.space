@@ -247,6 +247,15 @@ create table if not exists custom_domains(
 create unique index if not exists custom_domains_host_idx on custom_domains(lower(host));
 create index if not exists custom_domains_workspace_idx on custom_domains(workspace_id,created_at desc);
 `},
+{version:9,name:'site_visits',sql:`
+create table if not exists site_visits(
+  slug text not null references published_sites(slug) on delete cascade,
+  day date not null default current_date,
+  views bigint not null default 0,
+  primary key(slug,day)
+);
+create index if not exists site_visits_slug_idx on site_visits(slug,day desc);
+`},
 ];
 export async function migrationStatus(){const sql=db();try{const rows=await sql`select version,name,applied_at from scen_schema_migrations order by version`;const current=rows.length?Number(rows[rows.length-1].version):0;return {current,target:MIGRATIONS.at(-1)?.version||0,applied:rows}}catch(e:any){if(String(e?.code)==='42P01')return {current:0,target:MIGRATIONS.at(-1)?.version||0,applied:[]};throw e}}
 export async function applyMigrations(){const sql=db();return await sql.begin(async(tx:any)=>{await tx.unsafe('create table if not exists scen_schema_migrations(version integer primary key,name text not null,applied_at timestamptz not null default now())');const rows=await tx`select version from scen_schema_migrations`;const applied=new Set(rows.map((r:any)=>Number(r.version)));const ran:any[]=[];for(const m of MIGRATIONS){if(applied.has(m.version))continue;await tx.unsafe(m.sql);await tx`insert into scen_schema_migrations(version,name) values(${m.version},${m.name})`;ran.push({version:m.version,name:m.name})}return {schemaVersion:MIGRATIONS.at(-1)?.version||0,applied:ran}})}

@@ -16,6 +16,10 @@
     var first=(s.pages[0]||{}).file||'index.html';
     if(!byFile[first])return false;
 
+    // Once per real page load, not once per postMessage nav inside the
+    // iframe — the frame's own links never leave this document.
+    try{fetch('/api/sites/'+encodeURIComponent(slug)+'/track',{method:'POST',keepalive:true})}catch(e){}
+
     document.title=(d.projectName||slug)+' — built with Scen';
     // The builder's loaders keep animating against their own nodes, so hiding
     // beats removing: nothing it holds a reference to disappears, and anything

@@ -23,16 +23,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 :root{
-  --bg:#ffffff; --shell:#fbfbfc; --ink:#141416; --ink2:#3f3f46; --muted:#7c7c86;
-  --line:#e8e8ec; --line2:#f0f0f3; --soft:#f6f6f8; --soft2:#f1f1f4;
-  --blue:#2f6bff; --blue-soft:#eef3ff; --violet:#7c5cff; --rose:#ff4d61;
-  --ok:#12a150; --warn:#b7791f;
+  --bg:#0a0a0d; --shell:#0e0e12; --ink:#f1f1f4; --ink2:#c6c6ce; --muted:#8a8a93;
+  --line:#242429; --line2:#1c1c21; --soft:#18181d; --soft2:#1f1f25; --surface:#141419;
+  --blue:#6d95ff; --blue-soft:#152244; --violet:#a48dff; --rose:#ff6f7d;
+  --ok:#33d17e; --warn:#eab04a; --strong:#f1f1f4; --strong-ink:#0a0a0d;
   --r:12px; --r2:16px; --r3:22px;
   --top:54px; --chat:430px;
-  --shadow:0 1px 2px rgba(16,16,20,.05),0 8px 24px -12px rgba(16,16,20,.14);
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 24px -12px rgba(0,0,0,.5);
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
+html{color-scheme:dark}
 body{background:var(--bg);color:var(--ink);
   font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
@@ -43,18 +44,18 @@ a{color:inherit;text-decoration:none}
 .muted{color:var(--muted)}
 .grow{flex:1}
 ::-webkit-scrollbar{width:10px;height:10px}
-::-webkit-scrollbar-thumb{background:#dcdce2;border-radius:8px;border:3px solid #fff;background-clip:padding-box}
-::-webkit-scrollbar-thumb:hover{background:#c6c6cf;background-clip:padding-box}
+::-webkit-scrollbar-thumb{background:#2c2c33;border-radius:8px;border:3px solid var(--surface);background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:#38383f;background-clip:padding-box}
 ::-webkit-scrollbar-track{background:transparent}
 :focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:8px}
 
 /* ---------- controls ---------- */
 .btn{display:inline-flex;align-items:center;gap:7px;justify-content:center;
-  border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 15px;
+  border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 15px;
   font-size:13.5px;font-weight:500;transition:.15s ease;white-space:nowrap}
-.btn:hover{background:var(--soft);border-color:#dcdce2}
-.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
-.btn.primary:hover{background:#000}
+.btn:hover{background:var(--soft);border-color:#33333b}
+.btn.primary{background:var(--strong);color:var(--strong-ink);border-color:var(--strong)}
+.btn.primary:hover{background:#dcdce2}
 .btn.blue{background:var(--blue);color:#fff;border-color:var(--blue)}
 .btn.blue:hover{background:#255ae6}
 .btn.ghost{border-color:transparent;background:transparent}
@@ -70,12 +71,12 @@ a{color:inherit;text-decoration:none}
 .round{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff}
 .round svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;
   stroke-linecap:round;stroke-linejoin:round}
-.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 13px;
   font-size:13px;color:var(--ink2);transition:.15s}
 .chip:hover{background:var(--soft)}
-.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip.on{background:var(--strong);color:var(--strong-ink);border-color:var(--strong)}
 .tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 9px;
-  font-size:11.5px;font-weight:500;border:1px solid var(--line);color:var(--muted);background:#fff}
+  font-size:11.5px;font-weight:500;border:1px solid var(--line);color:var(--muted);background:var(--surface)}
 .tag.ok{color:var(--ok);border-color:rgba(18,161,80,.3);background:rgba(18,161,80,.07)}
 .tag.warn{color:var(--warn);border-color:rgba(183,121,31,.3);background:rgba(183,121,31,.07)}
 .tag.bad{color:var(--rose);border-color:rgba(255,77,97,.3);background:rgba(255,77,97,.07)}
@@ -88,7 +89,7 @@ a{color:inherit;text-decoration:none}
 .mark{width:26px;height:26px;border-radius:8px;display:block;
   background:conic-gradient(from 210deg,#ff4d61,#7c5cff,#2f6bff,#ff4d61)}
 .ws{display:flex;align-items:center;gap:9px;width:100%;border:1px solid var(--line);
-  border-radius:11px;padding:8px 10px;background:#fff;transition:.15s}
+  border-radius:11px;padding:8px 10px;background:var(--surface);transition:.15s}
 .ws:hover{background:var(--soft)}
 .ws-badge{width:22px;height:22px;border-radius:6px;background:var(--violet);color:#fff;
   display:grid;place-items:center;font-size:11px;font-weight:700;flex:0 0 auto}
@@ -106,7 +107,7 @@ a{color:inherit;text-decoration:none}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:.14s;width:100%;text-align:left}
 .recents .r:hover{background:var(--soft)}
 .side-card{border:1px solid var(--line);border-radius:13px;padding:12px;display:flex;
-  align-items:center;gap:10px;margin-top:10px;background:#fff}
+  align-items:center;gap:10px;margin-top:10px;background:var(--surface)}
 .side-card b{display:block;font-size:13px;font-weight:600}
 .side-card span{font-size:11.5px;color:var(--muted)}
 
@@ -116,48 +117,48 @@ a{color:inherit;text-decoration:none}
     radial-gradient(900px 420px at 18% 0%,rgba(79,130,255,.42),transparent 62%),
     radial-gradient(760px 460px at 82% 8%,rgba(255,110,196,.40),transparent 64%),
     radial-gradient(700px 520px at 50% 42%,rgba(150,110,255,.30),transparent 66%),
-    linear-gradient(180deg,#eef3ff 0%,#fdfbff 58%,#fff 100%)}
+    linear-gradient(180deg,#131320 0%,#0c0c10 58%,var(--bg) 100%)}
 .canvas-in{position:relative;padding:0 24px 56px}
 .hero{min-height:min(560px,72vh);display:flex;flex-direction:column;align-items:center;
   justify-content:center;text-align:center;padding:52px 0 30px}
-.hero .pill{display:inline-flex;align-items:center;gap:9px;background:#fff;border-radius:999px;
+.hero .pill{display:inline-flex;align-items:center;gap:9px;background:var(--surface);border-radius:999px;
   padding:9px 17px;box-shadow:var(--shadow);font-size:13.5px;font-weight:500;margin-bottom:34px}
 .hero .pill .dots{display:flex;gap:-4px}
 .hero .pill i{width:16px;height:16px;border-radius:4px;display:inline-block;margin-right:-4px}
 .hero h1{font-size:clamp(28px,4.4vw,46px);letter-spacing:-.035em;font-weight:700;margin:0 0 26px}
-.ask{width:min(720px,100%);background:#fff;border-radius:var(--r3);box-shadow:var(--shadow);
-  border:1px solid rgba(20,20,25,.06);padding:16px 16px 10px;text-align:left}
+.ask{width:min(720px,100%);background:var(--surface);border-radius:var(--r3);box-shadow:var(--shadow);
+  border:1px solid rgba(255,255,255,.08);padding:16px 16px 10px;text-align:left}
 .ask textarea{width:100%;border:0;resize:none;outline:0;background:transparent;
   font-size:15.5px;line-height:1.5;min-height:52px;max-height:200px}
-.ask textarea::placeholder{color:#a3a3ad}
+.ask textarea::placeholder{color:#68686f}
 .ask-row{display:flex;align-items:center;gap:8px;padding-top:6px}
 .dropdown{position:relative}
-.dd-menu{position:absolute;z-index:60;min-width:210px;background:#fff;border:1px solid var(--line);
+.dd-menu{position:absolute;z-index:60;min-width:210px;background:var(--surface);border:1px solid var(--line);
   border-radius:13px;box-shadow:0 10px 40px -8px rgba(16,16,20,.22);padding:5px;display:none}
 .dd-menu.open{display:block}
 .dd-menu button{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:9px;font-size:13.5px}
 .dd-menu button:hover{background:var(--soft)}
 .dd-menu button small{display:block;color:var(--muted);font-size:11.5px}
 .dd-menu .sep{height:1px;background:var(--line2);margin:5px 2px}
-.gallery{width:min(1120px,100%);margin:14px auto 0;background:#fff;border:1px solid var(--line);
+.gallery{width:min(1120px,100%);margin:14px auto 0;background:var(--surface);border:1px solid var(--line);
   border-radius:22px;box-shadow:var(--shadow);padding:14px 16px 20px}
 .gal-tabs{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:4px 2px 14px}
 .gal-search{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;
   color:var(--muted);font-size:13px}
 .gal-search input{border:0;outline:0;background:transparent;width:150px;font-size:13px}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:14px}
-.card{border:1px solid var(--line);border-radius:15px;overflow:hidden;background:#fff;
+.card{border:1px solid var(--line);border-radius:15px;overflow:hidden;background:var(--surface);
   transition:.16s;text-align:left;display:block;width:100%}
-.card:hover{border-color:#d8d8e0;transform:translateY(-2px);box-shadow:var(--shadow)}
+.card:hover{border-color:#34343c;transform:translateY(-2px);box-shadow:var(--shadow)}
 .card .thumb{height:132px;background:var(--soft);position:relative;overflow:hidden}
 .card .thumb iframe{width:1280px;height:820px;border:0;transform:scale(.181);
-  transform-origin:0 0;pointer-events:none;background:#fff}
+  transform-origin:0 0;pointer-events:none;background:var(--surface)}
 .card .meta{padding:10px 12px 12px}
 .card .meta b{display:block;font-size:13.5px;font-weight:600;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
 .card .meta span{font-size:11.5px;color:var(--muted)}
 .card .star{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:8px;
-  background:rgba(255,255,255,.9);display:grid;place-items:center;color:#9a9aa4}
+  background:rgba(15,15,18,.85);display:grid;place-items:center;color:#9a9aa4}
 .card .star.on{color:#f5a623}
 .empty{padding:34px 8px;text-align:center;color:var(--muted);font-size:13.5px}
 
@@ -177,11 +178,11 @@ a{color:inherit;text-decoration:none}
 .seg{display:flex;align-items:center;gap:2px;background:var(--blue-soft);border-radius:999px;padding:3px}
 .seg button{display:flex;align-items:center;gap:6px;border-radius:999px;padding:5px 13px;
   font-size:13.5px;font-weight:500;color:#4b6bbf;transition:.15s}
-.seg button.on{background:#fff;color:var(--blue);box-shadow:0 1px 3px rgba(16,16,20,.1)}
+.seg button.on{background:var(--surface);color:var(--blue);box-shadow:0 1px 3px rgba(16,16,20,.1)}
 .seg svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;
   stroke-linecap:round;stroke-linejoin:round}
 .pagesel{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:10px;
-  padding:6px 11px;font-size:13px;min-width:170px;justify-content:space-between;background:#fff}
+  padding:6px 11px;font-size:13px;min-width:170px;justify-content:space-between;background:var(--surface)}
 .pagesel:hover{background:var(--soft)}
 .pagesel span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .pagesel svg{flex:0 0 auto}
@@ -196,7 +197,7 @@ a{color:inherit;text-decoration:none}
 .thread{flex:1;overflow:auto;padding:22px 22px 8px;display:flex;flex-direction:column;gap:16px}
 .msg{max-width:100%}
 .msg.you{align-self:flex-end;max-width:82%}
-.msg.you .bubble{background:#fff;border:1px solid var(--line);border-radius:20px;
+.msg.you .bubble{background:var(--surface);border:1px solid var(--line);border-radius:20px;
   padding:11px 17px;font-size:14px;box-shadow:0 1px 2px rgba(16,16,20,.04);white-space:pre-wrap;
   word-break:break-word}
 .msg.bot{font-size:14px;color:var(--ink2);white-space:pre-wrap;word-break:break-word}
@@ -206,11 +207,11 @@ a{color:inherit;text-decoration:none}
 .msg.step .tick{width:15px;height:15px;flex:0 0 auto;color:var(--ok)}
 .msg.step .tick svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;
   stroke-linecap:round;stroke-linejoin:round}
-.shim{background:linear-gradient(90deg,#a6a6b0 12%,#141416 38%,#a6a6b0 64%);
+.shim{background:linear-gradient(90deg,#4a4a52 12%,#f1f1f4 38%,#4a4a52 64%);
   background-size:240% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
   animation:shim 1.9s linear infinite}
 @keyframes shim{to{background-position:-240% 0}}
-.filelist{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff;margin-top:2px}
+.filelist{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--surface);margin-top:2px}
 .filelist .f{display:flex;align-items:center;gap:9px;padding:8px 12px;font-size:13px;
   border-bottom:1px solid var(--line2);width:100%;text-align:left;transition:.14s}
 .filelist .f:last-child{border-bottom:0}
@@ -224,39 +225,39 @@ a{color:inherit;text-decoration:none}
 .nextup button:hover{color:var(--blue)}
 .scorebar{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .scorebar .s{font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:3px 8px;
-  background:#fff;color:var(--muted)}
+  background:var(--surface);color:var(--muted)}
 .scorebar .s b{color:var(--ink);font-weight:600}
 .scorebar .s.low{border-color:rgba(255,77,97,.35);background:rgba(255,77,97,.05)}
 
 /* composer */
 .composer{flex:0 0 auto;padding:10px 18px 18px}
-.composer-in{background:#fff;border:1px solid var(--line);border-radius:var(--r3);
+.composer-in{background:var(--surface);border:1px solid var(--line);border-radius:var(--r3);
   box-shadow:var(--shadow);padding:13px 14px 9px}
 .composer textarea{width:100%;border:0;outline:0;resize:none;background:transparent;
   font-size:14.5px;line-height:1.5;min-height:44px;max-height:190px}
 .composer textarea::placeholder{color:#a3a3ad}
 .composer-row{display:flex;align-items:center;gap:7px;padding-top:4px}
-.stop{width:32px;height:32px;border-radius:10px;background:var(--ink);display:grid;place-items:center}
-.stop i{width:11px;height:11px;background:#fff;border-radius:2px;display:block}
+.stop{width:32px;height:32px;border-radius:10px;background:var(--strong);display:grid;place-items:center}
+.stop i{width:11px;height:11px;background:var(--strong-ink);border-radius:2px;display:block}
 .switch{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)}
-.switch input{appearance:none;width:30px;height:18px;border-radius:999px;background:#dcdce2;
+.switch input{appearance:none;width:30px;height:18px;border-radius:999px;background:#33333b;
   position:relative;transition:.16s;cursor:pointer}
 .switch input:checked{background:var(--blue)}
 .switch input::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;
-  border-radius:50%;background:#fff;transition:.16s}
+  border-radius:50%;background:#e8e8ec;transition:.16s}
 .switch input:checked::after{transform:translateX(12px)}
 
 /* preview */
 .viewcol{flex:1;min-width:0;padding:10px 12px 12px 0;display:flex;flex-direction:column}
-.frame{flex:1;min-height:0;background:#fff;border:1px solid var(--line);border-radius:var(--r2);
+.frame{flex:1;min-height:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r2);
   overflow:hidden;position:relative;display:flex;flex-direction:column}
-.frame iframe{flex:1;width:100%;border:0;background:#fff}
+.frame iframe{flex:1;width:100%;border:0;background:var(--surface)}
 .frame.tablet iframe,.frame.mobile iframe{margin:0 auto;box-shadow:0 0 0 1px var(--line2)}
 .frame.tablet iframe{width:820px;max-width:100%}
 .frame.mobile iframe{width:400px;max-width:100%}
 .frame-blank{position:absolute;inset:0;display:grid;place-items:center;text-align:center;
   padding:30px;color:var(--muted);font-size:13.5px}
-.codewrap{flex:1;min-height:0;display:flex;background:#fff;border:1px solid var(--line);
+.codewrap{flex:1;min-height:0;display:flex;background:var(--surface);border:1px solid var(--line);
   border-radius:var(--r2);overflow:hidden}
 .codenav{width:196px;flex:0 0 auto;border-right:1px solid var(--line);overflow:auto;padding:8px}
 .codenav button{display:block;width:100%;text-align:left;padding:7px 10px;border-radius:8px;
@@ -268,7 +269,7 @@ a{color:inherit;text-decoration:none}
   white-space:pre;tab-size:2}
 
 /* overlays */
-.pop{position:fixed;z-index:120;background:#fff;border:1px solid var(--line);border-radius:14px;
+.pop{position:fixed;z-index:120;background:var(--surface);border:1px solid var(--line);border-radius:14px;
   box-shadow:0 18px 60px -14px rgba(16,16,20,.3);padding:6px;min-width:230px;max-width:340px;display:none}
 .pop.open{display:block}
 .pop h5{margin:6px 10px;font-size:11.5px;color:var(--muted);font-weight:500}
@@ -282,21 +283,29 @@ a{color:inherit;text-decoration:none}
 .scrim{position:fixed;inset:0;background:rgba(18,18,22,.32);z-index:110;display:none;
   align-items:center;justify-content:center;padding:22px}
 .scrim.open{display:flex}
-.modal{background:#fff;border-radius:20px;box-shadow:0 30px 80px -20px rgba(16,16,20,.4);
+.modal{background:var(--surface);border-radius:20px;box-shadow:0 30px 80px -20px rgba(16,16,20,.4);
   width:min(460px,100%);padding:22px}
 .modal h3{margin:0 0 6px;font-size:17px;letter-spacing:-.02em}
 .modal p{margin:0 0 16px;font-size:13.5px;color:var(--muted)}
 .field{display:block;margin-bottom:14px}
 .field span{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px}
 .field input{width:100%;border:1px solid var(--line);border-radius:11px;padding:10px 12px;
-  font-size:14px;outline:0}
+  font-size:14px;outline:0;background:var(--surface);color:var(--ink)}
 .field input:focus{border-color:var(--blue)}
 .modal-row{display:flex;gap:8px;justify-content:flex-end}
+.pub-status{display:flex;align-items:center;gap:8px;border:1px solid var(--line);
+  border-radius:12px;padding:9px 11px;background:var(--soft)}
+.pub-link{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:12.5px;color:var(--blue)}
+.pub-urlrow{display:flex;align-items:center;border:1px solid var(--line);border-radius:11px;
+  overflow:hidden}
+.pub-urlrow .pub-prefix{padding:10px 0 10px 12px;color:var(--muted);font-size:14px;white-space:nowrap}
+.pub-urlrow input{border:0!important;border-radius:0!important;padding-left:2px!important}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(14px);z-index:200;
-  background:var(--ink);color:#fff;border-radius:12px;padding:10px 16px;font-size:13.5px;
+  background:var(--strong);color:var(--strong-ink);border-radius:12px;padding:10px 16px;font-size:13.5px;
   opacity:0;pointer-events:none;transition:.2s;max-width:min(520px,92vw)}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
-.banner{background:#fff7ed;border-bottom:1px solid #fde2c4;color:#8a5a12;font-size:13px;
+.banner{background:#241c0f;border-bottom:1px solid #4a3a1c;color:#e0b25c;font-size:13px;
   padding:8px 14px;display:flex;align-items:center;gap:10px}
 .banner button{text-decoration:underline;font-weight:500}
 
@@ -391,7 +400,7 @@ a{color:inherit;text-decoration:none}
               <button class="btn sq" id="askMode" data-act="modeMenu">Build
                 <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8"><path d="m6 9 6 6 6-6"/></svg></button>
             </div>
-            <button class="round" style="background:var(--ink)" data-act="startBuild" title="Start">
+            <button class="round" style="background:var(--strong);color:var(--strong-ink)" data-act="startBuild" title="Start">
               <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
           </div>
         </div>
@@ -452,6 +461,8 @@ a{color:inherit;text-decoration:none}
         <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8"><path d="m6 9 6 6 6-6"/></svg></button>
       <button class="ico wide" data-act="openTab" title="Open the preview in a new tab">
         <svg viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4 10 14"/><path d="M18 14v5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 19V8a1.5 1.5 0 0 1 1.5-1.5H10"/></svg></button>
+      <button class="ico" data-act="shareProject" title="Share project">
+        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5 15.4 6.5M8.6 13.5l6.8 4"/></svg></button>
       <button class="avatar" data-act="account" id="avatar">S</button>
       <button class="ico" data-act="newProject" title="New project">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -478,7 +489,7 @@ a{color:inherit;text-decoration:none}
               <button class="btn sq" id="sayMode" data-act="modeMenu">Build
                 <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8"><path d="m6 9 6 6 6-6"/></svg></button>
             </div>
-            <button class="round" style="background:var(--ink)" id="sendBtn" data-act="send" title="Send">
+            <button class="round" style="background:var(--strong);color:var(--strong-ink)" id="sendBtn" data-act="send" title="Send">
               <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
             <button class="stop hidden" id="stopBtn" data-act="stop" title="Stop"><i></i></button>
           </div>
@@ -678,7 +689,7 @@ function newProject(brief){
 function touch(p){if(!p)return;p.updatedAt=Date.now();save()}
 
 /* ---------- the gateway ---------- */
-var SESSION={state:'unknown',name:'',email:'',credits:null,providers:[]};
+var SESSION={state:'unknown',name:'',email:'',role:'',credits:null,providers:[]};
 
 function req(path,opts){
   opts=opts||{};
@@ -1333,9 +1344,9 @@ function shot(frame){
     if(!doc||!doc.documentElement)return resolve('');
     var w=Math.min(1180,doc.documentElement.clientWidth||1180);
     var h=Math.min(1400,Math.max(700,doc.documentElement.clientHeight||900));
-    var html;
+    var clone;
     try{
-      var clone=doc.documentElement.cloneNode(true);
+      clone=doc.documentElement.cloneNode(true);
       Array.prototype.slice.call(clone.querySelectorAll('script')).forEach(function(n){n.remove()});
       /* the page's own reveal starts everything at opacity 0 and is switched on
          by one of those scripts — without this the review marks a blank page */
@@ -1344,27 +1355,48 @@ function shot(frame){
         'filter:none!important;clip-path:none!important;visibility:visible!important}'+
         'html,body{overflow:visible!important}*{animation:none!important;transition:none!important}';
       (clone.querySelector('head')||clone).appendChild(unhide);
-      html=new XMLSerializer().serializeToString(clone);
     }catch(e){return resolve('')}
-    var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'+
-      '<foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">'+
-      html+'</div></foreignObject></svg>';
-    var url;try{url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}catch(e){return resolve('')}
-    var img=new Image(),settled=false;
-    var give=setTimeout(function(){if(!settled){settled=true;resolve('')}},10000);
-    img.onload=function(){
-      if(settled)return;settled=true;clearTimeout(give);
-      try{
-        var cv=document.createElement('canvas');
-        cv.width=Math.round(w*.62);cv.height=Math.round(h*.62);
-        var cx=cv.getContext('2d');
-        cx.fillStyle='#ffffff';cx.fillRect(0,0,cv.width,cv.height);
-        cx.drawImage(img,0,0,cv.width,cv.height);
-        resolve(cv.toDataURL('image/jpeg',.62));
-      }catch(e){resolve('')}
-    };
-    img.onerror=function(){if(!settled){settled=true;clearTimeout(give);resolve('')}};
-    img.src=url;
+    /* A foreignObject built from a data: URI never fetches anything external —
+       every photograph rendered as its own broken box, so the review called a
+       working hero "broken" on every single run. Inlining each photograph as
+       a data URI first makes it part of the document instead of a reference
+       the foreignObject cannot go and fetch. */
+    var imgs=Array.prototype.slice.call(clone.querySelectorAll('img[src]'))
+      .filter(function(im){return !/^data:/i.test(im.getAttribute('src')||'')});
+    Promise.all(imgs.map(function(im){
+      return fetch(im.getAttribute('src'),{credentials:'same-origin'}).then(function(r){
+        if(!r.ok)throw 0;return r.blob();
+      }).then(function(b){
+        return new Promise(function(res){
+          var fr=new FileReader();
+          fr.onload=function(){res(fr.result)};
+          fr.onerror=function(){res(null)};
+          fr.readAsDataURL(b);
+        });
+      }).then(function(data){if(data)im.setAttribute('src',data)}).catch(function(){});
+    })).then(function(){
+      var html;
+      try{html=new XMLSerializer().serializeToString(clone)}catch(e){return resolve('')}
+      var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'+
+        '<foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">'+
+        html+'</div></foreignObject></svg>';
+      var url;try{url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}catch(e){return resolve('')}
+      var img=new Image(),settled=false;
+      var give=setTimeout(function(){if(!settled){settled=true;resolve('')}},10000);
+      img.onload=function(){
+        if(settled)return;settled=true;clearTimeout(give);
+        try{
+          var cv=document.createElement('canvas');
+          cv.width=Math.round(w*.62);cv.height=Math.round(h*.62);
+          var cx=cv.getContext('2d');
+          cx.fillStyle='#ffffff';cx.fillRect(0,0,cv.width,cv.height);
+          cx.drawImage(img,0,0,cv.width,cv.height);
+          resolve(cv.toDataURL('image/jpeg',.62));
+        }catch(e){resolve('')}
+      };
+      img.onerror=function(){if(!settled){settled=true;clearTimeout(give);resolve('')}};
+      img.src=url;
+    });
   });
 }
 
@@ -1512,6 +1544,7 @@ function probe(){
     U.SESSION.state='in';
     U.SESSION.name=String(me.name||me.email||'').split('@')[0]||'there';
     U.SESSION.email=String(me.email||'');
+    U.SESSION.role=String(d.role||'');
     tag.className='tag ok';tag.textContent='signed in as '+(U.SESSION.email||U.SESSION.name);
     $('#wsName').textContent=U.SESSION.name+"'s workspace";
     var i=(U.SESSION.name||'S').slice(0,1).toUpperCase();
@@ -2032,22 +2065,189 @@ function publish(){
   var x=I.p();if(!x)return;
   if(!x.files.length)return toast(L('There is nothing built to publish yet.','Abhi publish karne ko kuch nahi hai.'));
   var suggested=(x.published&&x.published.slug)||slugify(x.name)||'my-site';
+  var live=x.published;
   $('#modal').innerHTML=
     '<h3>'+L('Put it online','Live kar do')+'</h3>'+
-    '<p>'+L('It will be served at scen.space/s/&lt;address&gt;. Republishing keeps the same address.',
-            'scen.space/s/&lt;address&gt; par live hoga. Dobara publish karne par address wahi rehta hai.')+'</p>'+
-    '<label class="field"><span>'+L('Address','Address')+'</span>'+
-    '<input id="slug" value="'+esc(suggested)+'" autocomplete="off"></label>'+
+    '<div class="pub-status">'+
+      '<span class="tag '+(live?'ok':'')+'">'+(live?L('Live','Live'):L('Not published','Abhi live nahi'))+'</span>'+
+      (live?'<a href="'+esc(live.url)+'" target="_blank" rel="noopener" class="pub-link">'+esc(live.url)+'</a>'+
+        '<button class="ico sq" data-act="copyPublishLink" title="'+L('Copy link','Link copy karo')+'">'+
+        '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>'
+        :'')+
+    '</div>'+
+    '<label class="field" style="margin-top:14px"><span>'+L('Website URL','Website URL')+'</span>'+
+    '<div class="pub-urlrow"><span class="pub-prefix">scen.space/s/</span>'+
+    '<input id="slug" value="'+esc(suggested)+'" autocomplete="off"></div></label>'+
+    '<p>'+L('Republishing keeps the same address.','Dobara publish karne par address wahi rehta hai.')+'</p>'+
     '<div class="modal-row"><button class="btn" data-act="close">'+L('Cancel','Rehne do')+'</button>'+
-    '<button class="btn blue" data-act="doPublish">'+L('Publish','Publish')+'</button></div>';
+    '<button class="btn blue" data-act="doPublish">'+(live?L('Republish','Dobara publish karo'):L('Publish','Publish'))+'</button></div>';
   $('#scrim').classList.add('open');
   setTimeout(function(){var i=$('#slug');i&&i.focus()},50);
+}
+function copyPublishLink(){
+  var x=I.p();if(!x||!x.published)return;
+  var done=function(){toast(L('Link copied','Link copy ho gaya'))};
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(x.published.url).then(done,done);
+  else done();
+}
+/* Sharing a Scen *workspace* is real — POST /api/workspaces/invitations sends
+   an actual email with a join link — but that link is generated and mailed
+   server-side and never handed back to the client, so there is no link here
+   to copy. This modal offers only what is actually true: invite by email,
+   and the live URL to copy once the project is published. No invented member
+   list, no fake "copy invite link" for a link this page never receives. */
+function shareProject(){
+  var x=I.p();if(!x)return;
+  var canInvite=['owner','admin'].indexOf(U.SESSION.role)>=0;
+  $('#modal').innerHTML=
+    '<h3>'+L('Share project','Project share karo')+'</h3>'+
+    (canInvite?
+      '<label class="field"><span>'+L('Invite by email','Email se invite karo')+'</span>'+
+      '<div class="pub-urlrow" style="border-radius:11px"><input id="inviteEmail" type="email" '+
+      'placeholder="teammate@company.com" autocomplete="off" style="padding-left:12px">'+
+      '<select id="inviteRole" style="border:0;background:transparent;padding:0 10px;font-size:13px;color:var(--muted)">'+
+      '<option value="member">'+L('Member','Member')+'</option>'+
+      '<option value="editor">'+L('Editor','Editor')+'</option>'+
+      '<option value="admin">'+L('Admin','Admin')+'</option>'+
+      '<option value="viewer">'+L('Viewer','Viewer')+'</option></select></div></label>'+
+      '<button class="btn primary" style="width:100%;justify-content:center;margin-bottom:14px" '+
+      'data-act="submitInvite">'+L('Send invite','Invite bhejo')+'</button>'
+      :'<p>'+L('Only the workspace owner or an admin can invite people.',
+               'Sirf workspace owner ya admin hi logon ko invite kar sakte hain.')+'</p>')+
+    '<label class="field"><span>'+L('Live link','Live link')+'</span>'+
+    (x.published?
+      '<div class="pub-urlrow" style="border-radius:11px;padding:2px 4px 2px 12px;justify-content:space-between">'+
+      '<span class="pub-link" style="padding:8px 0">'+esc(x.published.url)+'</span>'+
+      '<button class="ico sq" data-act="copyPublishLink" title="'+L('Copy link','Link copy karo')+'">'+
+      '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button></div>'
+      :'<p>'+L('Publish this project first to get a link you can share.',
+               'Pehle project publish karo, tab shareable link milega.')+'</p>')+
+    '</label>'+
+    '<div class="modal-row"><button class="btn" data-act="close">'+L('Done','Ho gaya')+'</button></div>';
+  $('#scrim').classList.add('open');
+}
+function submitInvite(){
+  var email=String(($('#inviteEmail')||{}).value||'').trim();
+  var role=($('#inviteRole')||{}).value||'member';
+  if(!email||email.indexOf('@')<0)return toast(L('Enter a real email address.','Sahi email address daalo.'));
+  var btn=$('#modal').querySelector('[data-act="submitInvite"]');
+  btn.disabled=true;btn.textContent=L('Sending…','Bhej raha hoon…');
+  U.req('/api/workspaces/invitations',{method:'POST',body:{email:email,role:role}}).then(function(){
+    toast(L('Invited '+email+' — they will get an email with a link to join.',
+            email+' ko invite bhej diya — unhe email mein join link milega.'),6000);
+    $('#scrim').classList.remove('open');
+  },function(e){
+    btn.disabled=false;btn.textContent=L('Send invite','Invite bhejo');
+    toast(why(e,'send that invite'),6000);
+  });
+}
+/* Page views only, counted server-side by POST /api/sites/[slug]/track —
+   there is no visitor identity anywhere in this system, so "visitors" is
+   never shown here: only what was actually counted (per §23, do not claim
+   what was not measured). */
+function analytics(){
+  var x=I.p();if(!x)return;
+  if(!x.published){
+    $('#modal').innerHTML='<h3>'+L('Analytics','Analytics')+'</h3>'+
+      '<p>'+L('Publish your app to start tracking visitors. Share your app with a live URL to see its traffic here.',
+              'Pehle app publish karo, tab visitors track hone shuru honge.')+'</p>'+
+      '<div class="modal-row"><button class="btn" data-act="close">'+L('Close','Band karo')+'</button>'+
+      '<button class="btn blue" data-act="publish">'+L('Publish','Publish')+'</button></div>';
+    $('#scrim').classList.add('open');return;
+  }
+  $('#modal').innerHTML='<h3>'+L('Analytics','Analytics')+'</h3>'+
+    '<p>'+L('Loading…','Load ho raha hai…')+'</p>'+
+    '<div class="modal-row"><button class="btn" data-act="close">'+L('Close','Band karo')+'</button></div>';
+  $('#scrim').classList.add('open');
+  U.req('/api/sites/'+encodeURIComponent(x.published.slug)+'/analytics').then(function(d){
+    if(!$('#scrim').classList.contains('open'))return;
+    var max=Math.max(1,Math.max.apply(null,d.last7Days.map(function(r){return r.views})));
+    var bars=d.last7Days.map(function(r){
+      var h=Math.round(4+36*(r.views/max)),day=new Date(r.day+'T00:00:00');
+      return '<div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex:1">'+
+        '<div style="width:100%;max-width:26px;height:40px;display:flex;align-items:flex-end">'+
+        '<div style="width:100%;height:'+h+'px;background:var(--blue);border-radius:4px 4px 0 0"></div></div>'+
+        '<span style="font-size:10.5px;color:var(--muted)">'+day.toLocaleDateString(undefined,{weekday:'short'}).slice(0,2)+'</span></div>';
+    }).join('');
+    $('#modal').innerHTML='<h3>'+L('Analytics','Analytics')+'</h3>'+
+      '<div style="display:flex;gap:10px;margin-bottom:16px">'+
+      '<div style="flex:1;border:1px solid var(--line);border-radius:12px;padding:12px"><span style="font-size:11.5px;color:var(--muted)">'+
+      L('Page views','Page views')+'</span><b style="display:block;font-size:22px;margin-top:2px">'+d.pageViews+'</b></div>'+
+      '<div style="flex:1;border:1px solid var(--line);border-radius:12px;padding:12px"><span style="font-size:11.5px;color:var(--muted)">'+
+      L('Today','Aaj')+'</span><b style="display:block;font-size:22px;margin-top:2px">'+d.today+'</b></div></div>'+
+      '<span style="font-size:11.5px;color:var(--muted)">'+L('Last 7 days','Pichle 7 din')+'</span>'+
+      '<div style="display:flex;gap:4px;margin-top:8px;align-items:flex-end">'+bars+'</div>'+
+      '<div class="modal-row" style="margin-top:16px"><button class="btn" data-act="close">'+L('Close','Band karo')+'</button></div>';
+  },function(e){
+    if(!$('#scrim').classList.contains('open'))return;
+    $('#modal').innerHTML='<h3>'+L('Analytics','Analytics')+'</h3>'+
+      '<p>'+esc(why(e,'load analytics'))+'</p>'+
+      '<div class="modal-row"><button class="btn" data-act="close">'+L('Close','Band karo')+'</button></div>';
+  });
+}
+/* Real cards only — every row here is read from GET /api/capabilities, the
+   same honest source the main Scen app's Connections hub uses. Nothing here
+   is a Connect button that leads nowhere: AI/Data/Auth/Storage/Payments/Email
+   are server-side, set once by the operator; Domain is the one thing a
+   customer can actually add themselves, from Scen itself; Analytics/CRM/
+   GitHub/Webhooks have no backend adapter, so they say so instead of
+   pretending. See [[scen-connection-capabilities]]. */
+var CONNECTOR_ROWS=[
+  ['ai','AI generation','Text generation — set by the operator'],
+  ['images','Photography','Image generation — set by the operator'],
+  ['video','Video','Video generation — set by the operator'],
+  ['data','Database','Set by the operator'],
+  ['auth','Sign-in','Set by the operator'],
+  ['storage','File storage','Set by the operator'],
+  ['domain','Custom domain','Added from Scen itself'],
+  ['payments','Payments','Set by the operator'],
+  ['email','Email','Transactional email — set by the operator'],
+  ['analytics','Product analytics','No adapter yet'],
+  ['crm','CRM','No adapter yet'],
+  ['github','GitHub','No adapter yet'],
+  ['webhooks','Webhooks','No adapter yet']
+];
+function connectorBadge(state){
+  var cls=state==='connected'?'ok':(state==='setup_required'?'warn':(state==='error'?'bad':''));
+  var label={connected:'Connected',setup_required:'Setup required',not_connected:'Not connected',
+    error:'Error',unavailable:'Not available yet'}[state]||state;
+  return '<span class="tag '+cls+'">'+esc(L(label,label))+'</span>';
+}
+function connectors(){
+  $('#modal').innerHTML='<h3>'+L('Connectors','Connectors')+'</h3>'+
+    '<p>'+L('Loading…','Load ho raha hai…')+'</p>'+
+    '<div class="modal-row"><button class="btn" data-act="close">'+L('Close','Band karo')+'</button></div>';
+  $('#scrim').classList.add('open');
+  U.req('/api/capabilities').then(function(d){
+    if(!$('#scrim').classList.contains('open'))return;
+    var caps=d.capabilities||{};
+    var rows=CONNECTOR_ROWS.map(function(r){
+      var c=caps[r[0]]||{state:'unavailable'};
+      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;'+
+        'padding:11px 2px;border-bottom:1px solid var(--line2)">'+
+        '<div><b style="font-size:13.5px;font-weight:600;display:block">'+esc(L(r[1],r[1]))+'</b>'+
+        '<span style="font-size:11.5px;color:var(--muted)">'+esc(L(r[2],r[2]))+'</span></div>'+
+        connectorBadge(c.state)+'</div>';
+    }).join('');
+    $('#modal').innerHTML='<h3>'+L('Connectors','Connectors')+'</h3>'+
+      '<p>'+L('What this workspace can actually do right now.','Yeh workspace abhi actually kya kar sakta hai.')+'</p>'+
+      '<div style="max-height:360px;overflow:auto;margin:4px 0 6px">'+rows+'</div>'+
+      '<div class="modal-row" style="margin-top:12px"><button class="btn" data-act="close">'+L('Close','Band karo')+'</button></div>';
+  },function(e){
+    if(!$('#scrim').classList.contains('open'))return;
+    $('#modal').innerHTML='<h3>'+L('Connectors','Connectors')+'</h3>'+
+      '<p>'+esc(why(e,'load connectors'))+'</p>'+
+      '<div class="modal-row"><button class="btn" data-act="close">'+L('Close','Band karo')+'</button></div>';
+  });
 }
 function doPublish(){
   var x=I.p(),slug=slugify($('#slug').value);
   if(slug.length<3)return toast(L('That address is too short.','Address bahut chhota hai.'));
   var btn=$('#modal').querySelector('[data-act="doPublish"]');
-  btn.disabled=true;btn.textContent=L('Publishing…','Publish ho raha hai…');
+  var step=$('#modal').querySelector('.pub-status');
+  btn.disabled=true;btn.textContent=L('Checking address…','Address check ho raha hai…');
+  if(step)step.querySelector('.tag').textContent=L('Checking…','Check ho raha hai…');
   U.req('/api/publish',{method:'POST',body:{slug:slug,projectName:x.name||slug,site:snapshot(x,slug)}})
     .then(function(d){
       x.published={slug:d.slug,url:d.url};save();
@@ -2056,11 +2256,13 @@ function doPublish(){
       toast(L('Published to '+d.url,'Publish ho gaya: '+d.url),6000);
     },function(e){
       btn.disabled=false;btn.textContent=L('Publish','Publish');
+      if(step)step.querySelector('.tag').textContent=L('Not published','Abhi live nahi');
       toast(why(e,'publish this site'),6000);
     });
 }
-window.__SUPER_ACT={run:run,publish:publish,doPublish:doPublish,snapshot:snapshot,
-  nextSteps:nextSteps,fileRows:fileRows};
+window.__SUPER_ACT={run:run,publish:publish,doPublish:doPublish,copyPublishLink:copyPublishLink,
+  shareProject:shareProject,submitInvite:submitInvite,analytics:analytics,connectors:connectors,
+  snapshot:snapshot,nextSteps:nextSteps,fileRows:fileRows};
 })();
 </script>
 
@@ -2141,6 +2343,7 @@ function moreMenu(btn){
     '<div class="row"><span>'+L('Estimated cost','Anumaanit cost')+'</span><b>$'+(G.cost||0).toFixed(4)+'</b></div>'+
     (G.lastError?'<div class="row"><span>'+L('Last error','Aakhri error')+'</span><b>'+esc(G.lastError)+'</b></div>':'')+
     '<div class="sep"></div>'+
+    '<button data-act="analytics">'+L('Analytics','Analytics')+'</button>'+
     '<button data-act="downloadPage">'+L('Download this page','Yeh page download karo')+'</button>'+
     '<button data-act="downloadAll">'+L('Download every file','Saari files download karo')+'</button>'+
     '<div class="sep"></div>'+
@@ -2236,8 +2439,7 @@ document.addEventListener('click',function(e){
   else if(a==='focusSearch'){$('#search').focus()}
   else if(a==='openStudio') {open2('/agent-studio.html')}
   else if(a==='openScen')   {open2('/')}
-  else if(a==='connections'){toast(L('Providers, storage and domains are managed in Scen itself.',
-                                     'Providers, storage aur domains Scen ke andar se manage hote hain.'))}
+  else if(a==='connections'){A.connectors()}
   else if(a==='attach')     {$('#filePick').click()}
   else if(a==='modeMenu')   {modeMenu(act)}
   else if(a==='startBuild') {startFresh($('#ask').value)}
@@ -2257,6 +2459,10 @@ document.addEventListener('click',function(e){
   else if(a==='review')     {manualReview()}
   else if(a==='publish')    {A.publish()}
   else if(a==='doPublish')  {A.doPublish()}
+  else if(a==='copyPublishLink'){A.copyPublishLink()}
+  else if(a==='shareProject'){A.shareProject()}
+  else if(a==='analytics'){closePop();A.analytics()}
+  else if(a==='submitInvite'){A.submitInvite()}
   else if(a==='close')      {closeModal()}
   else if(a==='send')       {send()}
   else if(a==='stop')       {S.stop=true;toast(L('Stopping after this step.','Is step ke baad ruk jaunga.'))}

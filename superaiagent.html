@@ -940,12 +940,25 @@ function classify(p,text){
 }
 
 /* ---------- 2. creative direction + image plan (§3, §4, §26, §27) ---------- */
+/* Pictures this project has already generated and been charged for. A rebuild
+   that re-derives the direction would otherwise invent fresh ids, and every one
+   of these would be shot and billed a second time. */
+function paidFor(p){
+  var got=p.images||{};
+  return ((p.direction&&p.direction.images)||[]).filter(function(im){
+    return got[im.id]&&got[im.id].url;
+  });
+}
 function direct(p,text,mode){
   var input=[
     'A client asked for this: """'+text+'"""',
     p.direction?'This project already has a direction, which you are revising:\n'+brand(p):'',
     mode==='upgrade'?'This is a visual_upgrade of an existing build. Re-judge the direction against §13 and change what is weak — do not repaint the same layout.':'',
     p.reference?'The client attached a photograph of their own. §34 applies: the image direction and every generated picture must sit beside it, not fight it.':'',
+    paidFor(p).length?('These pictures have already been generated and paid for. Keep these exact ids in\n'+
+      'your image plan with the same subjects, and place them in the layout — only add a new\n'+
+      'picture if the design genuinely needs one:\n'+
+      paidFor(p).map(function(im){return '  '+im.id+' ('+im.ratio+') — '+im.prompt.slice(0,150)}).join('\n')):'',
     '',
     'Decide the direction before anything is written, then answer with JSON only, in this shape:',
     '{',
@@ -991,6 +1004,15 @@ function direct(p,text,mode){
         ratio:['1:1','4:3','3:4','16:9','9:16','3:2','2:3'].indexOf(String(im.ratio))>=0?im.ratio:'16:9',
         alt:String(im.alt||''),use:String(im.use||''),prompt:String(im.prompt||'')};
     }).filter(function(im){return im.prompt});
+    /* Asking is not enough — a model that drops one of those ids costs real
+       money. Whatever it planned, the paid-for pictures stay in the plan. */
+    var paid=paidFor(p);
+    if(paid.length){
+      var fresh=d.images.filter(function(im){
+        return !paid.some(function(k){return k.id===im.id});
+      });
+      d.images=paid.concat(fresh).slice(0,4);
+    }
     return d;
   });
 }

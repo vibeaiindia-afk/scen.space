@@ -1156,6 +1156,12 @@ u.display?'h1,h2,h3,.brand,.ch h2,.lp-hero h1{font-family:'+u.display+'}':'',
 var ORDERISH=/\b(bna ?do|bna|bana ?do|banao|bnao|banwana|banani|chahiye|chaiye|i want|i need|want a|need a|make me|build me|create a|create me|design me|please make)\b/i;
 function saneLine(b){
   var P=pack(b),p=String(b.pitch||'').replace(/\s+/g,' ').trim();
+  /* The brief keeps the client's first message as the pitch until the writer
+     answers. It is addressed to me, not to their visitors — "Japanese sushi
+     restaurant ki website" went out as the line under the headline. Guarding
+     only the headline was half a fix; every place that asks for the business's
+     own sentence has to refuse it. */
+  if(b.__pitchIsPrompt&&!(P.__src&&P.__src.pitch==='ai'))return String(P.pitch||'').trim();
   if(!p||ORDERISH.test(p))return String(P.pitch||'').trim()||p;
   return p;
 }

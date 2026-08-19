@@ -5570,7 +5570,7 @@ function buildPlanSteps(){
      if this one matches it the architecture is pushed off that mark before a
      file is written — a different navigation, a different opening, and a
      rhythm section forced into the middle. */
-  out.push({l:L('Making sure it is not the last one','Pichhli site jaisa na ho'),s:'',ms:260,
+  out.push({l:L('Making sure it is not the last one','Pichhli site jaisa na ho'),s:'',ms:260,quiet:true,
     run:function(){return Promise.resolve(differentiate(b))}});
 
   if(live)out.push({l:L('Laying out the page','Page ka layout bana raha hoon'),s:'',ms:560,
@@ -5592,7 +5592,7 @@ function buildPlanSteps(){
      hero sits for this one business, and the rest of the build is written to
      match. Without a gateway the deterministic direction stands, which is what
      every build used to get. */
-  if(live)out.push({l:L('Creating the visual direction','Visual direction bana raha hoon'),s:'',ms:520,
+  if(live)out.push({l:L('Creating the visual direction','Visual direction bana raha hoon'),s:'',ms:520,quiet:true,
     run:function(){
       return X.designUI(b,transcript()).then(function(r){
         if(!r){delete b.__ui;setAiPill();return 'gateway unavailable — used the built-in direction'}
@@ -5600,7 +5600,7 @@ function buildPlanSteps(){
         return (r.design.idea?String(r.design.idea).slice(0,90):(r.provider+' · '+r.model))+fellNote();
       });
     }});
-  else out.push({l:L('Creating the visual direction','Visual direction bana raha hoon'),s:STYLES[b.style].l+' · '+b.accent,ms:520});
+  else out.push({l:L('Creating the visual direction','Visual direction bana raha hoon'),s:STYLES[b.style].l+' · '+b.accent,ms:520,quiet:true});
 
   if(live)out.push({l:L('Writing the words','Words likh raha hoon'),s:'',ms:640,compose:true,
     run:function(){

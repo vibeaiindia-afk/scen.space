@@ -223,6 +223,12 @@ a{color:inherit;text-decoration:none}
   background-size:240% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
   animation:shim 1.9s linear infinite}
 @keyframes shim{to{background-position:-240% 0}}
+.msg.code{max-width:100%;margin-top:2px}
+.msg.code .code-head{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--muted);
+  padding:6px 12px;border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;background:var(--surface)}
+.msg.code .code-body{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.55;
+  color:#c9c9d1;background:var(--shell,#0b0b0e);border:1px solid var(--line);border-radius:0 0 12px 12px;
+  padding:10px 12px;margin:0;max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-word}
 .filelist{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--surface);margin-top:2px}
 .filelist .f{display:flex;align-items:center;gap:9px;padding:8px 12px;font-size:13px;
   border-bottom:1px solid var(--line2);width:100%;text-align:left;transition:.14s}
@@ -1848,6 +1854,17 @@ function node(m,x){
       d.appendChild(i)}
     return d;
   }
+  if(m.role==='code'){
+    var c=U.el('div','msg code');
+    var head=U.el('div','code-head');
+    head.innerHTML='<code>'+esc(m.path||'')+'</code>';
+    c.appendChild(head);
+    var pre=document.createElement('pre');
+    pre.className='code-body';
+    pre.textContent=m.text;
+    c.appendChild(pre);
+    return c;
+  }
   if(m.role==='step'){
     var s=U.el('div','msg step'+(m.done?'':' live'));
     var mark=m.failed
@@ -1909,6 +1926,32 @@ function retitle(m,text){
   if(!m||m.done)return;
   m.text=String(text||'');save();drawThread();
 }
+/* The client asked to see code arrive in the chat as it's written, not just
+   a file-list after the fact. The gateway answers in one block (racing two
+   providers means there's no single stream to read from), so this can't be
+   a real per-token feed — it's a bounded, fast typewriter reveal of the
+   actual returned code, capped so a 6000-character page still finishes in
+   about a second rather than however long a true per-character reveal
+   would take. */
+function revealCode(path,fullText){
+  var text=String(fullText||'');
+  if(!text.trim())return Promise.resolve();
+  var m=say('code','',{path:path});
+  if(!m)return Promise.resolve();
+  var cap=1400;
+  var shown=text.length>cap?text.slice(0,cap):text;
+  var extra=text.length>cap?('\n… '+(text.length-cap)+' more characters'):'';
+  var chunk=Math.max(6,Math.round(shown.length/44));
+  return new Promise(function(resolve){
+    var i=0;
+    (function tick(){
+      i=Math.min(shown.length,i+chunk);
+      m.text=shown.slice(0,i)+(i<shown.length?'▌':extra);
+      drawThread();
+      if(i<shown.length)setTimeout(tick,26);else resolve();
+    })();
+  });
+}
 /* A run that throws used to leave its last step shimmering for the rest of the
    session, so the studio looked like it was still working on something it had
    already given up on. */
@@ -1923,7 +1966,7 @@ function sealOpen(){
 window.__SUPER_UI={S:S,L:L,p:p,say:say,step:step,seal:seal,drawThread:drawThread,drawProject:drawProject,
   drawHome:drawHome,drawCode:drawCode,renderPreview:renderPreview,open:open,home:home,probe:probe,
   banner:banner,pageTitle:pageTitle,setFilter:setFilter,setQuery:setQuery,
-  sealOpen:sealOpen,retitle:retitle};
+  sealOpen:sealOpen,retitle:retitle,revealCode:revealCode};
 })();
 </script>
 
@@ -2051,6 +2094,7 @@ async function build(x,text,upgrade){
     var s=step(L('Writing '+pages[i].title+'…',pages[i].title+' likh raha hoon…'));
     try{
       var r=await B.writePage(x,pages[i],i);
+      await I.revealCode(pages[i].file,r.html);
       written.push({file:pages[i].file,html:r.html});
       if(r.css)css+='\n\n/* ---------- '+pages[i].file+' ---------- */\n'+r.css;
       seal(s);
@@ -2143,6 +2187,8 @@ async function change(x,text,intent){
     touchedHtml=out.files.some(function(f){return /\.html$/.test(f.path)});
     seal(s2);
   }else seal(s);
+  var shown=out.files.find(function(f){return /\.html$/.test(f.path)})||out.files[0];
+  if(shown)await I.revealCode(shown.path,shown.body);
   out.files.forEach(function(f){U.putFile(x.files,f.path,f.body)});
   x.versions=(x.versions||[]).concat([{at:Date.now(),label:text.slice(0,60),
     files:x.files.map(function(f){return {path:f.path,body:f.body}})}]).slice(-4);

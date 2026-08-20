@@ -115,13 +115,24 @@ a{color:inherit;text-decoration:none}
 .canvas{flex:1;min-width:0;overflow:auto;position:relative}
 .aurora{position:absolute;inset:0 0 auto;height:640px;pointer-events:none;
   background:
-    radial-gradient(900px 420px at 18% 0%,rgba(79,130,255,.42),transparent 62%),
-    radial-gradient(760px 460px at 82% 8%,rgba(255,110,196,.40),transparent 64%),
-    radial-gradient(700px 520px at 50% 42%,rgba(150,110,255,.30),transparent 66%),
-    linear-gradient(180deg,#131320 0%,#0c0c10 58%,var(--bg) 100%)}
+    radial-gradient(900px 420px at 18% 0%,rgba(0,229,255,.34),transparent 62%),
+    radial-gradient(760px 460px at 82% 8%,rgba(124,92,255,.36),transparent 64%),
+    radial-gradient(700px 520px at 50% 42%,rgba(0,255,178,.22),transparent 66%),
+    repeating-linear-gradient(0deg,rgba(94,242,255,.055) 0 1px,transparent 1px 42px),
+    repeating-linear-gradient(90deg,rgba(94,242,255,.055) 0 1px,transparent 1px 42px),
+    linear-gradient(180deg,#050912 0%,#03040a 58%,var(--bg) 100%);
+  mask-image:linear-gradient(180deg,#000 0%,#000 72%,transparent 100%)}
 .canvas-in{position:relative;padding:0 24px 56px}
 .hero{min-height:min(560px,72vh);display:flex;flex-direction:column;align-items:center;
   justify-content:center;text-align:center;padding:52px 0 30px}
+.super-kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;font-weight:700;
+  letter-spacing:.38em;text-transform:uppercase;color:#5ef2ff;margin-bottom:16px;
+  text-shadow:0 0 6px rgba(94,242,255,.9),0 0 22px rgba(94,242,255,.55),0 0 44px rgba(124,92,255,.35);
+  animation:kickerPulse 2.6s ease-in-out infinite}
+@keyframes kickerPulse{
+  0%,100%{opacity:1;text-shadow:0 0 6px rgba(94,242,255,.9),0 0 22px rgba(94,242,255,.55),0 0 44px rgba(124,92,255,.35)}
+  50%{opacity:.74;text-shadow:0 0 10px rgba(94,242,255,1),0 0 34px rgba(94,242,255,.8),0 0 60px rgba(124,92,255,.5)}
+}
 .hero .pill{display:inline-flex;align-items:center;gap:9px;background:var(--surface);border-radius:999px;
   padding:9px 17px;box-shadow:var(--shadow);font-size:13.5px;font-weight:500;margin-bottom:34px}
 .hero .pill .dots{display:flex;gap:-4px}
@@ -406,6 +417,7 @@ a{color:inherit;text-decoration:none}
           <span class="dots"><i style="background:#ff4d61"></i><i style="background:#7c5cff"></i><i style="background:#2f6bff"></i></span>
           <span id="heroPill">Design direction, photographs and a live page — from one line</span>
         </div>
+        <div class="super-kicker">Super AI Agent</div>
         <h1 id="heroTitle">What are we building?</h1>
         <div class="ask">
           <textarea id="ask" rows="2" placeholder="Describe the business — e.g. Jaipur mein ek luxury salon ki website"></textarea>

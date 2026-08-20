@@ -12,7 +12,7 @@ function syncMarketingNav(){
   if(!links)return;
   var docs=links.querySelector('[data-nav="helpdocs"]');
   if(docs)docs.style.display=signedIn()?'':'none';
-  var product=links.querySelector('a[href="#features"]');
+  var product=links.querySelector('[data-nav="features"]');
   if(product&&product.textContent==='Features')product.textContent='Product';
 }
 

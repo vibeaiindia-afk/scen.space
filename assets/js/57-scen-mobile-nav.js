@@ -59,7 +59,11 @@ function fill(sheet){
     var a=links[i];
     /* Docs is hidden from signed-out visitors by an earlier layer; respect it. */
     if(a.style.display==='none')continue;
-    h+='<a href="'+(a.getAttribute('href')||'#')+'" data-mnav-go>'+a.textContent+'</a>';
+    /* Without data-nav the clone loses the app's own click handling and falls
+       back to a real browser navigation on real hrefs like /features — a full
+       reload instead of the instant in-page move the desktop link gets. */
+    var dn=a.getAttribute('data-nav');
+    h+='<a href="'+(a.getAttribute('href')||'#')+'"'+(dn?' data-nav="'+dn+'"':'')+' data-mnav-go>'+a.textContent+'</a>';
   }
   h+='<hr>';
   h+='<a class="studio" href="/superaiagent.html">4D Website Builder</a>';

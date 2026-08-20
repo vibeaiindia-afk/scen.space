@@ -415,6 +415,7 @@ a{color:inherit;text-decoration:none}
             <span class="grow"></span>
             <label class="switch" title="Generate original photography for the build — 25 credits an image">
               <input type="checkbox" id="askPhotos" checked><span>Photography</span></label>
+            <span style="font-size:11px;color:var(--muted);white-space:nowrap" title="Charged once when this first build runs">~50 credits</span>
             <div class="dropdown">
               <button class="btn sq" id="askMode" data-act="modeMenu">Build
                 <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8"><path d="m6 9 6 6 6-6"/></svg></button>
@@ -504,6 +505,7 @@ a{color:inherit;text-decoration:none}
             <span class="grow"></span>
             <label class="switch" title="Generate original photography — 25 credits an image">
               <input type="checkbox" id="sayPhotos" checked><span>Photography</span></label>
+            <span style="font-size:11px;color:var(--muted);white-space:nowrap" title="Only the first build of a new project is charged — follow-up edits are free">~50 credits (first build)</span>
             <div class="dropdown">
               <button class="btn sq" id="sayMode" data-act="modeMenu">Build
                 <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8"><path d="m6 9 6 6 6-6"/></svg></button>
@@ -2077,6 +2079,43 @@ async function change(x,text,intent){
       'Ye bhi sirf styling badli, markup nahi — file ya element ka naam clearly bolo, phir try karta hoon.'));
 }
 
+/* ---------- build cost ---------- */
+function refreshCreditsBadge(){
+  var tag=$('#sessionTag');if(!tag)return;
+  var base=tag.textContent.replace(/\s*·\s*\d+\s*credits\s*$/,'');
+  if(!isNaN(U.SESSION.credits))tag.textContent=base+' · '+U.SESSION.credits+' credits';
+}
+// A first full build costs credits, same wallet image generation already
+// spends from — reserved and committed server-side in one call before
+// build() ever starts. Follow-up edits to an existing project are never
+// charged again (see build() itself for why: a paid-for asset stays paid
+// for). Resolves true if the build may proceed, false if it was blocked —
+// callers should not throw insufficient-credit failures into the generic
+// error path, since that would print a chat line instead of the modal
+// this is meant to guarantee.
+function chargeForBuild(x){
+  var attemptId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():(Date.now()+'-'+Math.random().toString(36).slice(2));
+  return U.req('/api/billing/build-charge',{method:'POST',body:{projectId:x.id,buildAttemptId:attemptId}}).then(function(d){
+    if(d&&d.wallet&&d.wallet.available!=null){U.SESSION.credits=Number(d.wallet.available);refreshCreditsBadge()}
+    return true;
+  },function(e){
+    if(e&&(e.status===402||e.code==='insufficient_credits')){insufficientCreditsModal();return false}
+    throw e;
+  });
+}
+function insufficientCreditsModal(){
+  $('#modal').className='modal';
+  $('#modal').innerHTML=
+    '<div class="acct-head" style="padding-bottom:16px"><span class="av" style="background:var(--rose)">'+
+    '<svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/></svg></span>'+
+    '<div><b>'+L('Not enough credits','Credits kam hain')+'</b><span>'+
+    L('A build costs 50 credits','Ek build ke 50 credits lagte hain')+'</span></div></div>'+
+    '<p>'+L('Your workspace does not have enough credits for this build. Top up to keep building.',
+            'Aapke workspace mein is build ke liye poore credits nahi hain. Build jaari rakhne ke liye credits daalo.')+'</p>'+
+    '<div class="modal-row"><button class="btn" data-act="close">'+L('Not now','Abhi nahi')+'</button>'+
+    '<button class="btn blue" data-act="openPricing">'+L('Add credits','Credits daalo')+'</button></div>';
+  $('#scrim').classList.add('open');
+}
 async function run(text,image){
   var x=I.p();if(!x||S.busy)return;
   S.busy=true;S.stop=false;I.drawProject();
@@ -2105,7 +2144,8 @@ async function run(text,image){
       }else if(c.intent==='deploy_or_publish'){
         say('bot',L('Opening the publish box.','Publish box khol raha hoon.'));publish();
       }else if(!x.files.length||c.intent==='create_website'||c.intent==='create_app'){
-        await build(x,text,false);
+        var okToBuild=!x.files.length?await chargeForBuild(x):true;
+        if(okToBuild)await build(x,text,false);
       }else if(c.intent==='visual_upgrade'){
         await build(x,text,true);
       }else{
@@ -2605,6 +2645,7 @@ document.addEventListener('click',function(e){
   else if(a==='focusSearch'){$('#search').focus()}
   else if(a==='openStudio') {open2('/agent-studio.html')}
   else if(a==='openScen')   {open2('/')}
+  else if(a==='openPricing'){open2('/#pricing')}
   else if(a==='connections'){A.connectors()}
   else if(a==='attach')     {$('#filePick').click()}
   else if(a==='modeMenu')   {modeMenu(act)}

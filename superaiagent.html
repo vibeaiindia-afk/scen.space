@@ -1580,51 +1580,67 @@ function patch(p,found){
 function editFiles(p,text,intent){
   var list=p.files.filter(function(f){return f.path!=='app.js'});
   var body=list.map(function(f){return '@@FILE '+f.path+'\n'+f.body}).join('\n')+'\n@@END';
-  var input=[
-    B.brand(p),'',
-    'The client asked for this change: """'+text+'"""',
-    'Classified as: '+intent+'.','',
-    'This is the current build. Read it, work out the smallest set of files that has to change,',
-    'and return ONLY those files, complete. Do not return a file you did not change. Do not',
-    'rewrite the whole site for a small change (§14). Keep the existing structure, copy and',
-    'features that work.',
-    U.impliesMarkupChange(text)?
-      'This request changes markup, not just styling (an element is being added, replaced or removed). '+
-      'A CSS-only answer does not satisfy it — you must include the .html file with that element actually changed.':'',
-    'Picture tokens like {{img:hero}} are real — leave any you do not touch exactly as they are.',
-    'Keep the two exact lines in every page head/body:',
-    '  <link rel="stylesheet" href="styles.css"/>',
-    '  <scr'+'ipt src="app.js"></scr'+'ipt>',
-    '',
-    body,'',
-    'Answer with the changed files in the same @@FILE form and nothing else, then @@END.',
-    'After the last file, on its own line, write:',
-    '@@NOTE one or two sentences to the client about what you changed and why.',
-    B.langLine(p)
-  ].filter(Boolean).join('\n');
-  /* 3400 left too little room for a full index.html plus styles.css in one
-     answer — under time pressure (esp. the 0.55x retry budget in ask()) the
-     model would keep the small CSS file and drop the large HTML file, which
-     silently satisfied "at least one file came back" (line below) while
-     missing the point of the request entirely. 3900 matches the same
-     headroom used in direct() under the gateway's 4096 ceiling. */
-  return ask('code',input,{max:3900,temp:.6}).then(function(t){
-    var note='';
-    var m=/@@NOTE[ \t]*([\s\S]*)$/.exec(t);
-    if(m){note=m[1].trim();t=t.slice(0,m.index)}
-    var files=parseFiles(t).filter(function(f){return /\.(html|css)$/.test(f.path)});
-    if(!files.length)throw Object.assign(new Error('Nothing came back that could be applied'),{status:502});
-    /* A file that parsed fine can still have been cut off mid-answer — see
-       looksTruncatedCss/Html (§ "editFiles() had no output validation").
-       Better to fail the whole edit and let the client retry than save a
-       page or stylesheet that ends mid-rule. */
-    var broken=files.filter(function(f){
-      return /\.css$/.test(f.path)?U.looksTruncatedCss(f.body):U.looksTruncatedHtml(f.body);
+  function attempt(shorter){
+    var input=[
+      B.brand(p),'',
+      'The client asked for this change: """'+text+'"""',
+      'Classified as: '+intent+'.','',
+      'This is the current build. Read it, work out the smallest set of files that has to change,',
+      'and return ONLY those files, complete. Do not return a file you did not change. Do not',
+      'rewrite the whole site for a small change (§14). Keep the existing structure, copy and',
+      'features that work.',
+      U.impliesMarkupChange(text)?
+        'This request changes markup, not just styling (an element is being added, replaced or removed). '+
+        'A CSS-only answer does not satisfy it — you must include the .html file with that element actually changed.':'',
+      shorter?
+        'Your last answer got cut off before it finished — it was too long to complete in time. This '+
+        'time write less: touch only what is strictly necessary for the request, keep any new CSS as '+
+        'terse as the existing stylesheet, and make sure every file you return is fully finished — a '+
+        'shorter complete answer is far better than a longer one that runs out of room.':'',
+      'Picture tokens like {{img:hero}} are real — leave any you do not touch exactly as they are.',
+      'Keep the two exact lines in every page head/body:',
+      '  <link rel="stylesheet" href="styles.css"/>',
+      '  <scr'+'ipt src="app.js"></scr'+'ipt>',
+      '',
+      body,'',
+      'Answer with the changed files in the same @@FILE form and nothing else, then @@END.',
+      'After the last file, on its own line, write:',
+      '@@NOTE one or two sentences to the client about what you changed and why.',
+      B.langLine(p)
+    ].filter(Boolean).join('\n');
+    /* 3400 left too little room for a full index.html plus styles.css in one
+       answer — under time pressure (esp. the 0.55x retry budget in ask()) the
+       model would keep the small CSS file and drop the large HTML file, which
+       silently satisfied "at least one file came back" (line below) while
+       missing the point of the request entirely. 3900 matches the same
+       headroom used in direct() under the gateway's 4096 ceiling. */
+    return ask('code',input,{max:3900,temp:.6}).then(function(t){
+      var note='';
+      var m=/@@NOTE[ \t]*([\s\S]*)$/.exec(t);
+      if(m){note=m[1].trim();t=t.slice(0,m.index)}
+      var files=parseFiles(t).filter(function(f){return /\.(html|css)$/.test(f.path)});
+      if(!files.length)throw Object.assign(new Error('Nothing came back that could be applied'),{status:502});
+      /* A file that parsed fine can still have been cut off mid-answer — see
+         looksTruncatedCss/Html (§ "editFiles() had no output validation").
+         Better to fail this attempt and retry once, asking for less, than
+         save a page or stylesheet that ends mid-rule. */
+      var broken=files.filter(function(f){
+        return /\.css$/.test(f.path)?U.looksTruncatedCss(f.body):U.looksTruncatedHtml(f.body);
+      });
+      if(broken.length)throw Object.assign(new Error('The answer for '+broken[0].path+
+        ' was cut off partway through'),{status:502,truncated:true});
+      files.forEach(function(f){if(/\.html$/.test(f.path))f.body=B.fixPage(f.body,p)});
+      return {files:files,note:note};
     });
-    if(broken.length)throw Object.assign(new Error('The answer for '+broken[0].path+
-      ' was cut off partway through — nothing was applied'),{status:502});
-    files.forEach(function(f){if(/\.html$/.test(f.path))f.body=B.fixPage(f.body,p)});
-    return {files:files,note:note};
+  }
+  return attempt(false).catch(function(e){
+    if(!e||!e.truncated)throw e;
+    return attempt(true).catch(function(e2){
+      if(e2&&e2.truncated)throw Object.assign(
+        new Error('The answer was cut off partway through twice in a row — nothing was applied. Try asking for a smaller piece of this change.'),
+        {status:502});
+      throw e2;
+    });
   });
 }
 

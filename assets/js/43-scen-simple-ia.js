@@ -140,7 +140,6 @@ window.scenIcon=ic;
 var SIMPLE=[
   {label:'Main',items:[['dashboard','Home','home'],['projects','Projects','grid']]},
   {label:'Current project',items:[
-    ['aibuilder','AI Builder','spark'],
     ['pages','Pages','pages'],
     ['media','Media','media'],
     ['business','Business','chart'],
@@ -442,7 +441,7 @@ views.pages=function(){
   var h=viewHead('Pages','Every page on this website.',
         '<button class="btn primary" data-action="addPage">＋ Add page</button>');
   if(!pages.length){
-    return h+'<div class="sx-empty"><b>No pages yet</b><p>Pages appear here once your website has been generated. Ask the AI Builder for the site you want and it will create them.</p><button class="btn primary" data-nav="aibuilder">Open AI Builder</button></div>';
+    return h+'<div class="sx-empty"><b>No pages yet</b><p>Pages appear here once your website has been generated. Describe the site you want in Agent Studio and it will create them.</p><a class="btn primary" href="/agent-studio.html">Open Agent Studio</a></div>';
   }
   h+='<div class="table" style="margin-top:8px"><div class="tr header"><span>Page</span><span>Address</span><span>Type</span><span></span></div>';
   h+=pages.map(function(p){
@@ -526,7 +525,7 @@ views.help=function(){
   var h=viewHead('Help','Answers, a guided tour, and a way to reach us.');
   h+='<div class="sx-grid">'+
     '<button class="sx-card" data-nav="helpdocs"><div class="sx-head">'+ic('help')+'<b>Documentation</b></div><p>Search guides and the 15-minute build path.</p></button>'+
-    '<button class="sx-card" data-nav="aibuilder"><div class="sx-head">'+ic('spark')+'<b>Ask AI</b></div><p>Describe what you are trying to do and the builder will do it.</p></button>'+
+    '<a class="sx-card" href="/agent-studio.html"><div class="sx-head">'+ic('spark')+'<b>Ask AI</b></div><p>Describe what you are trying to do in Agent Studio and it will do it.</p></a>'+
     '<button class="sx-card" data-nav="onboardingcenter"><div class="sx-head">'+ic('check')+'<b>Product tour</b></div><p>A guided path through the product.</p></button>'+
     '<button class="sx-card" data-nav="support"><div class="sx-head">'+ic('mail')+'<b>Contact support</b></div><p>Report a bug, send feedback or request a feature.</p></button>'+
     '<button class="sx-card" data-sx="shortcuts"><div class="sx-head">'+ic('code')+'<b>Keyboard shortcuts</b></div><p>⌘K opens search and every action in the product.</p></button>'+

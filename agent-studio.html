@@ -918,25 +918,6 @@ var FLOW=[
   set:function(b,v){b.pitch=(v==='__auto'||!v)?(INDUSTRIES[b.industry]||INDUSTRIES.other).pitch:v.slice(0,180)},
   ack:function(b,v){return v==='__auto'?"Here's my draft — you can rewrite it any time after the build:\n\n<b>"+esc(b.pitch)+"</b>":"Got it."}},
 
-{id:'goal',type:'single',
-  q:function(){return "What do you want someone to actually do on the site? Whatever you pick, I point every button on every page at it."},
-  opts:function(b){
-    var all=Object.keys(GOALS).map(function(k){return{v:k,l:GOALS[k]}});
-    var P=INDUSTRIES[b.industry];
-    var first=P.feats.indexOf('store')>=0?'sell':P.feats.indexOf('bookings')>=0?'book':null;
-    if(first)all.sort(function(a,c){return (c.v===first)-(a.v===first)});
-    return all},
-  set:function(b,v){b.goal=v;
-    if(v==='sell'&&b.features.indexOf('store')<0)b.features.push('store');
-    if(v==='book'&&b.features.indexOf('bookings')<0)b.features.push('bookings');
-    if(v==='lead'&&b.features.indexOf('forms')<0)b.features.push('forms');
-    if(v==='signup'&&b.features.indexOf('accounts')<0)b.features.push('accounts');},
-  ack:function(b,v){return{sell:"Then the shop is the spine of this build.",
-    book:"Bookings first — I'll put the slot picker above the fold on mobile.",
-    lead:"Leads it is. Short forms, visible on every page.",
-    show:"Work first, words second.",
-    signup:"Signup it is — one primary button, repeated, nothing competing with it."}[v]}},
-
 {id:'audience',type:'text',optional:true,ph:'e.g. couples booking a first anniversary dinner',
   q:function(){return "Who's it for? One sentence about the person you want on the site — it changes the tone of the copy."},
   set:function(b,v){b.audience=v==='__skip'?'':v.slice(0,160)},

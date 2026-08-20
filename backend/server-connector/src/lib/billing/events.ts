@@ -38,6 +38,10 @@ export async function handleDodoEvent(e:any){
     if(cfg){
       const ref=String(d?.payment_id||e?.timestamp||'');
       await grantCredits({workspaceId,units:Number(m.credits||cfg.credits),reason:'Dodo credit top-up',referenceKey:`dodo:topup:${ref}`,metadata:{paymentId:d?.payment_id}});
+      // amountMinor comes from our own topups config, the same figure the
+      // checkout call itself charged — not from the (unverified) webhook
+      // payload — so revenue reporting can't drift from what was actually billed.
+      await upsertPayment('dodo',workspaceId,ref,'topup',cfg.amountMinor,'INR','succeeded',d);
     }
     return;
   }
@@ -49,9 +53,16 @@ export async function handleDodoEvent(e:any){
     if(t==='subscription.active'||t==='subscription.renewed'){
       const cfg=(plans as any)[planKey];
       const ref=String(d?.payment_id||`${t}:${e?.timestamp||Date.now()}`);
-      if(cfg)await grantCredits({workspaceId,units:cfg.credits,reason:`Dodo ${planKey} ${t==='subscription.renewed'?'renewal':'activation'}`,referenceKey:`dodo:subscription_charge:${ref}`,metadata:{subscriptionId:subId,planKey}});
+      if(cfg){
+        await grantCredits({workspaceId,units:cfg.credits,reason:`Dodo ${planKey} ${t==='subscription.renewed'?'renewal':'activation'}`,referenceKey:`dodo:subscription_charge:${ref}`,metadata:{subscriptionId:subId,planKey}});
+        await upsertPayment('dodo',workspaceId,ref,'subscription',cfg.amountMinor,'INR','succeeded',d);
+      }
     }
   }
 }
 async function upsertSubscription(provider:string,workspaceId:string,providerId:string,planKey:string,status:string,raw:any){const sql=db(),id=`${provider}:${providerId}`;await sql`insert into billing_subscriptions(id,workspace_id,provider,provider_subscription_id,plan_key,status,raw) values(${id},${workspaceId},${provider},${providerId},${planKey},${status},${JSON.stringify(raw)}::jsonb) on conflict(provider,provider_subscription_id) do update set status=excluded.status,plan_key=excluded.plan_key,raw=excluded.raw,updated_at=now()`}
 async function upsertInvoice(provider:string,workspaceId:string,providerId:string,amountMinor:number,currency:string,status:string,raw:any){const sql=db(),id=`${provider}:inv:${providerId}`;await sql`insert into billing_invoices(id,workspace_id,provider,provider_invoice_id,amount_minor,currency,status,hosted_url,pdf_url,issued_at,raw) values(${id},${workspaceId},${provider},${providerId},${amountMinor},${currency},${status},${raw.hosted_invoice_url||null},${raw.invoice_pdf||null},to_timestamp(${Number(raw.created||Date.now()/1000)}),${JSON.stringify(raw)}::jsonb) on conflict(provider,provider_invoice_id) do update set status=excluded.status,amount_minor=excluded.amount_minor,hosted_url=excluded.hosted_url,pdf_url=excluded.pdf_url,raw=excluded.raw`}
+// Only Dodo top-ups/subscriptions write here today (see handleDodoEvent) —
+// Stripe and Razorpay revenue currently lives only in billing_invoices /
+// credit_ledger, so the admin overview's revenue figure is Dodo-only for now.
+async function upsertPayment(provider:string,workspaceId:string,providerId:string,kind:string,amountMinor:number,currency:string,status:string,raw:any){const sql=db(),id=`${provider}:pay:${providerId}`;await sql`insert into billing_payments(id,workspace_id,provider,provider_payment_id,kind,amount_minor,currency,status,raw) values(${id},${workspaceId},${provider},${providerId},${kind},${amountMinor},${currency},${status},${JSON.stringify(raw)}::jsonb) on conflict(provider,provider_payment_id) do update set status=excluded.status,amount_minor=excluded.amount_minor,raw=excluded.raw,updated_at=now()`}

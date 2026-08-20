@@ -220,13 +220,6 @@ button.pill:hover{border-color:rgba(255,255,255,.28);color:#fff}
 .tools .caps{padding:0 8px;margin:14px 0 7px;display:block}
 .tools .caps:first-child{margin-top:0}
 .tool{display:flex;align-items:center;gap:10px;width:100%;padding:8px 9px;border-radius:10px;font-size:13px;color:#9d9da8;transition:.14s;text-align:left}
-.modeRow{display:flex;gap:3px;padding:3px;border:1px solid #1e1e26;border-radius:10px;background:#0b0b0f;margin:0 0 12px}
-.modeRow button{flex:1;padding:6px 5px;border-radius:7px;font-size:11px;font-weight:700;color:#7d7d88;transition:.14s}
-.modeRow button.on{background:#17171e;color:#fff}
-.toolAdv{display:flex;align-items:center;gap:10px;width:100%;padding:8px 9px;margin-top:12px;border-top:1px solid #1a1a22;
-  border-radius:0 0 10px 10px;font-size:13px;color:#7f7f8a;text-align:left;transition:.14s}
-.toolAdv:hover{color:#fff}
-.toolAdv .cnt{margin-left:auto;font-size:10px;color:#5d5d67}
 .tool:hover{background:#101017;color:#e6e6ec}
 .tool.on{background:#15151c;color:#fff}
 .tool em{font-style:normal;width:16px;text-align:center;opacity:.9;font-size:13px}
@@ -5084,7 +5077,6 @@ function handleText(text){
   var panel=pasted?null:panelAsk(text);
   if(panel){
     userSay(text,atts);S.atts=[];renderAtts();
-    if(uiMode()!=='advanced'&&['plan','files','log'].indexOf(panel[1])<0)setUiMode('advanced');
     S.tool=panel[1];setTab('tools');save();renderTools();renderMain();
     agentSay('Opened <b>'+esc(panel[2])+'</b> on the right.');
     return;
@@ -6641,9 +6633,14 @@ function rebuild(reason,t0){
    Panels — tools column
    ============================================================ */
 /* Sixteen panels used to be listed at once, so the studio opened on a wall of
-   infrastructure. Simple Mode shows the four that belong to the project; the
-   cloud and setup panels move behind Advanced, which is the same
-   `scen.uimode` key the main app uses, so the two surfaces agree.
+   infrastructure, and the ones a client could actually use — publish, claim
+   a domain, see the AI gateway, manage their account — sat behind a Simple/
+   Advanced switch next to six that were stubs or raw API listings (Site
+   Health with every field reading "—", Connections dumping route paths,
+   GitHub and API Keys both "not linked"). The switch is gone: what is left
+   is only the panels backed by a real API, always visible, nothing to
+   unlock. The stub panels are described on the public site instead, at
+   /#platform, in plain language.
    Labels follow the client-facing vocabulary (AI gateway → AI, and so on);
    the panels themselves are untouched and all still reachable. */
 /* PROJECT — Brief, Plan, Files, Activity — is gone. Those four are the build
@@ -6654,36 +6651,14 @@ function rebuild(reason,t0){
    The panels themselves are still built and still render; nothing links to
    them from here. */
 var TOOLS=[
-  ['SCEN CLOUD','advanced',[['aigateway','✦','AI'],['publishing','◈','Publishing'],['domains','🌐','Domain'],['database','⛁','Data'],
-    ['users','◍','Login & Users'],['monitoring','📈','Site Health'],['storage','▦','Storage'],
-    ['security','⛨','Security']]],
-  ['SETUP','advanced',[['integrations','⧉','Connections'],['git','⑂','GitHub'],['secrets','🔑','API Keys']]]
+  ['PLATFORM',[['aigateway','✦','AI'],['publishing','◈','Publishing'],['domains','🌐','Domain'],
+    ['users','◍','Login & Users'],['security','⛨','Security']]]
 ];
-var MODE_KEY='scen.uimode';
-function uiMode(){try{return localStorage.getItem(MODE_KEY)==='advanced'?'advanced':'simple'}catch(e){return 'simple'}}
-function setUiMode(m){
-  try{localStorage.setItem(MODE_KEY,m)}catch(e){}
-  /* A panel that is being hidden must not stay selected underneath. */
-  if(m==='simple'&&!toolIsSimple(S.tool)){S.tool='aigateway';save()}
-  renderTools();renderMain();
-}
-function toolIsSimple(id){
-  for(var i=0;i<TOOLS.length;i++)
-    if(TOOLS[i][1]==='simple')
-      for(var j=0;j<TOOLS[i][2].length;j++)
-        if(TOOLS[i][2][j][0]===id)return true;
-  return false;
-}
 function renderTools(){
-  var col=$('#toolsCol'),out='',adv=uiMode()==='advanced';
-  out+='<div class="modeRow" role="tablist" aria-label="Interface complexity">'+
-    '<button role="tab" aria-selected="'+(!adv)+'" class="'+(adv?'':'on')+'" data-uimode="simple">Simple</button>'+
-    '<button role="tab" aria-selected="'+adv+'" class="'+(adv?'on':'')+'" data-uimode="advanced">Advanced</button>'+
-  '</div>';
+  var col=$('#toolsCol'),out='';
   TOOLS.forEach(function(grp){
-    if(grp[1]==='advanced'&&!adv)return;
     out+='<span class="caps">'+grp[0]+'</span>';
-    grp[2].forEach(function(t){
+    grp[1].forEach(function(t){
       var meta='';
       if(t[0]==='plan'&&S.brief.pages.length)meta='<span class="cnt">'+S.brief.pages.length+'</span>';
       if(t[0]==='files'&&S.files.length)meta='<span class="cnt">'+S.files.length+'</span>';
@@ -6691,7 +6666,6 @@ function renderTools(){
       out+='<button class="tool'+(S.tool===t[0]?' on':'')+'" data-tool="'+t[0]+'"><em>'+t[1]+'</em>'+esc(t[2])+meta+'</button>';
     });
   });
-  if(!adv)out+='<button class="toolAdv" data-uimode="advanced"><em>⚙</em>Advanced tools<span class="cnt">12</span></button>';
   col.innerHTML=out;
 }
 function refreshTools(){renderTools()}
@@ -8280,9 +8254,6 @@ $('#planBtn').addEventListener('click',function(){
 $$('.tab').forEach(function(b){b.addEventListener('click',function(){autoPreview=false;setTab(b.dataset.tab)})});
 $$('.seg [data-mode]').forEach(function(b){b.addEventListener('click',function(){setMode(b.dataset.mode)})});
 $('#toolsCol').addEventListener('click',function(e){
-  /* The Simple/Advanced switch lives in this column too, and is not a panel. */
-  var m=e.target.closest('[data-uimode]');
-  if(m){setUiMode(m.dataset.uimode);return}
   var t=e.target.closest('.tool');if(!t||!t.dataset.tool)return;
   S.tool=t.dataset.tool;S.tab='tools';save();setTab('tools');renderTools();
 });

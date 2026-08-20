@@ -1006,8 +1006,17 @@ function scopeRules(text){
   var singleFile=/\b(single|one)[- ]?(html )?(page|viewport|file)\b/i.test(t)||/\bonly one page\b/i.test(t);
   var mPages=/\bexactly (\d+)\s+pages?\b/i.exec(t)||/\b(\d+)\s+pages?\s+(only|max|maximum)\b/i.exec(t);
   var pages=singleFile?1:(mPages?Math.max(1,Math.min(6,parseInt(mPages[1],10))):null);
+  /* Catches "Do not add a thesis section, a loop section... — the page ends
+     at X" as well as the original "no extra sections beyond" phrasing — a
+     client naming sections they don't want is exactly as explicit as one
+     naming a word like "beyond", and missing it left direct()'s default
+     "5 to 8 sections" rule active on a page whose own brief had already
+     ruled most of that range out, which is part of why that page then had
+     more to write than the client actually wanted. */
   var noExtra=/\bno extra section/i.test(t)||/\bnothing (else|more) beyond\b/i.test(t)||
-    (/\bbeyond\b/i.test(t)&&/\bsection/i.test(t));
+    (/\bbeyond\b/i.test(t)&&/\bsection/i.test(t))||
+    /\bdo(?:n['’]?t| not) add\b[\s\S]{0,80}\bsection/i.test(t)||
+    /\bonly the sections\b/i.test(t);
   return {pages:pages,noExtra:noExtra};
 }
 function direct(p,text,mode){

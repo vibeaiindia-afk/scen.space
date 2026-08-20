@@ -155,7 +155,7 @@ function link(route,label,icon,cls){
 function buildSidebar(){
   var bar=document.querySelector('.app-sidebar');
   if(!bar)return;
-  var html='<button class="new-project" data-nav="create">＋ New project</button>';
+  var html='<a class="new-project" href="/superaiagent.html">＋ New project</a>';
 
   SIMPLE.forEach(function(g){
     html+='<div class="nav-group"><div class="nav-label">'+g.label+'</div>';

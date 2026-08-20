@@ -273,8 +273,18 @@ a{color:inherit;text-decoration:none}
 .frame.tablet iframe,.frame.mobile iframe{margin:0 auto;box-shadow:0 0 0 1px var(--line2)}
 .frame.tablet iframe{width:820px;max-width:100%}
 .frame.mobile iframe{width:400px;max-width:100%}
-.frame-blank{position:absolute;inset:0;display:grid;place-items:center;text-align:center;
-  padding:30px;color:var(--muted);font-size:13.5px}
+.frame-blank{position:absolute;inset:0;display:flex;flex-direction:column;gap:16px;align-items:center;justify-content:center;
+  text-align:center;padding:30px;color:var(--muted);font-size:13.5px;
+  background:
+    radial-gradient(560px 320px at 50% 34%,rgba(0,229,255,.12),transparent 65%),
+    radial-gradient(460px 300px at 78% 74%,rgba(164,141,255,.10),transparent 66%),
+    repeating-linear-gradient(0deg,rgba(94,242,255,.05) 0 1px,transparent 1px 38px),
+    repeating-linear-gradient(90deg,rgba(94,242,255,.05) 0 1px,transparent 1px 38px),
+    var(--shell)}
+.frame-blank .fb-dot{width:11px;height:11px;border-radius:50%;background:#5ef2ff;
+  box-shadow:0 0 10px rgba(94,242,255,.9),0 0 28px rgba(94,242,255,.5);
+  animation:fbPulse 1.8s ease-in-out infinite}
+@keyframes fbPulse{0%,100%{opacity:.45;transform:scale(.78)}50%{opacity:1;transform:scale(1.2)}}
 .codewrap{flex:1;min-height:0;display:flex;background:var(--surface);border:1px solid var(--line);
   border-radius:var(--r2);overflow:hidden}
 .codenav{width:196px;flex:0 0 auto;border-right:1px solid var(--line);overflow:auto;padding:8px}
@@ -544,7 +554,7 @@ a{color:inherit;text-decoration:none}
              still withholds top-level navigation, so a generated page cannot steer the
              studio away from itself. -->
         <iframe id="preview" title="Live preview" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
-        <div class="frame-blank" id="frameBlank">Nothing built yet. Describe the business in the box on the left.</div>
+        <div class="frame-blank" id="frameBlank"><span class="fb-dot"></span><span>Nothing built yet. Describe the business in the box on the left.</span></div>
       </div>
       <div class="codewrap hidden" id="codewrap">
         <div class="codenav" id="codenav"></div>

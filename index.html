@@ -89,12 +89,18 @@ if(/^\/agent\/?$/i.test(location.pathname))location.replace('/agent-studio.html'
     <div class="changelog-item"><span class="cdate">Aug 18, 2026</span><p>The studio works on a phone now — chat, plan and preview fit a phone screen, not just desktop.</p></div>
     <div class="changelog-item"><span class="cdate">Aug 17, 2026</span><p>Domains and the Security Center now read and write real data instead of keeping rows only in the browser.</p></div>
   </div></div></section>
+  <!-- Product/Company links here are #anchors into this same page, not
+       data-nav routes: /features, /about etc. have no views.X and no
+       PUBLIC_ROUTES entry, so data-nav would either silently show the
+       dashboard or bounce a logged-out visitor to auth. Legal/Resources
+       use data-action="openLegalFromMarketing" for the same reason —
+       'legal' and 'helpdocs' are the only routes here actually public. -->
   <footer class="mfooter"><div class="inner"><div class="mfooter-top">
     <div class="mfooter-brand"><a class="logo" href="#" data-nav="marketing"><span class="logo-mark"></span><span data-brand-name>Scen</span></a><p>3D-native AI website creation system — one brief becomes a live, motion-native site.</p></div>
-    <div class="mfooter-col"><h4>Product</h4><a href="#features">Features</a><a href="#showcase">Showcase</a><a href="#platform">Platform</a><a href="#pricing">Pricing</a><a href="#" data-action="openTemplatesMarketing">Presets</a></div>
-    <div class="mfooter-col"><h4>Company</h4><a href="#about">About</a><a href="#changelog">Changelog</a><a href="mailto:digitalmediastep@gmail.com">Contact</a></div>
-    <div class="mfooter-col"><h4>Resources</h4><button data-nav="helpdocs">Help Center</button><button data-action="openLegalFromMarketing" data-legal-tab="acceptable">Report abuse</button></div>
-    <div class="mfooter-col"><h4>Legal</h4><button data-action="openLegalFromMarketing" data-legal-tab="privacy">Privacy</button><button data-action="openLegalFromMarketing" data-legal-tab="terms">Terms</button><button data-action="openLegalFromMarketing" data-legal-tab="cookies">Cookies</button><button data-action="openLegalFromMarketing" data-legal-tab="refund">Cancellation &amp; Refund</button><button data-action="openLegalFromMarketing" data-legal-tab="dpa">DPA</button></div>
+    <div class="mfooter-col"><h4>Product</h4><a href="/features" data-nav="features">Features</a><a href="/showcase" data-nav="showcase">Showcase</a><a href="/platform" data-nav="platform">Platform</a><a href="/pricing" data-nav="pricing">Pricing</a><a href="/presets" data-nav="presets">Presets</a></div>
+    <div class="mfooter-col"><h4>Company</h4><a href="/about" data-nav="about">About</a><a href="/changelog" data-nav="changelog">Changelog</a><a href="mailto:digitalmediastep@gmail.com">Contact</a></div>
+    <div class="mfooter-col"><h4>Resources</h4><a href="/helpdocs" data-nav="helpdocs">Help Center</a><a href="/report-abuse" data-nav="report-abuse">Report abuse</a></div>
+    <div class="mfooter-col"><h4>Legal</h4><a href="/privacy-policy" data-nav="privacy-policy">Privacy</a><a href="/terms" data-nav="terms">Terms</a><a href="/cookies" data-nav="cookies">Cookies</a><a href="/refund" data-nav="refund">Cancellation &amp; Refund</a><a href="/dpa" data-nav="dpa">DPA</a></div>
   </div><div class="mfooter-bottom"><span>© 2026 Scen. All rights reserved.</span></div></div></footer>
 </section>
 

@@ -856,11 +856,40 @@ function impliesMarkupChange(text){
     /\b(image|photo|picture)\b[^.]{0,20}\binto (a |an )?video\b/i.test(t);
 }
 
+/* editFiles() had no output validation at all, unlike writeBase() (which
+   rejects an answer with no "{") or patch() (which rejects unbalanced
+   braces) — a follow-up's CSS could come back cut off mid-declaration and
+   still get saved as "Done.". A plain brace count is not enough: a cut that
+   lands *between* rules — after the last complete "}" but partway through
+   typing the next selector or @-rule, e.g. a file ending "...}\n@media
+   (max-width:860" — is still perfectly balanced (every "{" it did write has
+   its "}"), so counting alone misses it. Checking that the file also *ends*
+   on a closed rule catches both: an unclosed rule leaves depth above zero,
+   and a dangling next-selector leaves the trimmed tail not ending in "}". */
+function looksTruncatedCss(css){
+  var body=String(css||'');
+  var depth=0;
+  for(var i=0;i<body.length;i++){
+    if(body[i]==='{')depth++;
+    else if(body[i]==='}')depth--;
+  }
+  if(depth!==0)return true;
+  var trimmed=body.replace(/\s+$/,'');
+  return !trimmed||trimmed.charAt(trimmed.length-1)!=='}';
+}
+/* Same idea for the HTML half of an edit answer — writePage()/fixPage()
+   always produce a full document, so one that doesn't reach its closing
+   </html> was cut off partway through, not a smaller-but-complete page. */
+function looksTruncatedHtml(html){
+  return !/<\/html>\s*$/i.test(String(html||''));
+}
+
 window.__SUPER={$:$,$$:$$,esc:esc,el:el,toast:toast,sniffLang:sniffLang,
   DB:DB,load:load,save:save,project:project,active:active,newProject:newProject,touch:touch,
   SESSION:SESSION,req:req,scrub:scrub,why:why,ask:ask,GATE:GATE,
   unfence:unfence,jsonFrom:jsonFrom,parseFiles:parseFiles,fileNamed:fileNamed,putFile:putFile,
-  impliesMarkupChange:impliesMarkupChange};
+  impliesMarkupChange:impliesMarkupChange,looksTruncatedCss:looksTruncatedCss,
+  looksTruncatedHtml:looksTruncatedHtml};
 })();
 </script>
 
@@ -1573,6 +1602,15 @@ function editFiles(p,text,intent){
     if(m){note=m[1].trim();t=t.slice(0,m.index)}
     var files=parseFiles(t).filter(function(f){return /\.(html|css)$/.test(f.path)});
     if(!files.length)throw Object.assign(new Error('Nothing came back that could be applied'),{status:502});
+    /* A file that parsed fine can still have been cut off mid-answer — see
+       looksTruncatedCss/Html (§ "editFiles() had no output validation").
+       Better to fail the whole edit and let the client retry than save a
+       page or stylesheet that ends mid-rule. */
+    var broken=files.filter(function(f){
+      return /\.css$/.test(f.path)?U.looksTruncatedCss(f.body):U.looksTruncatedHtml(f.body);
+    });
+    if(broken.length)throw Object.assign(new Error('The answer for '+broken[0].path+
+      ' was cut off partway through — nothing was applied'),{status:502});
     files.forEach(function(f){if(/\.html$/.test(f.path))f.body=B.fixPage(f.body,p)});
     return {files:files,note:note};
   });

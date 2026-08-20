@@ -544,6 +544,32 @@ document.addEventListener('click',function(e){
     }).join('')+'</div></div>');
 },false);
 
+/* ── 12b. Settings ── the sidebar has linked here twice (Settings, and the
+   Profile entry above the fold) since the IA refactor, but nothing ever
+   defined the view — both fell through to the dashboard silently. This is
+   the account hub: who you are, and the real places account-level work
+   happens — Security was gated as staff-only by a stale entry in
+   __ADMIN_ROUTES (see 23-inline.js) and is fixed alongside this. ── */
+views.settings=function(){
+  var email=(state.auth&&state.auth.email)||'';
+  var name=state.userName||(email?email.split('@')[0]:'');
+  var h=viewHead('Settings','Your account, security and billing — one place instead of a scattered dead end.');
+  if(name||email){
+    var initial=(name||email||'S').slice(0,1).toUpperCase();
+    h+='<div class="card" style="padding:18px 22px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">'+
+      '<span class="avatar" style="width:44px;height:44px;font-size:16px">'+escV(initial)+'</span>'+
+      '<div><b>'+escV(name||email)+'</b>'+(email&&name?'<div class="tiny muted">'+escV(email)+'</div>':'')+'</div>'+
+    '</div>';
+  }
+  h+='<div class="sx-grid">'+
+    '<button class="sx-card" data-nav="billing"><div class="sx-head">'+ic('card')+'<b>Billing &amp; Credits</b></div><p>Your credit balance and how it is being spent.</p></button>'+
+    '<button class="sx-card" data-nav="security"><div class="sx-head">'+ic('lock')+'<b>Security</b></div><p>Devices signed into your account, and signing any of them out.</p></button>'+
+    '<button class="sx-card" data-nav="legal"><div class="sx-head">'+ic('lock')+'<b>Legal</b></div><p>Privacy, terms and acceptable use.</p></button>'+
+    '<button class="sx-card" data-action="logout"><div class="sx-head">'+ic('bolt')+'<b>Sign out</b></div><p>End your session on this device.</p></button>'+
+  '</div>';
+  return h;
+};
+
 /* ── 13. Boot ── */
 function boot(){
   document.body.classList.toggle('sx-advanced',mode()==='advanced');

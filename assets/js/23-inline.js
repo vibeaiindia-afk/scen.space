@@ -29,9 +29,14 @@
   // READINESS"...) must never reach a customer. The backend is the authority on
   // who is staff: every /api/admin route already requires a signed admin cookie,
   // so we ask it rather than trusting anything in the browser.
+  /* 'security' used to be a staff panel, which is why it was on this list.
+     38-inline.js repointed the route at the customer's own real sessions
+     (GET/DELETE /api/auth/sessions) and nobody took it back off — so every
+     link to it, sidebar included, was invisible to the customer it was
+     built for. */
   window.__ADMIN_ROUTES=new Set(['admin','integrations','production','productionready',
     'preapiaudit','finalqa','uxstates','mobileqa','globalsearch',
-    'auditlogs','security','roles','clientreview','handoff','uxpolish']);
+    'auditlogs','roles','clientreview','handoff','uxpolish']);
   window.__isPlatformAdmin=false;
   function applyAdminUI(){
     document.body.classList.toggle('platform-admin',!!window.__isPlatformAdmin);

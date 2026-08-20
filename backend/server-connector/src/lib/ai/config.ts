@@ -39,8 +39,15 @@ export function routeFor(feature:AIFeature):{primary:AIProviderId;fallback?:AIPr
    queued, so raising this costs no extra wall time: both still start together
    and the first good answer still wins.
 
-   Eighty-five sits inside both ceilings that bound it — SCEN_AI_BUDGET_MS is
-   100s, and the route is declared at maxDuration 120 on a team plan, which
-   allows it. Do not raise this past the budget: the platform would kill the
-   function before the gateway could say which provider had failed. */
-export function gatewayLimits(){return {timeoutMs:Math.max(5000,Number(process.env.SCEN_AI_TIMEOUT_MS||85000)),maxInputChars:Math.max(1000,Number(process.env.SCEN_AI_MAX_INPUT_CHARS||120000)),maxOutputTokens:Math.max(64,Number(process.env.SCEN_AI_MAX_OUTPUT_TOKENS||4096))}}
+   Eighty-five still lost to a genuinely dense single-page SUPERAIAGENT build,
+   four times running (measured live, not assumed — see scen-superaiagent.md).
+   router.ts caps what a racing call actually gets to
+   `min(timeoutMs, SCEN_AI_BUDGET_MS-2000)`, so 95s here still lands on 95s
+   there — under the 98s that leaves inside the 100s budget, itself under the
+   route's maxDuration 120 on a team plan. Raising this costs no extra wall
+   time on anything that was already finishing: the providers race, so a fast
+   answer is exactly as fast as before, and only a request that was going to
+   time out anyway gets the extra ten seconds to try. Do not raise this past
+   the budget: the platform would kill the function before the gateway could
+   say which provider had failed. */
+export function gatewayLimits(){return {timeoutMs:Math.max(5000,Number(process.env.SCEN_AI_TIMEOUT_MS||95000)),maxInputChars:Math.max(1000,Number(process.env.SCEN_AI_MAX_INPUT_CHARS||120000)),maxOutputTokens:Math.max(64,Number(process.env.SCEN_AI_MAX_OUTPUT_TOKENS||4096))}}

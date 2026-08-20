@@ -50,7 +50,27 @@ views.dashboard=function(){
   var credits=state.credits;
   var todo=blockers();
 
-  var h='<div class="ui2-top"><h1>'+escV(typeof greeting==='function'?greeting():'Welcome back')+'</h1>'+
+  /* Who you are and the account-level actions, in one place instead of
+     scattered across the header avatar and the sidebar — the identity card
+     a workspace lands on has to say more than a single-letter initial. */
+  var idName=state.userName||'Your workspace';
+  var idEmail=(state.auth&&state.auth.email)||'';
+  var idInit=(idName||idEmail||'·').trim().slice(0,1).toUpperCase();
+  var h='<div class="card ui2-idcard" style="padding:18px 22px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">'+
+    '<div class="avatar" style="width:46px;height:46px;font-size:17px;flex:0 0 auto">'+escV(idInit)+'</div>'+
+    '<div style="flex:1;min-width:160px"><b style="font-size:15px">'+escV(idName)+'</b>'+
+    (idEmail?'<div class="tiny muted">'+escV(idEmail)+'</div>':'')+'</div>'+
+    '<div style="display:flex;gap:22px">'+
+      '<div><span class="caps">Live sites</span><div style="font-size:18px;font-weight:800;margin-top:3px">'+published+'</div></div>'+
+      '<div><span class="caps">Projects</span><div style="font-size:18px;font-weight:800;margin-top:3px">'+ps.length+'</div></div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<button class="btn ghost" data-nav="billing">Billing &amp; Credits</button>'+
+      '<button class="btn ghost" data-action="logout">Sign out</button>'+
+    '</div>'+
+  '</div>';
+
+  h+='<div class="ui2-top"><h1>'+escV(typeof greeting==='function'?greeting():'Welcome back')+'</h1>'+
     '<div style="display:flex;gap:10px;align-items:center">'+
     '<div class="ui2-seg"><button class="on">Overview</button>'+
     '<button data-nav="activity">Activity</button><button data-nav="monitoring">Health</button></div>'+

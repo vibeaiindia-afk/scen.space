@@ -1679,6 +1679,8 @@ function probe(){
     return req('/api/billing/credits').then(function(c){
       U.SESSION.credits=Number((c.wallet&&c.wallet.available!=null)?c.wallet.available:(c.balance!=null?c.balance:(c.credits!=null?c.credits:NaN)));
       if(!isNaN(U.SESSION.credits))tag.textContent+=' · '+U.SESSION.credits+' credits';
+      var note=$('#sideNote');
+      if(note)note.textContent=(U.SESSION.email||U.SESSION.name)+(!isNaN(U.SESSION.credits)?' · '+U.SESSION.credits+' credits':'');
     },function(){});
   },function(e){
     U.SESSION.state='out';
@@ -2622,11 +2624,12 @@ function historyMenu(btn){
 }
 function accountMenu(btn){
   var s=U.SESSION,signedIn=s.state==='in',initial=(s.name||s.email||'S').slice(0,1).toUpperCase();
+  var credLine=(s.credits!=null&&!isNaN(s.credits))?(' · '+s.credits+' '+L('credits','credits')):'';
   pop(btn,'<div class="acct-head"><span class="av">'+esc(initial)+'</span><div>'+
     '<b>'+esc(signedIn?(s.name||s.email):L('Not signed in','Signed in nahi'))+'</b>'+
-    '<span>'+esc(signedIn?(s.email||''):L('Sign in on Scen to build.','Build karne ke liye Scen mein sign in karo.'))+'</span>'+
+    '<span>'+esc(signedIn?(L('Signed in as ','Sign in hai ')+(s.email||'')+credLine):L('Sign in on Scen to build.','Build karne ke liye Scen mein sign in karo.'))+'</span>'+
     '</div></div>'+
-    (s.credits!=null&&!isNaN(s.credits)?'<div class="row"><span>'+L('Credits','Credits')+'</span><b>'+s.credits+'</b></div>':'')+
+    (DB.projects.length?'<div class="row"><span>'+L('Projects','Projects')+'</span><b>'+DB.projects.length+'</b></div>':'')+
     '<div class="sep"></div>'+
     '<button data-act="openScen">'+L('Open Scen','Scen kholo')+'</button>'+
     '<button data-act="openStudio">'+L('Open Agent Studio','Agent Studio kholo')+'</button>'+

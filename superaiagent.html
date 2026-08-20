@@ -840,11 +840,25 @@ function putFile(files,path,body){
   if(f){var was=f.body;f.body=body;return was===body?'same':'changed'}
   files.push({path:path,body:body});return 'new';
 }
+/* A follow-up like "replace the <img> with a <video>" needs the markup
+   itself touched, not just its styling — a CSS-only answer that reports
+   "Done." is a silent miss, not a fix. Deliberately narrow (a literal tag,
+   or a short list of structural verbs+nouns) so ordinary styling requests
+   ("make the button bigger") don't get flagged and forced into a wasted
+   retry. */
+function impliesMarkupChange(text){
+  var t=String(text||'');
+  if(/<[a-z][\w-]*(\s[^<>]*)?>/i.test(t))return true;
+  return /\b(replace|swap|remove|delete)\b[^.]{0,40}\b(image|photo|picture|video|hero|section|tag|element)\b/i.test(t)||
+    /\badd\b[^.]{0,40}\b(new )?section\b/i.test(t)||
+    /\b(image|photo|picture)\b[^.]{0,20}\binto (a |an )?video\b/i.test(t);
+}
 
 window.__SUPER={$:$,$$:$$,esc:esc,el:el,toast:toast,sniffLang:sniffLang,
   DB:DB,load:load,save:save,project:project,active:active,newProject:newProject,touch:touch,
   SESSION:SESSION,req:req,scrub:scrub,why:why,ask:ask,GATE:GATE,
-  unfence:unfence,jsonFrom:jsonFrom,parseFiles:parseFiles,fileNamed:fileNamed,putFile:putFile};
+  unfence:unfence,jsonFrom:jsonFrom,parseFiles:parseFiles,fileNamed:fileNamed,putFile:putFile,
+  impliesMarkupChange:impliesMarkupChange};
 })();
 </script>
 
@@ -979,7 +993,30 @@ function paidFor(p){
     return got[im.id]&&got[im.id].url;
   });
 }
+/* A client who names their own scope ("one HTML file", "no extra sections
+   beyond the three stats") is not asking for the 3-to-5-page / 5-to-8-section
+   defaults below — those are only a fallback for briefs that never say. This
+   is deliberately narrow (literal counts and a couple of stock phrases) so it
+   only overrides the defaults when the client was actually explicit, rather
+   than trying to infer scope from ordinary descriptive language. */
+function scopeRules(text){
+  var t=String(text||'');
+  var singleFile=/\b(single|one)[- ]?(html )?(page|viewport|file)\b/i.test(t)||/\bonly one page\b/i.test(t);
+  var mPages=/\bexactly (\d+)\s+pages?\b/i.exec(t)||/\b(\d+)\s+pages?\s+(only|max|maximum)\b/i.exec(t);
+  var pages=singleFile?1:(mPages?Math.max(1,Math.min(6,parseInt(mPages[1],10))):null);
+  var noExtra=/\bno extra section/i.test(t)||/\bnothing (else|more) beyond\b/i.test(t)||
+    (/\bbeyond\b/i.test(t)&&/\bsection/i.test(t));
+  return {pages:pages,noExtra:noExtra};
+}
 function direct(p,text,mode){
+  var scope=scopeRules(text);
+  var pageRule=scope.pages?
+    ('- The client explicitly asked for exactly '+scope.pages+' page'+(scope.pages>1?'s':'')+
+     '. Write exactly '+scope.pages+' — do not add benefits.html, pricing.html or any other file beyond that.'):
+    '- 3 to 5 pages. index.html always first. Every other file is lowercase and ends in .html.';
+  var sectionRule=scope.noExtra?
+    '- The client explicitly limited which sections are allowed. Write ONLY the sections named in their brief above — no extra sections, cards, or CTA blocks beyond what they described.':
+    '- 5 to 8 sections on the home page and they must not all be the same shape (§6, §9).';
   var input=[
     'A client asked for this: """'+text+'"""',
     p.direction?'This project already has a direction, which you are revising:\n'+brand(p):'',
@@ -1010,8 +1047,8 @@ function direct(p,text,mode){
     '}',
     '',
     'Rules for this answer:',
-    '- 3 to 5 pages. index.html always first. Every other file is lowercase and ends in .html.',
-    '- 5 to 8 sections on the home page and they must not all be the same shape (§6, §9).',
+    pageRule,
+    sectionRule,
     '- The hero must be a deliberate choice from §7, named in its "shape".',
     '- 2 to 4 images, no more. Every one must earn its place (§37) and share one direction (§30).',
     '- Never put website text, logos or interface inside an image prompt (§32).',
@@ -1027,7 +1064,7 @@ function direct(p,text,mode){
     var d=jsonFrom(t);
     if(!d||!Array.isArray(d.pages)||!d.pages.length)
       throw Object.assign(new Error('The direction came back unreadable'),{status:502});
-    d.pages=d.pages.slice(0,6).map(function(pg,i){
+    d.pages=d.pages.slice(0,scope.pages||6).map(function(pg,i){
       var file=String(pg.file||'').toLowerCase().replace(/[^a-z0-9.\-]/g,'');
       if(i===0||!/\.html$/.test(file))file=i===0?'index.html':(file||('page'+i+'.html'));
       if(!/\.html$/.test(file))file+='.html';
@@ -1499,6 +1536,9 @@ function editFiles(p,text,intent){
     'and return ONLY those files, complete. Do not return a file you did not change. Do not',
     'rewrite the whole site for a small change (§14). Keep the existing structure, copy and',
     'features that work.',
+    U.impliesMarkupChange(text)?
+      'This request changes markup, not just styling (an element is being added, replaced or removed). '+
+      'A CSS-only answer does not satisfy it — you must include the .html file with that element actually changed.':'',
     'Picture tokens like {{img:hero}} are real — leave any you do not touch exactly as they are.',
     'Keep the two exact lines in every page head/body:',
     '  <link rel="stylesheet" href="styles.css"/>',
@@ -1509,8 +1549,14 @@ function editFiles(p,text,intent){
     'After the last file, on its own line, write:',
     '@@NOTE one or two sentences to the client about what you changed and why.',
     B.langLine(p)
-  ].join('\n');
-  return ask('code',input,{max:3400,temp:.6}).then(function(t){
+  ].filter(Boolean).join('\n');
+  /* 3400 left too little room for a full index.html plus styles.css in one
+     answer — under time pressure (esp. the 0.55x retry budget in ask()) the
+     model would keep the small CSS file and drop the large HTML file, which
+     silently satisfied "at least one file came back" (line below) while
+     missing the point of the request entirely. 3900 matches the same
+     headroom used in direct() under the gateway's 4096 ceiling. */
+  return ask('code',input,{max:3900,temp:.6}).then(function(t){
     var note='';
     var m=/@@NOTE[ \t]*([\s\S]*)$/.exec(t);
     if(m){note=m[1].trim();t=t.slice(0,m.index)}
@@ -2002,14 +2048,33 @@ async function change(x,text,intent){
   var before=x.files.map(function(f){return {path:f.path,body:f.body}});
   var s=step(L('Making that change…','Woh change kar raha hoon…'));
   var out=await R.editFiles(x,text,intent);
+  var needsHtml=U.impliesMarkupChange(text);
+  var touchedHtml=out.files.some(function(f){return /\.html$/.test(f.path)});
+  if(needsHtml&&!touchedHtml){
+    /* The request named an element to add/replace/remove but the answer
+       only touched CSS — that satisfies editFiles()'s own "at least one
+       file came back" check while missing the actual point. One retry with
+       the miss spelled out, before this is shown to the client as done. */
+    seal(s,L('That only changed styling — the markup itself still needs the change. Trying once more…',
+             'Sirf styling badli — markup abhi bhi badalna hai. Ek aur try…'));
+    var s2=step(L('Making that change…','Woh change kar raha hoon…'));
+    out=await R.editFiles(x,text+'\n\n(Your last answer only returned CSS, but this request needs the '+
+      'markup itself changed — you must include the .html file with that element actually added, '+
+      'replaced or removed, not just restyled.)',intent);
+    touchedHtml=out.files.some(function(f){return /\.html$/.test(f.path)});
+    seal(s2);
+  }else seal(s);
   out.files.forEach(function(f){U.putFile(x.files,f.path,f.body)});
   x.versions=(x.versions||[]).concat([{at:Date.now(),label:text.slice(0,60),
     files:x.files.map(function(f){return {path:f.path,body:f.body}})}]).slice(-4);
-  save();seal(s);I.renderPreview();I.drawCode();
+  save();I.renderPreview();I.drawCode();
   var rows=fileRows(before,x.files);
   say('bot',out.note||L('Done.','Ho gaya.'),{files:rows,next:nextSteps(x)});
   if(!rows.length)say('bot',L('Nothing in the build actually changed — say it a different way and I will try again.',
                               'Build mein kuch badla nahi — thoda aur clearly bolo, phir karta hoon.'));
+  else if(needsHtml&&!touchedHtml)say('bot',
+    L('This still only changed styling, not the markup — try naming the exact file or element and I will try again.',
+      'Ye bhi sirf styling badli, markup nahi — file ya element ka naam clearly bolo, phir try karta hoon.'));
 }
 
 async function run(text,image){

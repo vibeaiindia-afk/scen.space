@@ -61,6 +61,7 @@ a{color:inherit;text-decoration:none}
 .btn.ghost{border-color:transparent;background:transparent}
 .btn.ghost:hover{background:var(--soft)}
 .btn.sq{border-radius:10px;padding:7px 12px}
+.btn.sm{padding:6px 11px;font-size:12.5px}
 .btn[disabled]{opacity:.45;pointer-events:none}
 .ico{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
   color:#5f5f6a;transition:.15s}
@@ -285,6 +286,24 @@ a{color:inherit;text-decoration:none}
 .scrim.open{display:flex}
 .modal{background:var(--surface);border-radius:20px;box-shadow:0 30px 80px -20px rgba(16,16,20,.4);
   width:min(460px,100%);padding:22px}
+.modal.modal-wide{width:min(600px,94vw)}
+.more-row{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line2);
+  width:100%;text-align:left;cursor:pointer}
+.more-row:last-child{border-bottom:0}
+.more-row:hover{background:var(--soft)}
+.more-row .ic{width:34px;height:34px;border-radius:9px;background:var(--soft2);display:flex;
+  align-items:center;justify-content:center;flex:0 0 auto}
+.more-row .ic svg{width:16px;height:16px;stroke:var(--ink)}
+.more-row .tx{flex:1;min-width:0}
+.more-row .tx b{display:block;font-size:13.5px;font-weight:600}
+.more-row .tx span{font-size:11.5px;color:var(--muted)}
+.more-row .chev{color:var(--muted);flex:0 0 auto}
+.more-row .chev svg{width:16px;height:16px}
+.acct-head{display:flex;align-items:center;gap:10px;padding:4px 2px 12px}
+.acct-head .av{width:38px;height:38px;border-radius:50%;background:var(--blue);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex:0 0 auto}
+.acct-head b{display:block;font-size:14px}
+.acct-head span{font-size:12px;color:var(--muted)}
 .modal h3{margin:0 0 6px;font-size:17px;letter-spacing:-.02em}
 .modal p{margin:0 0 16px;font-size:13.5px;color:var(--muted)}
 .field{display:block;margin-bottom:14px}
@@ -1551,7 +1570,7 @@ function probe(){
     $('#wsBadge').textContent=i;$('#avatar').textContent=i;
     $('#heroTitle').textContent='What are we building, '+U.SESSION.name+'?';
     return req('/api/billing/credits').then(function(c){
-      U.SESSION.credits=Number(c.balance!=null?c.balance:(c.credits!=null?c.credits:NaN));
+      U.SESSION.credits=Number((c.wallet&&c.wallet.available!=null)?c.wallet.available:(c.balance!=null?c.balance:(c.credits!=null?c.credits:NaN)));
       if(!isNaN(U.SESSION.credits))tag.textContent+=' · '+U.SESSION.credits+' credits';
     },function(){});
   },function(e){
@@ -2066,6 +2085,7 @@ function publish(){
   if(!x.files.length)return toast(L('There is nothing built to publish yet.','Abhi publish karne ko kuch nahi hai.'));
   var suggested=(x.published&&x.published.slug)||slugify(x.name)||'my-site';
   var live=x.published;
+  $('#modal').className='modal';
   $('#modal').innerHTML=
     '<h3>'+L('Put it online','Live kar do')+'</h3>'+
     '<div class="pub-status">'+
@@ -2098,10 +2118,13 @@ function copyPublishLink(){
    and the live URL to copy once the project is published. No invented member
    list, no fake "copy invite link" for a link this page never receives. */
 function shareProject(){
-  var x=I.p();if(!x)return;
+  var x=I.p();if(!x)return toast(L('Nothing built yet.','Abhi kuch bana nahi.'));
   var canInvite=['owner','admin'].indexOf(U.SESSION.role)>=0;
+  $('#modal').className='modal';
   $('#modal').innerHTML=
-    '<h3>'+L('Share project','Project share karo')+'</h3>'+
+    '<div class="acct-head" style="padding-bottom:16px"><span class="av" style="background:var(--violet)">'+
+    '<svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5 15.4 6.5M8.6 13.5l6.8 4"/></svg></span>'+
+    '<div><b>'+L('Share project','Project share karo')+'</b><span>'+esc(x.name||'Untitled')+'</span></div></div>'+
     (canInvite?
       '<label class="field"><span>'+L('Invite by email','Email se invite karo')+'</span>'+
       '<div class="pub-urlrow" style="border-radius:11px"><input id="inviteEmail" type="email" '+
@@ -2115,6 +2138,7 @@ function shareProject(){
       'data-act="submitInvite">'+L('Send invite','Invite bhejo')+'</button>'
       :'<p>'+L('Only the workspace owner or an admin can invite people.',
                'Sirf workspace owner ya admin hi logon ko invite kar sakte hain.')+'</p>')+
+    '<div style="height:1px;background:var(--line2);margin:2px 0 14px"></div>'+
     '<label class="field"><span>'+L('Live link','Live link')+'</span>'+
     (x.published?
       '<div class="pub-urlrow" style="border-radius:11px;padding:2px 4px 2px 12px;justify-content:space-between">'+
@@ -2148,6 +2172,7 @@ function submitInvite(){
    what was not measured). */
 function analytics(){
   var x=I.p();if(!x)return;
+  $('#modal').className='modal';
   if(!x.published){
     $('#modal').innerHTML='<h3>'+L('Analytics','Analytics')+'</h3>'+
       '<p>'+L('Publish your app to start tracking visitors. Share your app with a live URL to see its traffic here.',
@@ -2215,6 +2240,7 @@ function connectorBadge(state){
   return '<span class="tag '+cls+'">'+esc(L(label,label))+'</span>';
 }
 function connectors(){
+  $('#modal').className='modal';
   $('#modal').innerHTML='<h3>'+L('Connectors','Connectors')+'</h3>'+
     '<p>'+L('Loading…','Load ho raha hai…')+'</p>'+
     '<div class="modal-row"><button class="btn" data-act="close">'+L('Close','Band karo')+'</button></div>';
@@ -2241,6 +2267,47 @@ function connectors(){
       '<div class="modal-row"><button class="btn" data-act="close">'+L('Close','Band karo')+'</button></div>';
   });
 }
+/* Same two endpoints the main Scen app's own Billing page reads — the
+   wallet balance from GET /api/billing/credits (already used to badge the
+   avatar at boot, ~line 1553) and payment history from GET /api/billing/invoices
+   (returns amount_minor/currency, not a display string, so it's formatted here). */
+function billingCredits(){
+  $('#modal').className='modal';
+  $('#modal').innerHTML='<h3>'+L('Billing & credits','Billing & credits')+'</h3>'+
+    '<p>'+L('Loading…','Load ho raha hai…')+'</p>'+
+    '<div class="modal-row"><button class="btn" data-act="close">'+L('Close','Band karo')+'</button></div>';
+  $('#scrim').classList.add('open');
+  Promise.all([
+    U.req('/api/billing/credits'),
+    U.req('/api/billing/invoices').catch(function(){return {invoices:[]}})
+  ]).then(function(r){
+    if(!$('#scrim').classList.contains('open'))return;
+    var c=r[0]||{},balance=(c.wallet&&c.wallet.available!=null)?c.wallet.available:(c.balance!=null?c.balance:(c.credits!=null?c.credits:null));
+    var invoices=(r[1]&&r[1].invoices)||[];
+    var rows=invoices.slice(0,8).map(function(inv){
+      var amt=inv.amount_minor!=null?(inv.amount_minor/100).toFixed(2)+' '+(inv.currency||''):'';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;'+
+        'padding:9px 2px;border-bottom:1px solid var(--line2)">'+
+        '<div><b style="font-size:12.5px;font-weight:600;display:block">'+
+        esc(inv.issued_at?new Date(inv.issued_at).toLocaleDateString():(inv.provider||''))+'</b>'+
+        '<span style="font-size:11px;color:var(--muted)">'+esc(inv.status||'')+'</span></div>'+
+        '<b style="font-size:13px">'+esc(amt)+'</b></div>';
+    }).join('')||'<p style="margin:4px 0 0;font-size:12.5px;color:var(--muted)">'+
+      L('No invoices yet.','Abhi koi invoice nahi.')+'</p>';
+    $('#modal').innerHTML='<h3>'+L('Billing & credits','Billing & credits')+'</h3>'+
+      '<div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px">'+
+      '<span style="font-size:11.5px;color:var(--muted)">'+L('Credit balance','Credit balance')+'</span>'+
+      '<b style="display:block;font-size:26px;margin-top:2px">'+(balance!=null&&!isNaN(balance)?balance:'—')+'</b></div>'+
+      '<span style="font-size:11.5px;color:var(--muted)">'+L('Recent invoices','Recent invoices')+'</span>'+
+      '<div style="max-height:240px;overflow:auto;margin-top:6px">'+rows+'</div>'+
+      '<div class="modal-row" style="margin-top:16px"><button class="btn" data-act="close">'+L('Close','Band karo')+'</button></div>';
+  },function(e){
+    if(!$('#scrim').classList.contains('open'))return;
+    $('#modal').innerHTML='<h3>'+L('Billing & credits','Billing & credits')+'</h3>'+
+      '<p>'+esc(why(e,'load billing'))+'</p>'+
+      '<div class="modal-row"><button class="btn" data-act="close">'+L('Close','Band karo')+'</button></div>';
+  });
+}
 function doPublish(){
   var x=I.p(),slug=slugify($('#slug').value);
   if(slug.length<3)return toast(L('That address is too short.','Address bahut chhota hai.'));
@@ -2262,7 +2329,7 @@ function doPublish(){
 }
 window.__SUPER_ACT={run:run,publish:publish,doPublish:doPublish,copyPublishLink:copyPublishLink,
   shareProject:shareProject,submitInvite:submitInvite,analytics:analytics,connectors:connectors,
-  snapshot:snapshot,nextSteps:nextSteps,fileRows:fileRows};
+  billing:billingCredits,snapshot:snapshot,nextSteps:nextSteps,fileRows:fileRows};
 })();
 </script>
 
@@ -2326,30 +2393,51 @@ function projMenu(btn){
     '<div class="sep"></div>'+
     '<button class="bad" data-act="deleteProject">'+L('Delete this project','Project delete karo')+'</button>');
 }
-function moreMenu(btn){
+/* the icon+title+subtitle row this menu uses for every navigable section —
+   pulled out once so Analytics/Connections/Billing don't repeat the same
+   five lines of markup three times */
+function moreRow(act,icon,title,sub){
+  return '<button class="more-row" data-act="'+act+'"><span class="ic">'+icon+'</span>'+
+    '<span class="tx"><b>'+esc(title)+'</b><span>'+esc(sub)+'</span></span>'+
+    '<span class="chev"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span></button>';
+}
+function moreMenu(){
   var x=I.p(),G=U.GATE;
+  $('#modal').className='modal modal-wide';
   /* the page picker lives in the top bar on a wide screen and has nowhere to
      be on a phone, so it comes in here instead of disappearing */
   var pages=(innerWidth<900&&x&&x.files.length)
-    ? '<h5>'+L('Pages','Pages')+'</h5>'+
+    ? '<span style="font-size:11.5px;color:var(--muted)">'+L('Pages','Pages')+'</span>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 14px">'+
       x.files.filter(function(f){return /\.html$/.test(f.path)}).map(function(f){
-        return '<button data-page="'+esc(f.path)+'">'+esc(I.pageTitle(x,f.path))+
-          (x.page===f.path?' ·':'')+'</button>'}).join('')+'<div class="sep"></div>'
+        return '<button class="btn sm" data-page="'+esc(f.path)+'">'+esc(I.pageTitle(x,f.path))+
+          (x.page===f.path?' ·':'')+'</button>'}).join('')+'</div>'
     : '';
-  pop(btn,pages+'<h5>'+L('This session','Yeh session')+'</h5>'+
-    '<div class="row"><span>'+L('Answering','Jawab de raha hai')+'</span><b>'+
+  $('#modal').innerHTML='<h3>'+L('More','More')+'</h3>'+pages+
+    '<div style="border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px">'+
+    '<div class="row" style="padding:3px 0"><span>'+L('Answering','Jawab de raha hai')+'</span><b>'+
       esc(G.provider?(G.provider+' · '+G.model):'not called yet')+'</b></div>'+
-    '<div class="row"><span>'+L('Model calls','Model calls')+'</span><b>'+G.calls+'</b></div>'+
-    '<div class="row"><span>'+L('Estimated cost','Anumaanit cost')+'</span><b>$'+(G.cost||0).toFixed(4)+'</b></div>'+
-    (G.lastError?'<div class="row"><span>'+L('Last error','Aakhri error')+'</span><b>'+esc(G.lastError)+'</b></div>':'')+
-    '<div class="sep"></div>'+
-    '<button data-act="analytics">'+L('Analytics','Analytics')+'</button>'+
-    '<button data-act="downloadPage">'+L('Download this page','Yeh page download karo')+'</button>'+
-    '<button data-act="downloadAll">'+L('Download every file','Saari files download karo')+'</button>'+
-    '<div class="sep"></div>'+
-    (innerWidth<900?'<button data-act="review">'+L('Design review','Design review')+'</button>'+
-                    '<button data-act="account">'+L('Account','Account')+'</button>':'')+
-    '<button data-act="clearThread">'+L('Clear the conversation','Chat saaf karo')+'</button>');
+    '<div class="row" style="padding:3px 0"><span>'+L('Model calls','Model calls')+'</span><b>'+G.calls+'</b></div>'+
+    '<div class="row" style="padding:3px 0"><span>'+L('Estimated cost','Anumaanit cost')+'</span><b>$'+(G.cost||0).toFixed(4)+'</b></div>'+
+    (G.lastError?'<div class="row" style="padding:3px 0"><span>'+L('Last error','Aakhri error')+'</span><b>'+esc(G.lastError)+'</b></div>':'')+
+    '</div>'+
+    moreRow('analytics','<svg viewBox="0 0 24 24"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>',
+      L('Analytics','Analytics'),L('Page views on your published site','Published site ke page views')) +
+    moreRow('connections','<svg viewBox="0 0 24 24"><path d="M9 7 4 12l5 5M15 7l5 5-5 5"/></svg>',
+      L('Connections','Connections'),L('What this workspace can actually do','Yeh workspace kya kar sakta hai')) +
+    moreRow('billing','<svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/></svg>',
+      L('Billing & credits','Billing & credits'),L('Balance and recent invoices','Balance aur invoices')) +
+    (innerWidth<900?moreRow('review','<svg viewBox="0 0 24 24"><path d="M13 3 5 14h6l-1 7 8-11h-6z"/></svg>',
+      L('Design review','Design review'),L('Run a review on this build','Is build ka review karo'))+
+      moreRow('account','<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>',
+      L('Account','Account'),L('Session and sign out','Session aur sign out')):'')+
+    '<div class="modal-row" style="margin-top:16px;justify-content:space-between">'+
+    '<div style="display:flex;gap:8px">'+
+    '<button class="btn sm" data-act="downloadPage">'+L('Download page','Page download')+'</button>'+
+    '<button class="btn sm" data-act="downloadAll">'+L('Download all','Sab download')+'</button>'+
+    '<button class="btn sm" data-act="clearThread">'+L('Clear chat','Chat saaf')+'</button>'+
+    '</div><button class="btn" data-act="close">'+L('Done','Ho gaya')+'</button></div>';
+  $('#scrim').classList.add('open');
 }
 function pageMenu(btn){
   var x=I.p();if(!x||!x.files.length)return toast(L('Nothing built yet.','Abhi kuch bana nahi.'));
@@ -2369,15 +2457,26 @@ function historyMenu(btn){
       :'<div class="row"><span>'+L('Nothing saved yet','Abhi kuch save nahi')+'</span></div>'));
 }
 function accountMenu(btn){
-  var s=U.SESSION;
-  pop(btn,'<h5>'+L('Account','Account')+'</h5>'+
-    '<div class="row"><span>'+L('Signed in','Signed in')+'</span><b>'+
-      esc(s.state==='in'?(s.email||s.name):'no')+'</b></div>'+
-    (s.credits!=null&&!isNaN(s.credits)?'<div class="row"><span>Credits</span><b>'+s.credits+'</b></div>':'')+
+  var s=U.SESSION,signedIn=s.state==='in',initial=(s.name||s.email||'S').slice(0,1).toUpperCase();
+  pop(btn,'<div class="acct-head"><span class="av">'+esc(initial)+'</span><div>'+
+    '<b>'+esc(signedIn?(s.name||s.email):L('Not signed in','Signed in nahi'))+'</b>'+
+    '<span>'+esc(signedIn?(s.email||''):L('Sign in on Scen to build.','Build karne ke liye Scen mein sign in karo.'))+'</span>'+
+    '</div></div>'+
+    (s.credits!=null&&!isNaN(s.credits)?'<div class="row"><span>'+L('Credits','Credits')+'</span><b>'+s.credits+'</b></div>':'')+
     '<div class="sep"></div>'+
     '<button data-act="openScen">'+L('Open Scen','Scen kholo')+'</button>'+
     '<button data-act="openStudio">'+L('Open Agent Studio','Agent Studio kholo')+'</button>'+
-    '<button data-act="recheck">'+L('Check the session again','Session dobara check karo')+'</button>');
+    '<button data-act="recheck">'+L('Check the session again','Session dobara check karo')+'</button>'+
+    (signedIn?'<div class="sep"></div><button class="bad" data-act="signOut">'+L('Sign out','Sign out')+'</button>':''));
+}
+/* the only session token this page has is the cookie — this mirrors the
+   exact call agent-studio.html already makes to end it (agent-studio.html
+   ~line 7798), then falls back to a hard reload so every bit of in-memory
+   state (S, DB, U.SESSION) resets rather than trying to hand-unwind it. */
+function signOut(){
+  closePop();
+  fetch('/api/auth/logout',{method:'POST',credentials:'same-origin'}).catch(function(){})
+    .then(function(){location.reload()});
 }
 
 /* ---------- a design review on demand (§16) ---------- */
@@ -2436,6 +2535,8 @@ document.addEventListener('click',function(e){
   if(a==='home')            {e.preventDefault();closePop();I.home()}
   else if(a==='newProject') {startFresh()}
   else if(a==='account')    {accountMenu(act)}
+  else if(a==='signOut')    {signOut()}
+  else if(a==='billing')    {closePop();A.billing()}
   else if(a==='focusSearch'){$('#search').focus()}
   else if(a==='openStudio') {open2('/agent-studio.html')}
   else if(a==='openScen')   {open2('/')}
@@ -2502,6 +2603,7 @@ function startFresh(seed){
 }
 function rename(){
   var x=I.p();if(!x)return;
+  $('#modal').className='modal';
   $('#modal').innerHTML='<h3>'+L('Rename','Naam badlo')+'</h3>'+
     '<label class="field"><span>'+L('Project name','Project ka naam')+'</span>'+
     '<input id="newName" value="'+esc(x.name||'')+'"></label>'+
@@ -2523,6 +2625,7 @@ function duplicate(){
 }
 function removeProject(){
   var x=I.p();if(!x)return;
+  $('#modal').className='modal';
   $('#modal').innerHTML='<h3>'+L('Delete this project?','Yeh project delete karein?')+'</h3>'+
     '<p>'+L('The build, the conversation and the version history go with it. A published site stays live.',
             'Build, chat aur history sab chali jayegi. Published site live rahegi.')+'</p>'+
